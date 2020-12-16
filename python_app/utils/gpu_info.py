@@ -59,11 +59,12 @@ def verify_gpu_allocation(**kwargs):
         "block_dim_y",
         "block_dim_z",
         "global_memory",
+        "shared_memory_per_block",
     ]
-    for key in filter(lambda x: x in kwargs for x in kwargs):
+    for key in filter(lambda x: x in kwargs, kwargs):
         if kwargs[key] > gpu_parameters[key]:
             raise RuntimeError(
-                f"Parameter ('{key}' = {kwargs[key]}) larger than allowed {gpu_parameters[key]}"
+                f"Parameter ({key} = {kwargs[key]}) larger than allowed ({key} = {gpu_parameters[key]})"
             )
         if key in ["block_dim_x", "block_dim_y", "block_dim_z"]:
             total_threads_in_block *= kwargs[key]
