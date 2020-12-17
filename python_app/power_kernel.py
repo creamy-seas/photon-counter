@@ -1,3 +1,4 @@
+import json
 from typing import List, Callable, Tuple, Optional, Dict
 
 import numpy as np
@@ -5,31 +6,49 @@ from numba import cuda
 from numba.cuda.cudadrv.devicearray import DeviceNDArray
 
 from python_app.utils import gpu_info
+from python_app.utils.terminal_colour import TerminalColour
 
 
 class PowerKernel:
-    def __init__(self, parameter_dict: Dict):
+    HEADING = (
+        TerminalColour.CBLUE
+        + TerminalColour.BOLD
+        + "POWER-KERNEL"
+        + TerminalColour.ENDC
+        + ":"
+    )
+    LOG_TEMPLATE = f"{HEADING:<65}{{info}}"
 
-        self.verify_gpu_allocation(parameter_dict)
+    @classmethod
+    def log(cls, message: str):
+        print(cls.LOG_TEMPLATE.format(info=str(message)))
+
+    def __init__(self, power_kernel_parameters: Dict):
+
+        self.verify_gpu_allocation(power_kernel_parameters)
+        self.log(
+            f"""Loaded following parameters:
+{json.dumps(power_kernel_parameters, indent=4, default=lambda o: str(o))}"""
+        )
 
         self.kernel = self.kernel_wrapper(
-            parameter_dict["NP_POINTS"],
-            parameter_dict["R_POINTS"],
-            parameter_dict["PROCESSING_ARRAY_TYPE"],
+            power_kernel_parameters["NP_POINTS"],
+            power_kernel_parameters["R_POINTS"],
+            power_kernel_parameters["PROCESSING_ARRAY_TYPE"],
         )
 
     @staticmethod
-    def verify_gpu_allocation(parameter_dict: Dict):
+    def verify_gpu_allocation(power_kernel_parameters: Dict):
         """Checks that allowed threads, blocks, memory"""
 
         # Unpack parameters ###################################################
-        BLOCKS = parameter_dict["BLOCKS"]
-        THREADS_PER_BLOCK = parameter_dict["THREADS_PER_BLOCK"]
-        NP_POINTS = parameter_dict["NP_POINTS"]
-        R_POINTS = parameter_dict["R_POINTS"]
-        PROCESSING_ARRAY_TYPE = parameter_dict["PROCESSING_ARRAY_TYPE"]
-        INPUT_ARRAY_TYPE = parameter_dict["INPUT_ARRAY_TYPE"]
-        OUTPUT_ARRAY_TYPE = parameter_dict["OUTPUT_ARRAY_TYPE"]
+        BLOCKS = power_kernel_parameters["BLOCKS"]
+        THREADS_PER_BLOCK = power_kernel_parameters["THREADS_PER_BLOCK"]
+        NP_POINTS = power_kernel_parameters["NP_POINTS"]
+        R_POINTS = power_kernel_parameters["R_POINTS"]
+        PROCESSING_ARRAY_TYPE = power_kernel_parameters["PROCESSING_ARRAY_TYPE"]
+        INPUT_ARRAY_TYPE = power_kernel_parameters["INPUT_ARRAY_TYPE"]
+        OUTPUT_ARRAY_TYPE = power_kernel_parameters["OUTPUT_ARRAY_TYPE"]
 
         # Evaluate size of arrays to store ####################################
         in_arrays_in_bytes = 2 * (
