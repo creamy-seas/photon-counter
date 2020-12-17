@@ -54,19 +54,20 @@ class PowerKernel:
         self, NP_POINTS: int, R_POINTS: int, PROCESSING_ARRAY_TYPE: type
     ):
         @cuda.jit(device=True)
-        def reduction_sum(processing_array):
+        def reduction_sum(cache_array):
             """Reduce the array by summing up the total into the first cell"""
+
+            # Account for odd number of repetitions
+            if R_POINTS % 2 != 0:
+                cache_array[0] += cache_array[R_POINTS - 1]
 
             i = min(cuda.blockDim.x // 2, R_POINTS // 2)
 
             while i != 0:
-
                 r_coordinate = cuda.threadIdx.x
                 while r_coordinate < R_POINTS:
-
                     if r_coordinate < i:
-                        processing_array[r_coordinate] = r_coordinate + i
-                        # a = processing_array[r_coordinate + i]
+                        cache_array[r_coordinate] += cache_array[r_coordinate + i]
                     r_coordinate += cuda.blockDim.x
                 cuda.syncthreads()
                 i //= 2
@@ -98,8 +99,8 @@ class PowerKernel:
             repetition-axis (r_coordinate)
             """
 
-            processing_array = cuda.shared.array(
-                shape=R_POINTS, dtype=PROCESSING_ARRAY_TYPE
+            cache_array = cuda.shared.array(
+                shape=(R_POINTS), dtype=PROCESSING_ARRAY_TYPE
             )
 
             np_coordinate = cuda.blockIdx.x
@@ -107,11 +108,10 @@ class PowerKernel:
 
                 r_coordinate = cuda.threadIdx.x
                 while r_coordinate < R_POINTS:
+                    # coordinate = r_coordinate + np_coordinate * R_POINTS
+                    coordinate = r_coordinate * NP_POINTS + np_coordinate
 
-                    coordinate = r_coordinate + np_coordinate * NP_POINTS
-                    # array_out[np_coordinate] = coordinate
-
-                    processing_array[r_coordinate] = (
+                    cache_array[r_coordinate] += (
                         a_array[coordinate] * a_array[coordinate]
                         + b_array[coordinate] * b_array[coordinate]
                     )
@@ -125,8 +125,8 @@ class PowerKernel:
                 cuda.syncthreads()
 
                 # Summation
-                reduction_sum(processing_array)
-                array_out[np_coordinate] = float(processing_array[2])  # / R_POINTS
+                reduction_sum(cache_array)
+                array_out[np_coordinate] = float(cache_array[0])  # / R_POINTS
 
                 # Shift by number of allocated blocks along main-axis
                 np_coordinate += cuda.gridDim.x

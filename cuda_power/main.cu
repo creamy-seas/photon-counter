@@ -51,7 +51,7 @@ cudaDeviceProp fetch_gpu_parameters(){
 
         printf( "%s\n", OKBLUE("Memory Information for device"));
         printf(
-                "Total global mem: %ld (int16: %ld) (float32: %ld)\n",
+                "Total global mem (in bytes): %ld (int16: %ld) (float32: %ld)\n",
                 prop.totalGlobalMem,
                 prop.totalGlobalMem / 16,
                 prop.totalGlobalMem / 32
