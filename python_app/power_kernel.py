@@ -50,18 +50,23 @@ class PowerKernel:
             }
         )
 
+        assert (
+            R_POINTS & (R_POINTS - 1) == 0
+        ) and R_POINTS != 0, f"(R_POINTS={R_POINTS}) is not a power of 2! This would make the implementaton of summation inefficient, so change it"
+        assert (
+            R_POINTS != 1
+        ), f"(R_POINTS={R_POINTS}) is an edge case - try setting it to at least 2"
+
     def kernel_wrapper(
         self, NP_POINTS: int, R_POINTS: int, PROCESSING_ARRAY_TYPE: type
     ):
+        i_default = R_POINTS // 2
+
         @cuda.jit(device=True)
         def reduction_sum(cache_array):
             """Reduce the array by summing up the total into the first cell"""
 
-            # Account for odd number of repetitions
-            if R_POINTS % 2 != 0:
-                cache_array[0] += cache_array[R_POINTS - 1]
-
-            i = min(cuda.blockDim.x // 2, R_POINTS // 2)
+            i = i_default
 
             while i != 0:
                 r_coordinate = cuda.threadIdx.x
@@ -111,7 +116,7 @@ class PowerKernel:
                     # coordinate = r_coordinate + np_coordinate * R_POINTS
                     coordinate = r_coordinate * NP_POINTS + np_coordinate
 
-                    cache_array[r_coordinate] += (
+                    cache_array[r_coordinate] = (
                         a_array[coordinate] * a_array[coordinate]
                         + b_array[coordinate] * b_array[coordinate]
                     )
@@ -126,7 +131,7 @@ class PowerKernel:
 
                 # Summation
                 reduction_sum(cache_array)
-                array_out[np_coordinate] = float(cache_array[0])  # / R_POINTS
+                array_out[np_coordinate] = float(cache_array[0]) / R_POINTS
 
                 # Shift by number of allocated blocks along main-axis
                 np_coordinate += cuda.gridDim.x
