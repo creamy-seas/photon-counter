@@ -18,6 +18,10 @@ class TestSpDigitiser(unittest.TestCase):
                     "samples_per_record": 1000000,
                     "delay": 0,
                     "trigger_type": SpDigitiser.TRIGGER_EXTERNAL,
+                    "channelA_gain": 1,
+                    "channelB_gain": 1,
+                    "channelA_offset": 0,
+                    "channelB_offset": 0,
                 }
             )
 
@@ -29,6 +33,10 @@ class TestSpDigitiser(unittest.TestCase):
                     "samples_per_record": 10,
                     "delay": 0,
                     "trigger_type": SpDigitiser.TRIGGER_EXTERNAL,
+                    "channelA_gain": 1,
+                    "channelB_gain": 1,
+                    "channelA_offset": 0,
+                    "channelB_offset": 0,
                 },
             )
 
@@ -39,6 +47,10 @@ class TestSpDigitiser(unittest.TestCase):
                 "samples_per_record": 10,
                 "delay": 0,
                 "trigger_type": SpDigitiser.TRIGGER_EXTERNAL,
+                "channelA_gain": 1,
+                "channelB_gain": 1,
+                "channelA_offset": 0,
+                "channelB_offset": 0,
             }
         )
         assert True

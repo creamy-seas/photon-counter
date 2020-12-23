@@ -121,43 +121,43 @@ class SpDigitiser:
         self.sp_digitiser_parameters["trigger_frequency"] = trigger_frequency
 
     def parameter_setup(self):
-        # a - delay after trigger
+        # a - delay after trigger #############################################
         ADQAPI.ADQ214_SetTriggerHoldOffSamples(
             self.adq_cu_ptr, 1, self.sp_digitiser_parameters["delay"]
         )
 
-        # b - internal clock source with external 10MHz refference
+        # b - internal clock source with external 10MHz refference ############
         INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERECNCE = 1
         ADQAPI.ADQ214_SetClockSource(
             self.adq_cu_ptr, 1, INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERECNCE
         )
 
-        # c - range of the external refference
+        # c - range of the external refference ################################
         LOW_FREQUENCY_MODE = 0
         HIGH_FREQUENCY_MODE = 1
         ADQAPI.ADQ214_SetClockFrequencyMode(self.adq_cu_ptr, 1, HIGH_FREQUENCY_MODE)
 
-        # d - Synthesise 400MHz sampling signal from the f_clock=10MHz
+        # d - Synthesise 400MHz sampling signal from the f_clock=10MHz ########
         # (phase locked loop samples at f_clock*80/divider_value, so in this case its 400MHz. That is the sampling frequency)
         ADQAPI.ADQ214_SetPllFreqDivider(self.adq_cu_ptr, 1, 2)
 
-        # e - Set the trigger type
+        # e - Set the trigger type ############################################
         ADQAPI.ADQ214_SetTriggerMode(
             self.adq_cu_ptr, 1, self.sp_digitiser_parameters["trigger_type"]
         )
 
-        # f - Set the data format to 14 bit unpacked, to map 1to1 the collected data memory inefficiently, but quickly
+        # f - Set the data format to 14 bit unpacked, to map 1to1 the collected data memory inefficiently, but quickly #
         ADQAPI.ADQ214_SetDataFormat(self.adq_cu_ptr, 1, 1)
 
-        # 9) Set the offset and gain of channels 1 and 2. Run the measurement in labview to determine the parameters
+        # g - Offset found by taking measurements of the 2 channels #
         ADQAPI.ADQ214_SetGainAndOffset(
             self.adq_cu_ptr,
             1,
             1,
-            int(self.gain_offset_param["channelA_gain"] * 1024),
+            int(self.sp_digitiser_parameters["channelA_gain"] * 1024),
             int(
-                -self.gain_offset_param["channelA_offset"]
-                / self.gain_offset_param["channelA_gain"]
+                -self.sp_digitiser_parameters["channelA_offset"]
+                / self.sp_digitiser_parameters["channelA_gain"]
                 / 4
             ),
         )
@@ -165,12 +165,20 @@ class SpDigitiser:
             self.adq_cu_ptr,
             1,
             2,
-            int(self.gain_offset_param["channelB_gain"] * 1024),
+            int(self.sp_digitiser_parameters["channelB_gain"] * 1024),
             int(
-                -self.gain_offset_param["channelB_offset"]
-                / self.gain_offset_param["channelB_gain"]
+                -self.sp_digitiser_parameters["channelB_offset"]
+                / self.sp_digitiser_parameters["channelB_gain"]
                 / 4
             ),
+        )
+
+        # h - setup multirecord mode ##########################################
+        ADQAPI.ADQ214_MultiRecordSetup(
+            self.adq_cu_ptr,
+            1,
+            self.sp_digitiser_parameters["number_of_records"],
+            self.sp_digitiser_parameters["samples_per_record"],
         )
 
     def blink(self):
