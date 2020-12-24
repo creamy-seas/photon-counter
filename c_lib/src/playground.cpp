@@ -2,6 +2,8 @@
 #include <mutex>        // std::mutex, std::lock_guard
 #include <iostream>     // std::count
 
+#include "colours.hpp"
+#include "ia_ADQAPI.hpp"
 // https://stackoverflow.com/questions/10828001/pthread-mutex-locking-without-global-mutex
 // example of non global locking
 int g_i[3] = {0};
@@ -18,13 +20,17 @@ void safe_increment(int increment)
 
 
 int main(void){
-        std::cout << "g_i[0]" << g_i[0] << '\n';
 
-        std::thread t1(safe_increment, 2);
-        std::thread t2(safe_increment, 4);
+        master_setup(1);
 
-        t1.join();
-        t2.join();
+        // OKBLUE("Running");
+        // std::cout << "g_i[0]" << g_i[0] << '\n';
 
-        std::cout << "g_i[0] " << g_i[0] << '\n';
+        // std::thread t1(safe_increment, 2);
+        // std::thread t2(safe_increment, 4);
+
+        // t1.join();
+        // t2.join();
+
+        // std::cout << "g_i[0] " << g_i[0] << '\n';
 }

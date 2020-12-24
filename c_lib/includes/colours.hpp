@@ -3,7 +3,7 @@
 
 #define ENDC "\033[0m"
 #define BOLD "\033[1m"
-#define COLOR(colour, str) (colour str ENDC)
+#define COLOR(colour, str) (printf("%s%s%s\n", colour, str, ENDC))
 
 #define HEADER(str) (COLOR("\033[95m\033[1m", str))
 #define OKBLUE(str) (COLOR("\033[94m\033[1m", str))
