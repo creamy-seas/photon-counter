@@ -4,7 +4,7 @@
 
 // Project Libraries
 #include "colours.hpp"
-#include "ia_ADQAPI.hpp"
+#include "iaADQAPI.hpp"
 
 #define ADQ1 (adq_cu_ptr, 1)
 

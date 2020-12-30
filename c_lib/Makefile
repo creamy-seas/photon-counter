@@ -8,8 +8,8 @@ LDLIBS += $(shell pkg-config --libs cppunit) # Unittest library
 
 INCS := -Iincludes # Location of header files
 
-tt: test/test_ia_ADQAPI.cpp src/ia_ADQAPI.cpp
-	$(CXX) $(CPPFLAGS) $(LDFLAGS) $(LDLIBS) $(INCS) -o $@ $^
+tt: test/iaADQAPITest.cpp src/iaADQAPI.cpp
+	@$(CXX) $(CPPFLAGS) $(LDFLAGS) $(LDLIBS) $(INCS) -o $@ $^
 	@./$@
 
 lib: src/ia_ADQAPI.cpp
@@ -25,7 +25,7 @@ play: src/playground.cpp src/ia_ADQAPI.cpp
 	@echo "Build complete 🐋"
 	@./$(TARGET)
 
-.PHONY: clean
+.PHONY: clean tt
 clean:
 	@echo "🖌 Cleaning build objects"
 	@rm -rf *.out *.o
