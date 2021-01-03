@@ -8,3 +8,9 @@
 ```
 
 2. Run `ggtags-create-tags` in an c/cpp project. or `gtags`
+
+3. Install `cppunit` lib
+
+```shell
+sudo apt-get install libcppunit-dev
+```

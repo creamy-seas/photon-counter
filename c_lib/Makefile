@@ -2,15 +2,11 @@ CXX := g++
 
 CPPFLAGS += -DLINUX -std=c++11
 
-LDFLAGS = $(shell pkg-config --cflags libadq) # Digitiser library
-LDLIBS := $(shell pkg-config --libs libadq) # Digitiser library
+# LDFLAGS = $(shell pkg-config --cflags libadq) # Digitiser library
+# LDLIBS := $(shell pkg-config --libs libadq) # Digitiser library
 LDLIBS += $(shell pkg-config --libs cppunit) # Unittest library
 
 INCS := -Iincludes # Location of header files
-
-tt: test/iaADQAPITest.cpp src/iaADQAPI.cpp
-	@$(CXX) $(CPPFLAGS) $(LDFLAGS) $(LDLIBS) $(INCS) -o $@ $^
-	@./$@
 
 lib: src/ia_ADQAPI.cpp
 	@$(eval TARGET=$(patsubst src/%.cpp,build/%,$<))
@@ -25,7 +21,12 @@ play: src/playground.cpp src/ia_ADQAPI.cpp
 	@echo "Build complete 🐋"
 	@./$(TARGET)
 
-.PHONY: clean tt
+.PHONY: clean test
+
+test: test/testRunner.cpp test/exampleTest.cpp # test/iaADQAPITest.cpp src/iaADQAPI.cpp
+	@$(CXX) $(CPPFLAGS) $(LDFLAGS) $(LDLIBS) $(INCS) -o build/test $^
+	@./build/test
+
 clean:
 	@echo "🖌 Cleaning build objects"
 	@rm -rf *.out *.o
