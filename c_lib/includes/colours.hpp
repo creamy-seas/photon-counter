@@ -27,8 +27,8 @@
 
 #define BLACKBG(str) (COLOR("\033[40m", str))
 #define REDBG(str) (COLOR("\033[41m", str))
-#define GREENBG(str) (COLOR("\033[42m", str))
-#define YELLOWBG(str) (COLOR("\033[43m", str))
+#define GREENBG(str) (COLOR("\033[30m\033[42m", str))
+#define YELLOWBG(str) (COLOR("\033[30m\033[43m", str))
 #define BLUEBG(str) (COLOR("\033[44m", str))
 #define VIOLETBG(str) (COLOR("\033[45m", str))
 #define BEIGEBG(str) (COLOR("\033[46m", str))

@@ -1,113 +1,60 @@
-#include <string>
-#include <exception>
-
-#include <cppunit/Exception.h>
-#include <cppunit/TestCase.h>
-// #include <cppunit/TestFixture.h>
-#include <cppunit/TestResult.h>
-#include <cppunit/TestSuite.h>
-#include <cppunit/TestCaller.h>
-#include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-
 #include "iaADQAPI.hpp"
+#include "ADQAPI.h"
 
-///////////////////////////////////////////////////////////////////////////////
-//                          Very basic test example                          //
-///////////////////////////////////////////////////////////////////////////////
-// class iaADQAPITest : public CppUnit::TestCase {
-// public:
-//         iaADQAPITest(std::string name) : CppUnit::TestCase(name) {}
-
-//         void exampleTest(){
-//                 CPPUNIT_ASSERT (0 == 0);
-//                 CPPUNIT_ASSERT (1 == 0);
-//                 CPPUNIT_ASSERT (0 == 0);
-//         }
-// };
-
-
-///////////////////////////////////////////////////////////////////////////////
-//                              Test with suite                              //
-///////////////////////////////////////////////////////////////////////////////
-// class iaADQAPITest : public CppUnit::TestFixture {
-// private:
-//         // declare variables for use in tests
-// public:
-//         // define method that returns a test suite instance
-//         static CppUnit::Test *suite(){
-
-//                 // Create suite
-//                 CppUnit::TestSuite *suite = new CppUnit::TestSuite( "iaADQAPITest" );
-
-//                 // Populate with tests
-//                 suite->addTest( new CppUnit::TestCaller<iaADQAPITest>(
-//                                         "exampleTest",
-//                                         &iaADQAPITest::exampleTest ) );
-//                 return suite;
-//         }
-
-//         void setUp() {
-//                 //
-//         }
-//         void tearDown() {
-//                 //
-//         }
-//         void exampleTest(){
-//                 CPPUNIT_ASSERT (0 == 0);
-//                 CPPUNIT_ASSERT (1 == 0);
-//                 CPPUNIT_ASSERT (0 == 0);
-//         }
-// };
-// int main(void)
-// {
-
-//         CppUnit::TextUi::TestRunner runner;
-//         runner.addTest( iaADQAPITest::suite() );
-
-//         runner.run();
-//         return 0;
-// }
-
-
-///////////////////////////////////////////////////////////////////////////////
-//                              Utilising macros                             //
-///////////////////////////////////////////////////////////////////////////////
 class iaADQAPITest : public CppUnit::TestFixture {
 
         // Macro for generating suite
         CPPUNIT_TEST_SUITE( iaADQAPITest );
 
         // Population with tests
-        CPPUNIT_TEST_EXCEPTION( test_fail, CppUnit::Exception );
-        // CPPUNIT_TEST( test_fail );
-        CPPUNIT_TEST( test_ok );
+        // CPPUNIT_TEST_EXCEPTION( test_fail, CppUnit::Exception );
+        CPPUNIT_TEST( test_GetMaxNofRecordsFromNofSamples );
+        CPPUNIT_TEST( test_GetMaxNofSamplesFromNofRecords );
+        CPPUNIT_TEST( test_fetch_channel_data );
 
         CPPUNIT_TEST_SUITE_END();
 private:
-        // declare variables for use in tests
+        void* adq_cu_ptr;
 public:
         void setUp() {
-                //
+                adq_cu_ptr = master_setup(NO_BLINK,
+                                          INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE,
+                                          TRIGGER_INTERNAL
+                        );
         }
         void tearDown() {
-                //
+                DeleteADQControlUnit(adq_cu_ptr);
         }
-        void test_ok(){
-                CPPUNIT_ASSERT (0 == 0);
+        void test_GetMaxNofSamplesFromNofRecords(){
+                int max_number_of_samples = 0;
+                max_number_of_samples = GetMaxNofSamplesFromNofRecords(adq_cu_ptr, 1);
+                CPPUNIT_ASSERT (max_number_of_samples != 0);
         }
-        void test_fail(){
-                CPPUNIT_ASSERT (1 == 0);
+        void test_GetMaxNofRecordsFromNofSamples(){
+                int max_number_of_records = 0;
+                max_number_of_records = GetMaxNofRecordsFromNofSamples(adq_cu_ptr, 1);
+                CPPUNIT_ASSERT (max_number_of_records != 0);
+        }
+
+
+
+        void test_fetch_channel_data(){
+                unsigned int number_of_records = 4;
+                unsigned int samples_per_record = GetMaxNofRecordsFromNofSamples(adq_cu_ptr, 4);
+
+                short* buff_a = new short[samples_per_record*number_of_records];
+                short* buff_b = new short[samples_per_record*number_of_records];
+
+                fetch_channel_data(adq_cu_ptr,
+                                   buff_a, buff_b, 1000, 4
+                        );
+
+                delete[] buff_a;
+                delete[] buff_b;
         }
 };
 
-
-int main(void)
-{
-        CppUnit::TextUi::TestRunner runner;
-        runner.addTest( iaADQAPITest::suite() );
-
-        runner.run();
-        return 0;
-}
+// Add suite to Factory Register which will be retrieved later on
+CPPUNIT_TEST_SUITE_REGISTRATION( iaADQAPITest );

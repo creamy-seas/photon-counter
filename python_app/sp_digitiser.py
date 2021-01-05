@@ -18,7 +18,7 @@ try:
 except Exception as err:
     raise RuntimeError(f"Failed to load the ADQ library - see below for details: {err}")
 try:
-    ia_ADQAPI = cdll.LoadLibrary("/usr/lib/ia_ADQAPI.os")
+    iaADQAPI = cdll.LoadLibrary("/usr/lib/iaADQAPI.os")
 except Exception as err:
     raise RuntimeError(
         f"Failed to load the custom ADQ library - make sure that it has been built!: {err}"
@@ -81,12 +81,12 @@ class SpDigitiser:
         self.log("🕱 Destructor activated")
 
     def get_max_samples_per_record(self, number_of_records: int) -> int:
-        return ia_ADQAPI.GetMaxNofSamplesFromNofRecords(
+        return iaADQAPI.GetMaxNofSamplesFromNofRecords(
             self.adq_cu_ptr, number_of_records
         )
 
     def get_max_number_of_records(self, samples_per_record: int) -> int:
-        return ia_ADQAPI.GetMaxNofRecordsFromNofSamples(
+        return iaADQAPI.GetMaxNofRecordsFromNofSamples(
             self.adq_cu_ptr, samples_per_record
         )
 

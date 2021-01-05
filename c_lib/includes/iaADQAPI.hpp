@@ -6,8 +6,18 @@ static unsigned char FETCH_CHANNEL_A = 0x1;
 static unsigned char FETCH_CHANNEL_B = 0x2;
 static unsigned char FETCH_CHANNEL_BOTH = 0x3;
 
-static unsigned int TRIGGER_EXTERNAL = 1;
-static unsigned int TRIGGER_INTERNAL = 0;
+static unsigned int TRIGGER_EXTERNAL = 2;
+static unsigned int TRIGGER_INTERNAL = 4;
+
+static int INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE = 0;
+static int INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERENCE = 1;
+
+static int LOW_FREQUENCY_MODE = 0;
+static int HIGH_FREQUENCY_MODE = 1;
+
+static int BLINK = 1;
+static int NO_BLINK = 0;
+
 
 // Rewrapped functions ////////////////////////////////////////////////////////
 int GetMaxNofSamplesFromNofRecords(void* adq_cu_ptr, int no_of_records);
@@ -21,5 +31,5 @@ void fetch_channel_data(
         unsigned int number_of_records
         );
 
-void* master_setup(int);
+void* master_setup(int blink, int clock_source, unsigned int trigger_type);
 #endif
