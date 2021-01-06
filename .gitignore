@@ -1,6 +1,7 @@
 .ipynb_checkpoints
 *.pyc
 /.dir-locals.el
+*.log
 GPATH
 GRTAGS
 GTAGS
