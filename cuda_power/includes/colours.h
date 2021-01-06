@@ -13,7 +13,7 @@
 #define FAIL(str) (COLOR("\033[91m\033[1m", str))
 
 #define UNDERLINE(str) (COLOR("\033[4m", str))
-#define BLINK(str) (COLOR("\033[5m", str))
+#define FLASH(str) (COLOR("\033[5m", str))
 
 #define BLACK(str) (COLOR("\033[30m", str))
 #define RED(str) (COLOR("\033[31m", str))

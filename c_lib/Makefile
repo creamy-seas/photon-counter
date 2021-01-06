@@ -23,7 +23,7 @@ play: src/playground.cpp src/ia_ADQAPI.cpp
 
 .PHONY: clean test
 
-test: test/testRunner.cpp test/exampleTest.cpp test/iaADQAPITest.cpp src/iaADQAPI.cpp
+test: test/utilsTest.cpp test/testRunner.cpp test/exampleTest.cpp test/iaADQAPITest.cpp src/iaADQAPI.cpp
 	@$(CXX) -DTESTENV $(CPPFLAGS) $(LDFLAGS) $(LDLIBS) $(INCS) -o build/test $^
 	@./build/test
 

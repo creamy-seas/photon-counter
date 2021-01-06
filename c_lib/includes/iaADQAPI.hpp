@@ -6,17 +6,18 @@ static unsigned char FETCH_CHANNEL_A = 0x1;
 static unsigned char FETCH_CHANNEL_B = 0x2;
 static unsigned char FETCH_CHANNEL_BOTH = 0x3;
 
-static unsigned int TRIGGER_EXTERNAL = 2;
-static unsigned int TRIGGER_INTERNAL = 4;
+#define TRIGGER_SOFTWARE 1
+#define TRIGGER_EXTERNAL 2
+#define TRIGGER_LEVEL 3
 
-static int INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE = 0;
-static int INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERENCE = 1;
+#define INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE 0
+#define INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERENCE 1
 
 static int LOW_FREQUENCY_MODE = 0;
 static int HIGH_FREQUENCY_MODE = 1;
 
-static int BLINK = 1;
-static int NO_BLINK = 0;
+#define BLINK 1
+#define NO_BLINK 0
 
 
 // Rewrapped functions ////////////////////////////////////////////////////////
