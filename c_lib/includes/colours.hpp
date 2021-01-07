@@ -5,11 +5,11 @@
 #define BOLD "\033[1m"
 #define COLOR(colour, str) (printf("%s%s%s\n", colour, str, ENDC))
 
-#define HEADER(str) (COLOR("\033[95m\033[1m", str))
-#define OKBLUE(str) (COLOR("\033[94m\033[1m", str))
-#define OKGREEN(str) (COLOR("\033[92m\033[1m", str))
-#define WARNING(str) (COLOR("\033[93m\033[1m", str))
-#define FAIL(str) (COLOR("\033[91m\033[1m", str))
+#define HEADER(str) COLOR("\033[95m\033[1m", str)
+#define OKBLUE(str) COLOR("\033[94m\033[1m", str)
+#define OKGREEN(str) COLOR("\033[92m\033[1m", str)
+#define WARNING(str) COLOR("\033[93m\033[1m", str)
+#define FAIL(str) COLOR("\033[91m\033[1m", str);throw std::runtime_error(str)
 
 #define UNDERLINE(str) (COLOR("\033[4m", str))
 #define FLASH(str) (COLOR("\033[5m", str))

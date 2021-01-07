@@ -19,6 +19,18 @@ static int HIGH_FREQUENCY_MODE = 1;
 #define BLINK 1
 #define NO_BLINK 0
 
+// struct sp_digitiser_parameters {
+//         int samples_per_record;
+//         int number_of_records;
+//         int hold_of_samples;
+//         int trigger_type;
+
+//         sp_digitiser_parameters(
+//                 int samples_per_record,
+//                 int number_of_records,
+
+//                 )
+//                 };
 
 // Rewrapped functions ////////////////////////////////////////////////////////
 int GetMaxNofSamplesFromNofRecords(void* adq_cu_ptr, int no_of_records);
