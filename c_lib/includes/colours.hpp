@@ -1,5 +1,7 @@
-#ifndef _COLOURS
-#define _COLOURS
+#include <stdexcept>
+
+#ifndef _COLOURS_
+#define _COLOURS_
 
 #define ENDC "\033[0m"
 #define BOLD "\033[1m"
@@ -9,7 +11,7 @@
 #define OKBLUE(str) COLOR("\033[94m\033[1m", str)
 #define OKGREEN(str) COLOR("\033[92m\033[1m", str)
 #define WARNING(str) COLOR("\033[93m\033[1m", str)
-#define FAIL(str) COLOR("\033[91m\033[1m", str);throw std::runtime_error(str)
+#define FAIL(str) COLOR("\033[91m\033[1m", str); throw std::runtime_error(str)
 
 #define UNDERLINE(str) (COLOR("\033[4m", str))
 #define FLASH(str) (COLOR("\033[5m", str))

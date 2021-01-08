@@ -1,10 +1,12 @@
+#include "colours.hpp"
+
+#include <cstring>
 #include <fstream>
 #include <string>
 #include <math.h>
 #include <sstream>
 #include <iomanip>      // std::setprecision
-
-#include "colours.hpp"
+#include <string>
 
 #ifndef UTILS_HPP
 #define UTILS_HPP
@@ -82,6 +84,7 @@ template <typename T1> void dump_arrays_to_file(
 
 
 template <typename T> void load_arrays_from_file(
+        T** array_to_fill,
         std::string file_name,
         int x_dim,
         int y_dim) {
@@ -96,42 +99,42 @@ template <typename T> void load_arrays_from_file(
         [[a1, a2, a3], [b1, b2, b3]]
         */
 
-
-        T** array_to_fill = new T*[x_dim];
-        for (int i(0); i < x_dim; i++) {
-                array_to_fill[i] = new T[y_dim]{(T)-1};
-        }
-
-        std::string temp_line;
+        std::string line;
         std::stringstream ss;
-        int x(0), y(0);
+        int x, y(0);
         T temp_variable;
 
         std::ifstream fin(file_name);
         if (fin.is_open()) {
                 while (!fin.eof()) {
+
                         // process line
-                        getline(fin, temp_line);
-                        ss << temp_line;
+                        getline(fin, line);
+                        if ((line[0] != '#') && (line.length() != 0)){
+                                ss << line;
 
-                        for (x; x < x_dim; x++) {
-                                ss >> temp_variable;
-                                array_to_fill[x][y] = T(temp_variable);
+                                for (x = 0; x < x_dim; x++) {
+                                        ss >> temp_variable;
+                                        array_to_fill[x][y] = (T)temp_variable;
+                                }
+                                //advance to next row
+                                y++;
                         }
-                        //clear string stream and advance to next row
-                        ss.str("");
-                        y++;
+                        //clear string stream
+                        ss.str(std::string());
+                        ss.clear();
 
-                        if (y > y_dim)
-                                FAIL("Array too small to fit the whole file!");
                 }
-                if (y < y_dim)
-                        FAIL("Array too large in y-direction!");
-                if (x < x_dim)
-                        FAIL("Array too large in x-direction!!");
+                if (y > y_dim){
+                        FAIL("Array too small in y-direction!");
+                }
+                if (y < y_dim){
+                                FAIL("Array too large in y-direction!");
+                                }
         }
-        else
+        else{
                 FAIL("No such file!");
+        }
 }
 
 
