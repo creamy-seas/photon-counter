@@ -14,3 +14,7 @@
 ```shell
 sudo apt-get install libcppunit-dev
 ```
+
+# Test coverage
+
+https://quantum-optics-ride.gitlab.io/experimental/photon-counting/
