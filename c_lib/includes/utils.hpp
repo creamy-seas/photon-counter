@@ -137,7 +137,4 @@ template <typename T> void load_arrays_from_file(
         }
 }
 
-
-
-
 #endif

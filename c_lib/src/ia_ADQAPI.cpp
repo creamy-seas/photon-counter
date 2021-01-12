@@ -4,7 +4,7 @@
 
 // Project Libraries
 #include "colours.hpp"
-#include "iaADQAPI.hpp"
+#include "ia_ADQAPI.hpp"
 
 #define ADQ1 (adq_cu_ptr, 1)
 #define INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERECNCE
@@ -72,6 +72,9 @@ void* master_setup(int blink, int clock_source, unsigned int trigger_mode) {
         return adq_cu_ptr;
 }
 
+/*
+ * Fetch data from the digitiser. Ensure that multirecord has been setup before this function is run!
+ */
 void fetch_channel_data(
         void* adq_cu_ptr,
         short* buff_a, short* buff_b,
