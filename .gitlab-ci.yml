@@ -2,7 +2,7 @@ pages:
   stage: deploy
   script:
     - mkdir .public
-    - cp -r ./c_lib/coverage/ .public
+    - cp -r ./c_lib/coverage/* .public
     - ls -l .public
     - mv .public public
   artifacts:
