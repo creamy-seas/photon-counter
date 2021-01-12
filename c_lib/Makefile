@@ -8,6 +8,10 @@ LDLIBS += $(shell pkg-config --libs cppunit) # Unittest library
 
 INCS := -Iincludes # Location of header files
 
+BROWSER := ns
+#BROWSER := ck
+PWD := $(shell pwd)
+
 lib: src/ia_ADQAPI.cpp
 	@$(eval TARGET=$(patsubst src/%.cpp,build/%,$<))
 	@$(CXX) -Wall $(CPPFLAGS) $(INCS) $(LDLIBS) -shared -o $(TARGET) -fPIC $^
@@ -23,10 +27,23 @@ play: src/playground.cpp src/ia_ADQAPI.cpp
 
 .PHONY: clean test
 
-test: test/utilsTest.cpp test/testRunner.cpp test/exampleTest.cpp test/iaADQAPITest.cpp src/iaADQAPI.cpp
-	@$(CXX) -DTESTENV $(CPPFLAGS) $(LDFLAGS) $(LDLIBS) $(INCS) -o build/test $^
+test: test/utilsTest.cpp test/runnerTest.cpp test/exampleTest.cpp test/iaADQAPITest.cpp src/iaADQAPI.cpp
+	@$(CXX) -DTESTENV $(CPPFLAGS) $(LDFLAGS) $(LDLIBS) $(INCS) -o build/test -fprofile-arcs -ftest-coverage $^
 	@./build/test
+	@mkdir -p ./coverage/build
+	@mv -f *.gcno *.gcda ./coverage/build
+	@gcov --branch-probabilities -o ./coverage/build $^
+	# Generate coverage report
+	@lcov --capture --base-directory . --directory ./coverage/build --output ./coverage/build/coverage.info
+	# Clean from std libraries and test functions
+	@lcov --remove ./coverage/build/coverage.info "/usr*" --output ./coverage/build/coverage.info
+	@lcov --remove ./coverage/build/coverage.info "*Test.cpp" --output ./coverage/build/coverage.info
+	@genhtml --output coverage -t "🐋 Test Coverage" ./coverage/build/coverage.info
+	@rm -rf *.log
+	# @ns ./coverage/index.html &
+	@echo "Launching in browser"
+	@${BROWSER} ${PWD}/coverage/index.html &
 
 clean:
 	@echo "🖌 Cleaning build objects"
-	@rm -rf *.out *.o
+	@rm -rf *.out *.o *.gcda *.gcno *.log
