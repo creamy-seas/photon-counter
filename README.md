@@ -9,10 +9,10 @@
 
 2. Run `ggtags-create-tags` in an c/cpp project. or `gtags`
 
-3. Install `cppunit` lib
+3. Install `cppunit, gcov, lcov` lib
 
 ```shell
-sudo apt-get install libcppunit-dev
+sudo apt-get install libcppunit-dev lcov
 ```
 
 # Test coverage
