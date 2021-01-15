@@ -48,8 +48,12 @@ TEST_OBJECTS += $(patsubst $(SOURCE_FOLDER)/%.cu,$(TBUILD_FOLDER)/%.o,$(CUDA_SOU
 .PHONY: clean test
 
 all:
-	@echo $(TEST_OBJECTS)
-	@echo $(LDLIBS)
+	$(CXX) -DTESTENV -fprofile-arcs -ftest-coverage $(CXXFLAGS) $(LDLIBS) $(INCS) -c test/test_runner.cpp test/utils_gpu_test.cpp test/example_test.cpp
+	nvcc $(INCS) -c src/utils_gpu.cu
+	@echo --------------------
+	nvcc $(LDLIBS) -lgcov -o testrun test_runner.o utils_gpu.o utils_gpu_test.o example_test.o
+
+#$(CXX) $(LDLIBS) $(INCS) -o testrun test_runner.o utils_gpu.o utils_gpu_test.o
 
 # Object files ################################################################
 # Building of cuda object files
@@ -77,23 +81,23 @@ lib: src/ia_ADQAPI.cpp
 $(TBUILD_FOLDER)/%.o: $(TEST_FOLDER)/%.cpp
 	@echo 🤖🐋 Building $^ into $@
 	@mkdir -p $(TBUILD_FOLDER)
-	$(CXX) $(TFLAGS) $(CXXFLAGS) $(INCS) $(LDLIBS) -c -o $@ $^
+	$(CXX) -DTESTENV -fprofile-arcs -ftest-coverage $(CXXFLAGS) $(INCS) $(LDLIBS) -c -o $@ $^
 
 $(TBUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cpp
 	@mkdir -p $(TBUILD_FOLDER)
 	@echo 🤖🐋 Building $^ into $@
-	$(CXX) $(TFLAGS) $(CXXFLAGS) $(INCS) $(LDLIBS) -c -o $@ $^
+	$(CXX) -DTESTENV -fprofile-arcs -ftest-coverage $(CXXFLAGS) $(INCS) $(LDLIBS) -c -o $@ $^
 
 $(TBUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cu
 	@mkdir -p $(TBUILD_FOLDER)
 	@echo 🤖🐍 Building $^ into $@
-	nvcc $(INCS) -ccbin=$(CXX) -c -o $@ $^
+	nvcc -DTESTENV $(INCS) -ccbin=$(CXX) -c -o $@ $^
 
 test: $(TEST_OBJECTS)
-	@nvcc $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) $(INCS) -o $(BIN_TEST) $^
-# @$(BIN_TEST)
-# @mkdir -p ./coverage/build
-# @mv -f *.gcno *.gcda ./coverage/build
+	@nvcc -DTESTENV -lgcov $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) $(INCS) -o $(BIN_TEST) $^
+	@$(BIN_TEST)
+	@mkdir -p ./coverage/build
+	# @mv -f *.gcno *.gcda ./coverage/build
 
 # # Remove cpp, Remove src and put in build folder
 # play: src/playground.cpp src/ia_ADQAPI.cpp
@@ -103,18 +107,18 @@ test: $(TEST_OBJECTS)
 #			@./$(TARGET)
 
 # cov: test
-#			@gcov --branch-probabilities -o ./coverage/build $^
-#			# Generate coverage report
-#			@lcov --capture --base-directory . --directory ./coverage/build --output ./coverage/build/coverage.info
-#			# Clean from std libraries and test functions
-#			@lcov --remove ./coverage/build/coverage.info "/usr*" --output ./coverage/build/coverage.info
-#			@lcov --remove ./coverage/build/coverage.info "*_test.cpp" --output ./coverage/build/coverage.info
-#			@lcov --remove ./coverage/build/coverage.info "*test_runner.cpp" --output ./coverage/build/coverage.info
-#			@genhtml --output coverage -t "🐋 Test Coverage" ./coverage/build/coverage.info
-#			@rm -rf *.log
-#			@echo "Launching in browser"
-#			@${BROWSER} ${PWD}/coverage/index.html &
+#				@gcov --branch-probabilities -o ./coverage/build $^
+#				# Generate coverage report
+#				@lcov --capture --base-directory . --directory ./coverage/build --output ./coverage/build/coverage.info
+#				# Clean from std libraries and test functions
+#				@lcov --remove ./coverage/build/coverage.info "/usr*" --output ./coverage/build/coverage.info
+#				@lcov --remove ./coverage/build/coverage.info "*_test.cpp" --output ./coverage/build/coverage.info
+#				@lcov --remove ./coverage/build/coverage.info "*test_runner.cpp" --output ./coverage/build/coverage.info
+#				@genhtml --output coverage -t "🐋 Test Coverage" ./coverage/build/coverage.info
+#				@rm -rf *.log
+#				@echo "Launching in browser"
+#				@${BROWSER} ${PWD}/coverage/index.html &
 
 clean:
 		@echo "🖌 Cleaning build objects"
-		@rm -rf *.out $(TBUILD_FOLDER) $(BUILD_FOLDER)/*.o *.gcda *.gcno *.log
+		@rm -rf *.out $(TBUILD_FOLDER) $(BUILD_FOLDER)/*.o *.gcda *.gcno *.log *.o
