@@ -33,7 +33,7 @@ public:
 
                 for(int i=0;i<=n;++i){
                         bar->Progressed(i);
-                        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                        std::this_thread::sleep_for(std::chrono::milliseconds(4));
                 }
         }
         void test_empty_and_clear_field(){

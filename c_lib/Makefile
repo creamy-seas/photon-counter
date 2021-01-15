@@ -8,8 +8,8 @@ LDLIBS += $(shell pkg-config --libs cppunit) # Unittest library
 
 INCS := -Iincludes # Location of header files
 
-BROWSER := ns
-#BROWSER := ck
+#BROWSER := ns
+BROWSER := ck
 PWD := $(shell pwd)
 
 .PHONY: clean
