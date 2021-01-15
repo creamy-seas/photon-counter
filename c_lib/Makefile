@@ -1,5 +1,7 @@
 CXX := g++
 
+CUDAFLAGS = -gencode arch=compute_61,code=compute_61 --machine 64
+
 CXXFLAGS += -DLINUX
 CXXFLAGS += -std=c++11
 # CXXFLAGS += -Wall # Enable the 'all' set of warnings
@@ -12,10 +14,11 @@ TFLAGS := -DTESTENV -fprofile-arcs -ftest-coverage
 LDFLAGS = $(shell pkg-config --cflags libadq) # Digitiser library
 LDLIBS := $(shell pkg-config --libs libadq) # Digitiser library
 LDLIBS += $(shell pkg-config --libs cppunit) # Unittest library
-#LDLIBS += lcuda
+LDLIBS += -lcudart # Cuda runtime (high leevel functions)
 
-INCS := -Iincludes -I/usr/local/cuda-11.0/include # Location of header files
-#-L/usr/local/cuda-11.0/lib64
+INCS := -Iincludes # Location of header files
+INCS += -I/usr/local/cuda-11.0/include # Cuda headers
+INCS += -L/usr/local/cuda-11.0/lib64 # Cuda libraries
 
 #BROWSER := ns
 BROWSER := ck
@@ -47,11 +50,16 @@ TEST_OBJECTS += $(patsubst $(SOURCE_FOLDER)/%.cu,$(TBUILD_FOLDER)/%.o,$(CUDA_SOU
 
 .PHONY: clean test
 
-all:
-	$(CXX) -DTESTENV -fprofile-arcs -ftest-coverage $(CXXFLAGS) $(LDLIBS) $(INCS) -c test/test_runner.cpp test/utils_gpu_test.cpp test/example_test.cpp
-	nvcc $(INCS) -c src/utils_gpu.cu
+play:
+	$(CXX) -DTESTENV -fprofile-arcs -ftest-coverage $(CXXFLAGS) $(LDLIBS) $(INCS) -c test/test_runner.cpp test/utils_gpu_test.cpp
+	g++ $(INCS) -c src/utils_gpu.cpp
+	# nvcc $(INCS) -c src/utils_gpu.cu
 	@echo --------------------
-	nvcc $(LDLIBS) -lgcov -o testrun test_runner.o utils_gpu.o utils_gpu_test.o example_test.o
+	@$(CXX) -DTESTENV -fprofile-arcs -ftest-coverage -lgcov \
+		$(LDLIBS) -L/usr/local/cuda-11.0/lib64 -lcudart \
+		-o testrun test_runner.o utils_gpu.o utils_gpu_test.o
+	#nvcc $(LDLIBS) -lgcov -o testrun test_runner.o utils_gpu.o utils_gpu_test.o example_test.o
+	./testrun
 
 #$(CXX) $(LDLIBS) $(INCS) -o testrun test_runner.o utils_gpu.o utils_gpu_test.o
 
@@ -79,25 +87,52 @@ lib: src/ia_ADQAPI.cpp
 ###############################################################################
 # First build all the object files for the test ###############################
 $(TBUILD_FOLDER)/%.o: $(TEST_FOLDER)/%.cpp
-	@echo 🤖🐋 Building $^ into $@
 	@mkdir -p $(TBUILD_FOLDER)
-	$(CXX) -DTESTENV -fprofile-arcs -ftest-coverage $(CXXFLAGS) $(INCS) $(LDLIBS) -c -o $@ $^
+	@echo 🤖🐋 Building $^ into $@
+	$(CXX) \
+		-DTESTENV -fprofile-arcs -ftest-coverage \
+		$(CXXFLAGS) $(INCS) $(LDLIBS) \
+		-c -o $@ $^
 
 $(TBUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cpp
 	@mkdir -p $(TBUILD_FOLDER)
 	@echo 🤖🐋 Building $^ into $@
-	$(CXX) -DTESTENV -fprofile-arcs -ftest-coverage $(CXXFLAGS) $(INCS) $(LDLIBS) -c -o $@ $^
+	$(CXX) \
+		-DTESTENV -fprofile-arcs -ftest-coverage \
+		$(CXXFLAGS) $(INCS) $(LDLIBS) \
+		-c -o $@ $^
 
 $(TBUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cu
 	@mkdir -p $(TBUILD_FOLDER)
 	@echo 🤖🐍 Building $^ into $@
-	nvcc -DTESTENV $(INCS) -ccbin=$(CXX) -c -o $@ $^
+	$(CXX) \
+		-DTESTENV -fprofile-arcs -ftest-coverage \
+		$(CXXFLAGS) $(INCS) $(LDLIBS) \
+		-c -o $@ $^
+	# nvcc -DTESTENV $(INCS) -ccbin=$(CXX) -c -o $@ $^
 
 test: $(TEST_OBJECTS)
-	@nvcc -DTESTENV -lgcov $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) $(INCS) -o $(BIN_TEST) $^
+	# @nvcc -DTESTENV -lgcov $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) $(INCS) -o $(BIN_TEST) $^
+	@$(CXX) \
+		-DTESTENV -fprofile-arcs -ftest-coverage -lgcov \
+		$(CXXFLAGS) $(INCS) $(LDLIBS) \
+		-o $(BIN_TEST) $^
 	@$(BIN_TEST)
 	@mkdir -p ./coverage/build
-	# @mv -f *.gcno *.gcda ./coverage/build
+	@mv -f $(TBUILD_FOLDER)/*.gcno $(TBUILD_FOLDER)/*.gcda ./coverage/build
+
+cov: $(TEST_OBJECTS)
+				@gcov --branch-probabilities -o ./coverage/build $^
+				# Generate coverage report
+				@lcov --capture --base-directory . --directory ./coverage/build --output ./coverage/build/coverage.info
+				# Clean from std libraries and test functions
+				@lcov --remove ./coverage/build/coverage.info "/usr*" --output ./coverage/build/coverage.info
+				@lcov --remove ./coverage/build/coverage.info "*_test.cpp" --output ./coverage/build/coverage.info
+				@lcov --remove ./coverage/build/coverage.info "*test_runner.cpp" --output ./coverage/build/coverage.info
+				@genhtml --output coverage -t "🐋 Test Coverage" ./coverage/build/coverage.info
+				@rm -rf *.log
+				@echo "Launching in browser"
+				@${BROWSER} ${PWD}/coverage/index.html &
 
 # # Remove cpp, Remove src and put in build folder
 # play: src/playground.cpp src/ia_ADQAPI.cpp
@@ -105,19 +140,6 @@ test: $(TEST_OBJECTS)
 #			@$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -o $(TARGET) $^
 #			@echo "Build complete 🐋"
 #			@./$(TARGET)
-
-# cov: test
-#				@gcov --branch-probabilities -o ./coverage/build $^
-#				# Generate coverage report
-#				@lcov --capture --base-directory . --directory ./coverage/build --output ./coverage/build/coverage.info
-#				# Clean from std libraries and test functions
-#				@lcov --remove ./coverage/build/coverage.info "/usr*" --output ./coverage/build/coverage.info
-#				@lcov --remove ./coverage/build/coverage.info "*_test.cpp" --output ./coverage/build/coverage.info
-#				@lcov --remove ./coverage/build/coverage.info "*test_runner.cpp" --output ./coverage/build/coverage.info
-#				@genhtml --output coverage -t "🐋 Test Coverage" ./coverage/build/coverage.info
-#				@rm -rf *.log
-#				@echo "Launching in browser"
-#				@${BROWSER} ${PWD}/coverage/index.html &
 
 clean:
 		@echo "🖌 Cleaning build objects"
