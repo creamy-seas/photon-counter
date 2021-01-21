@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2021-01-21 19:48:49</td>
+            <td class="headerValue">2021-01-21 20:49:04</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">7</td>
@@ -73,27 +73,27 @@
 <span class="lineNum">      11 </span>            : #ifndef UTILS_HPP
 <a name="12"><span class="lineNum">      12 </span>            : #define UTILS_HPP</a>
 <span class="lineNum">      13 </span>            : 
-<span class="lineNum">      14 </span><span class="lineCov">          4 : std::string seconds_to_hours(int seconds) {</span>
+<span class="lineNum">      14 </span><span class="lineCov">          2 : std::string seconds_to_hours(int seconds) {</span>
 <span class="lineNum">      15 </span>            :         /*
 <span class="lineNum">      16 </span>            :         Convert seconds to human readable format
 <span class="lineNum">      17 </span>            :         */
 <span class="lineNum">      18 </span>            : 
-<span class="lineNum">      19 </span><span class="lineCov">          4 :         int hours = floor(seconds / 3600);</span>
-<span class="lineNum">      20 </span><span class="lineCov">          4 :         int minutes = ceil((seconds - hours * 3600) / 60);</span>
+<span class="lineNum">      19 </span><span class="lineCov">          2 :         int hours = floor(seconds / 3600);</span>
+<span class="lineNum">      20 </span><span class="lineCov">          2 :         int minutes = ceil((seconds - hours * 3600) / 60);</span>
 <span class="lineNum">      21 </span>            : 
-<span class="lineNum">      22 </span><span class="lineCov">          4 :         return std::to_string(hours) + &quot;h:&quot; + std::to_string(minutes) + &quot;m&quot;;</span>
+<span class="lineNum">      22 </span><span class="lineCov">          2 :         return std::to_string(hours) + &quot;h:&quot; + std::to_string(minutes) + &quot;m&quot;;</span>
 <a name="23"><span class="lineNum">      23 </span>            : }</a>
 <span class="lineNum">      24 </span>            : 
-<span class="lineNum">      25 </span><span class="lineCov">          4 : std::string float_to_string(float numberToUse, int precision){</span>
+<span class="lineNum">      25 </span><span class="lineCov">          2 : std::string float_to_string(float numberToUse, int precision){</span>
 <span class="lineNum">      26 </span>            :         /*
 <span class="lineNum">      27 </span>            :           Convert float to a string with a set precisiion value
 <span class="lineNum">      28 </span>            :         */
-<span class="lineNum">      29 </span><span class="lineCov">          4 :         std::stringstream ss;</span>
-<span class="lineNum">      30 </span><span class="lineCov">          4 :         ss &lt;&lt; std::fixed &lt;&lt; std::setprecision(precision) &lt;&lt; numberToUse;</span>
-<span class="lineNum">      31 </span><span class="lineCov">          4 :         return ss.str();</span>
+<span class="lineNum">      29 </span><span class="lineCov">          2 :         std::stringstream ss;</span>
+<span class="lineNum">      30 </span><span class="lineCov">          2 :         ss &lt;&lt; std::fixed &lt;&lt; std::setprecision(precision) &lt;&lt; numberToUse;</span>
+<span class="lineNum">      31 </span><span class="lineCov">          2 :         return ss.str();</span>
 <a name="32"><span class="lineNum">      32 </span>            : }</a>
 <span class="lineNum">      33 </span>            : 
-<span class="lineNum">      34 </span><span class="lineCov">          4 : template &lt;typename T1=short, typename T2=double&gt; void cast_arrays(</span>
+<span class="lineNum">      34 </span><span class="lineCov">          2 : template &lt;typename T1=short, typename T2=double&gt; void cast_arrays(</span>
 <span class="lineNum">      35 </span>            :         T1** arrays_in, T2** arrays_out,
 <span class="lineNum">      36 </span>            :         int number_of_arrays,
 <span class="lineNum">      37 </span>            :         int array_size) {
@@ -103,16 +103,16 @@
 <span class="lineNum">      41 </span>            :           The faster method is
 <span class="lineNum">      42 </span>            :           std::copy(array_in, array_in + array_size, arrays_out);
 <span class="lineNum">      43 </span>            :         */
-<span class="lineNum">      44 </span><span class="lineCov">          4 :         WARNING(&quot;Very slow!&quot;);</span>
+<span class="lineNum">      44 </span><span class="lineCov">          2 :         WARNING(&quot;Very slow!&quot;);</span>
 <span class="lineNum">      45 </span>            : 
-<span class="lineNum">      46 </span><span class="lineCov">          8 :         for (int array_no(0); array_no &lt; number_of_arrays; array_no++) {</span>
-<span class="lineNum">      47 </span><span class="lineCov">         16 :                 for (int i(0); i &lt; array_size; i++)</span>
-<span class="lineNum">      48 </span><span class="lineCov">         12 :                         arrays_out[array_no][i] = (T2)arrays_in[array_no][i];</span>
+<span class="lineNum">      46 </span><span class="lineCov">          4 :         for (int array_no(0); array_no &lt; number_of_arrays; array_no++) {</span>
+<span class="lineNum">      47 </span><span class="lineCov">          8 :                 for (int i(0); i &lt; array_size; i++)</span>
+<span class="lineNum">      48 </span><span class="lineCov">          6 :                         arrays_out[array_no][i] = (T2)arrays_in[array_no][i];</span>
 <span class="lineNum">      49 </span>            :         }
-<span class="lineNum">      50 </span><span class="lineCov">          4 : }</span>
+<span class="lineNum">      50 </span><span class="lineCov">          2 : }</span>
 <a name="51"><span class="lineNum">      51 </span>            : </a>
 <span class="lineNum">      52 </span>            : 
-<span class="lineNum">      53 </span><span class="lineCov">          8 : template &lt;typename T1&gt; void dump_arrays_to_file(</span>
+<span class="lineNum">      53 </span><span class="lineCov">          4 : template &lt;typename T1&gt; void dump_arrays_to_file(</span>
 <span class="lineNum">      54 </span>            :         T1** array_to_dump,
 <span class="lineNum">      55 </span>            :         int number_of_series,
 <span class="lineNum">      56 </span>            :         int samples_per_record,
@@ -132,20 +132,20 @@
 <span class="lineNum">      70 </span>            :           samples_per_record (y)
 <span class="lineNum">      71 </span>            :         */
 <span class="lineNum">      72 </span>            : 
-<span class="lineNum">      73 </span><span class="lineCov">          8 :         std::fstream fout;</span>
-<span class="lineNum">      74 </span><span class="lineCov">          8 :         fout.open(file_name, std::ios_base::out);</span>
+<span class="lineNum">      73 </span><span class="lineCov">          4 :         std::fstream fout;</span>
+<span class="lineNum">      74 </span><span class="lineCov">          4 :         fout.open(file_name, std::ios_base::out);</span>
 <span class="lineNum">      75 </span>            : 
-<span class="lineNum">      76 </span><span class="lineCov">          8 :         fout &lt;&lt; headline_comment;</span>
-<span class="lineNum">      77 </span><span class="lineCov">         40 :         for (int i(0); i &lt; samples_per_record; i++) {</span>
-<span class="lineNum">      78 </span><span class="lineCov">         32 :                 fout &lt;&lt; std::endl;</span>
-<span class="lineNum">      79 </span><span class="lineCov">        112 :                 for (int j(0); j &lt; number_of_series; j++)</span>
-<span class="lineNum">      80 </span><span class="lineCov">         80 :                         fout &lt;&lt; array_to_dump[j][i] &lt;&lt; '\t';</span>
+<span class="lineNum">      76 </span><span class="lineCov">          4 :         fout &lt;&lt; headline_comment;</span>
+<span class="lineNum">      77 </span><span class="lineCov">         20 :         for (int i(0); i &lt; samples_per_record; i++) {</span>
+<span class="lineNum">      78 </span><span class="lineCov">         16 :                 fout &lt;&lt; std::endl;</span>
+<span class="lineNum">      79 </span><span class="lineCov">         56 :                 for (int j(0); j &lt; number_of_series; j++)</span>
+<span class="lineNum">      80 </span><span class="lineCov">         40 :                         fout &lt;&lt; array_to_dump[j][i] &lt;&lt; '\t';</span>
 <span class="lineNum">      81 </span>            :         }
-<span class="lineNum">      82 </span><span class="lineCov">          8 :         fout.close();</span>
-<span class="lineNum">      83 </span><span class="lineCov">          8 : }</span>
+<span class="lineNum">      82 </span><span class="lineCov">          4 :         fout.close();</span>
+<span class="lineNum">      83 </span><span class="lineCov">          4 : }</span>
 <a name="84"><span class="lineNum">      84 </span>            : </a>
 <span class="lineNum">      85 </span>            : 
-<span class="lineNum">      86 </span><span class="lineCov">         20 : template &lt;typename T&gt; void load_arrays_from_file(</span>
+<span class="lineNum">      86 </span><span class="lineCov">         10 : template &lt;typename T&gt; void load_arrays_from_file(</span>
 <span class="lineNum">      87 </span>            :         T** array_to_fill,
 <span class="lineNum">      88 </span>            :         std::string file_name,
 <span class="lineNum">      89 </span>            :         int x_dim,
@@ -161,43 +161,43 @@
 <span class="lineNum">      99 </span>            :         [[a1, a2, a3], [b1, b2, b3]]
 <span class="lineNum">     100 </span>            :         */
 <span class="lineNum">     101 </span>            : 
-<span class="lineNum">     102 </span><span class="lineCov">         20 :         std::string line;</span>
-<span class="lineNum">     103 </span><span class="lineCov">         40 :         std::stringstream ss;</span>
-<span class="lineNum">     104 </span><span class="lineCov">         20 :         int x, y(0);</span>
+<span class="lineNum">     102 </span><span class="lineCov">         10 :         std::string line;</span>
+<span class="lineNum">     103 </span><span class="lineCov">         20 :         std::stringstream ss;</span>
+<span class="lineNum">     104 </span><span class="lineCov">         10 :         int x, y(0);</span>
 <span class="lineNum">     105 </span>            :         T temp_variable;
 <span class="lineNum">     106 </span>            : 
-<span class="lineNum">     107 </span><span class="lineCov">         40 :         std::ifstream fin(file_name);</span>
-<span class="lineNum">     108 </span><span class="lineCov">         20 :         if (fin.is_open()) {</span>
-<span class="lineNum">     109 </span><span class="lineCov">        124 :                 while (!fin.eof()) {</span>
+<span class="lineNum">     107 </span><span class="lineCov">         20 :         std::ifstream fin(file_name);</span>
+<span class="lineNum">     108 </span><span class="lineCov">         10 :         if (fin.is_open()) {</span>
+<span class="lineNum">     109 </span><span class="lineCov">         62 :                 while (!fin.eof()) {</span>
 <span class="lineNum">     110 </span>            : 
 <span class="lineNum">     111 </span>            :                         // process line
-<span class="lineNum">     112 </span><span class="lineCov">         92 :                         getline(fin, line);</span>
-<span class="lineNum">     113 </span><span class="lineCov">         92 :                         if ((line[0] != '#') &amp;&amp; (line.length() != 0)){</span>
-<span class="lineNum">     114 </span><span class="lineCov">         64 :                                 ss &lt;&lt; line;</span>
+<span class="lineNum">     112 </span><span class="lineCov">         46 :                         getline(fin, line);</span>
+<span class="lineNum">     113 </span><span class="lineCov">         46 :                         if ((line[0] != '#') &amp;&amp; (line.length() != 0)){</span>
+<span class="lineNum">     114 </span><span class="lineCov">         32 :                                 ss &lt;&lt; line;</span>
 <span class="lineNum">     115 </span>            : 
-<span class="lineNum">     116 </span><span class="lineCov">        208 :                                 for (x = 0; x &lt; x_dim; x++) {</span>
-<span class="lineNum">     117 </span><span class="lineCov">        144 :                                         ss &gt;&gt; temp_variable;</span>
-<span class="lineNum">     118 </span><span class="lineCov">        144 :                                         array_to_fill[x][y] = (T)temp_variable;</span>
+<span class="lineNum">     116 </span><span class="lineCov">        104 :                                 for (x = 0; x &lt; x_dim; x++) {</span>
+<span class="lineNum">     117 </span><span class="lineCov">         72 :                                         ss &gt;&gt; temp_variable;</span>
+<span class="lineNum">     118 </span><span class="lineCov">         72 :                                         array_to_fill[x][y] = (T)temp_variable;</span>
 <span class="lineNum">     119 </span>            :                                 }
 <span class="lineNum">     120 </span>            :                                 //advance to next row
-<span class="lineNum">     121 </span><span class="lineCov">         64 :                                 y++;</span>
+<span class="lineNum">     121 </span><span class="lineCov">         32 :                                 y++;</span>
 <span class="lineNum">     122 </span>            :                         }
 <span class="lineNum">     123 </span>            :                         //clear string stream
-<span class="lineNum">     124 </span><span class="lineCov">         92 :                         ss.str(std::string());</span>
-<span class="lineNum">     125 </span><span class="lineCov">         92 :                         ss.clear();</span>
+<span class="lineNum">     124 </span><span class="lineCov">         46 :                         ss.str(std::string());</span>
+<span class="lineNum">     125 </span><span class="lineCov">         46 :                         ss.clear();</span>
 <span class="lineNum">     126 </span>            : 
 <span class="lineNum">     127 </span>            :                 }
-<span class="lineNum">     128 </span><span class="lineCov">         16 :                 if (y &gt; y_dim){</span>
-<span class="lineNum">     129 </span><span class="lineCov">          4 :                         FAIL(&quot;Array too small in y-direction!&quot;);</span>
+<span class="lineNum">     128 </span><span class="lineCov">          8 :                 if (y &gt; y_dim){</span>
+<span class="lineNum">     129 </span><span class="lineCov">          2 :                         FAIL(&quot;Array too small in y-direction!&quot;);</span>
 <span class="lineNum">     130 </span>            :                 }
-<span class="lineNum">     131 </span><span class="lineCov">         12 :                 if (y &lt; y_dim){</span>
-<span class="lineNum">     132 </span><span class="lineCov">          4 :                                 FAIL(&quot;Array too large in y-direction!&quot;);</span>
+<span class="lineNum">     131 </span><span class="lineCov">          6 :                 if (y &lt; y_dim){</span>
+<span class="lineNum">     132 </span><span class="lineCov">          2 :                                 FAIL(&quot;Array too large in y-direction!&quot;);</span>
 <span class="lineNum">     133 </span>            :                                 }
 <span class="lineNum">     134 </span>            :         }
 <span class="lineNum">     135 </span>            :         else{
-<span class="lineNum">     136 </span><span class="lineCov">          4 :                 FAIL(&quot;No such file!&quot;);</span>
-<span class="lineNum">     137 </span><span class="lineCov">         20 :         }</span>
-<span class="lineNum">     138 </span><span class="lineCov">          8 : }</span>
+<span class="lineNum">     136 </span><span class="lineCov">          2 :                 FAIL(&quot;No such file!&quot;);</span>
+<span class="lineNum">     137 </span><span class="lineCov">         10 :         }</span>
+<span class="lineNum">     138 </span><span class="lineCov">          4 : }</span>
 <span class="lineNum">     139 </span>            : 
 <span class="lineNum">     140 </span>            : #endif
 </pre>

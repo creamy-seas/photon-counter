@@ -52,4 +52,11 @@ namespace CPU {
                 );
 }
 
+namespace GPU {
+        float power_kernel(
+                short a,
+                short b
+                );
+}
+
 #endif

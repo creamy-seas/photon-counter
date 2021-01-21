@@ -7,7 +7,7 @@ CXXFLAGS += -std=c++11
 # CXXFLAGS += -Wshadow # Warn when shadowing variables
 # CXXFLAGS += -Wextra # Enable additional warnings
 
-CUDAFLAGS = -gencode arch=compute_61,code=compute_61 --machine 64
+CUDA_FLAGS = -gencode arch=compute_61,code=compute_61 --machine 64 -ccbin=$(CXX)
 
 TFLAGS := -DTESTENV -fprofile-arcs -ftest-coverage
 
@@ -56,27 +56,32 @@ TEST_OBJECTS += $(patsubst $(SOURCE_FOLDER)/%.cu,$(TEST_BUILD_FOLDER)/%.o,$(CUDA
 
 # Just for testing out ########################################################
 play:
-	$(CXX) -DTESTENV -fprofile-arcs -ftest-coverage $(CXXFLAGS) $(LDLIBS) $(INCS) -c test/test_runner.cpp test/utils_gpu_test.cpp
-	g++ $(INCS) -c src/utils_gpu.cpp
-	# nvcc $(INCS) -c src/utils_gpu.cu
-	@echo --------------------
-	@$(CXX) -DTESTENV -fprofile-arcs -ftest-coverage -lgcov \
-		$(LDLIBS) -L/usr/local/cuda-11.0/lib64 -lcudart \
-		-o testrun test_runner.o utils_gpu.o utils_gpu_test.o
-	#nvcc $(LDLIBS) -lgcov -o testrun test_runner.o utils_gpu.o utils_gpu_test.o example_test.o
-	./testrun
+	nvcc $(CUDA_FLAGS) $(INCS) $(CUDA_SOURCE) -o $(BIN_APP)
+	@./$(BIN_APP)
+
+# $(CXX) -DTESTENV -fprofile-arcs -ftest-coverage $(CXXFLAGS) $(LDLIBS) $(INCS) -c test/test_runner.cpp test/utils_gpu_test.cpp
+# g++ $(INCS) -c src/utils_gpu.cpp
+# nvcc $(INCS) -c src/utils_gpu.cu
+# @echo --------------------
+# @$(CXX) -DTESTENV -fprofile-arcs -ftest-coverage -lgcov \
+# $(LDLIBS) -L/usr/local/cuda-11.0/lib64 -lcudart \
+# -o testrun test_runner.o utils_gpu.o utils_gpu_test.o
+#nvcc $(LDLIBS) -lgcov -o testrun test_runner.o utils_gpu.o utils_gpu_test.o example_test.o
+# ./testrun
 #$(CXX) $(LDLIBS) $(INCS) -o testrun test_runner.o utils_gpu.o utils_gpu_test.o
 
-# Object files ################################################################
+###############################################################################
+#                                    Common                                   #
+###############################################################################
 # Building of cuda object files
 $(BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cu
 	@echo 🐍 Building $^ ⟶ $@
-	nvcc $(INCS) -ccbin=$(CXX) -c -o $@ $^
+	@nvcc $(CUDA_FLAGS) $(INCS) -c -o $@ $^
 
 # Building of cpp object files
 $(BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cpp
 	@echo 🐋 Building $^ ⟶ $@
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -c -o $@ $^
+	@$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -c -o $@ $^
 
 ###############################################################################
 #                                   Library                                   #
@@ -115,10 +120,7 @@ $(TEST_BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cpp
 $(TEST_BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cu
 	@mkdir -p $(TEST_BUILD_FOLDER)
 	@echo 🤖 Building [cuda] file: $^ ⟶ $@
-	@$(CXX) \
-		-DTESTENV -fprofile-arcs -ftest-coverage \
-		$(CXXFLAGS) $(INCS) $(LDLIBS) \
-		-c -o $@ $^
+	nvcc $(CUDA_FLAGS) $(INCS) -c -o $@ $^
 # nvcc -DTESTENV $(INCS) -ccbin=$(CXX) -c -o $@ $^
 
 link-and-run-test: $(TEST_OBJECTS)
@@ -134,7 +136,7 @@ test: | link-and-run-test
 	@rm -rf $(TEST_BUILD_FOLDER)/*.o
 	@echo "⚰  Removed all test .o files after test!"
 
-cov: $(TEST_OBJECTS)
+cov: $(TEST_OBJECTS) | test
 				@mkdir -p $(COVERAGE_FOLDER)
 				@gcov --branch-probabilities -o $(TEST_BUILD_FOLDER) $^
 				# Generate coverage report
@@ -147,13 +149,6 @@ cov: $(TEST_OBJECTS)
 				@rm -rf *.log
 				@echo "Launching in browser"
 				@${BROWSER} ${PWD}/coverage/index.html &
-
-# # Remove cpp, Remove src and put in build folder
-# play: src/playground.cpp src/ia_ADQAPI.cpp
-#			@$(eval TARGET=$(patsubst src/%.cpp,bin/%,$<))
-#			@$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -o $(TARGET) $^
-#			@echo "Build complete 🐋"
-#			@./$(TARGET)
 
 clean:
 		@echo "🖌 Cleaning build objects"
