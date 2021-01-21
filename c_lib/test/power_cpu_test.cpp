@@ -7,7 +7,6 @@
 #define NO_POINTS 9
 #endif // TESTENV
 
-
 class PowerCpuTest : public CppUnit::TestFixture {
 
         // Macro for generating suite
