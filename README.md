@@ -3,8 +3,14 @@
 1. Create `.dir-locals.el` listing location of standard libraries and header files.
 
 ```elisp
-((nil . ((company-clang-arguments . ("-I/usr/include"
-                                     "-I/Users/CCCP/photon_counting/c_lib/include")))))
+((nil . (
+         (company-clang-arguments . ("-I/usr/include"
+                                     "-I/home/antonov/photon_counting/c_lib/includes"
+                                     "-std=c++11"))
+         (flycheck-clang-include-path . ("/home/antonov/photon_counting/c_lib/includes"))
+         (flycheck-clang-definitions . ("LINUX")) ;; -D flags
+         (flycheck-clang-language-standard . ("-std=c++11"))
+         )))
 ```
 
 2. Run `ggtags-create-tags` in an c/cpp project. or `gtags`
