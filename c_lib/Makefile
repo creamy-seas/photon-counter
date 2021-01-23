@@ -1,7 +1,10 @@
+# CXX := /usr/bin/g++
 CXX := g++
 
 CXXFLAGS += -DLINUX
 CXXFLAGS += -std=c++11
+# CXXFLAGS += -D_GLIBCXX_USE_CXX11_ABI=0
+# CXXFLAGS += -lpthread
 # CXXFLAGS += -Wall # Enable the 'all' set of warnings
 # CXXFLAGS += -Werror=unused-variable # Treat all warnings as error
 # CXXFLAGS += -Wshadow # Warn when shadowing variables
@@ -11,14 +14,16 @@ CUDA_FLAGS = -gencode arch=compute_61,code=compute_61 --machine 64 -ccbin=$(CXX)
 
 TFLAGS := -DTESTENV -fprofile-arcs -ftest-coverage
 
-LDFLAGS := $(shell pkg-config --cflags libadq) # Digitiser library
 LDLIBS := $(shell pkg-config --libs libadq) # Digitiser library
 LDLIBS += $(shell pkg-config --libs cppunit) # Unittest library
 LDLIBS += -lcudart # Cuda runtime (high level functions)
+LDLIBS += -lcelero
 
 INCS := -Iincludes # Location of header files
 INCS += -I/usr/local/cuda-11.0/include # Cuda headers
 INCS += -L/usr/local/cuda-11.0/lib64 # Cuda libraries
+INCS += -I./../Celero/include # Celeto headers
+INCS += -L./../Celero/build # Celeto libraries
 
 #BROWSER := ns
 BROWSER := ck
@@ -56,8 +61,11 @@ TEST_OBJECTS += $(patsubst $(SOURCE_FOLDER)/%.cu,$(TEST_BUILD_FOLDER)/%.o,$(CUDA
 
 # Just for testing out ########################################################
 play:
-	nvcc $(CUDA_FLAGS) $(INCS) $(CUDA_SOURCE) -o $(BIN_APP)
-	@./$(BIN_APP)
+	$(CXX) $(CXXFLAGS) $(LDLIBS) $(INCS)  -o testrun bench.cpp
+	LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build ./testrun
+
+# nvcc $(CUDA_FLAGS) $(INCS) $(CUDA_SOURCE) -o $(BIN_APP)
+# @./$(BIN_APP)
 
 # $(CXX) -DTESTENV -fprofile-arcs -ftest-coverage $(CXXFLAGS) $(LDLIBS) $(INCS) -c test/test_runner.cpp test/utils_gpu_test.cpp
 # g++ $(INCS) -c src/utils_gpu.cpp
@@ -128,7 +136,7 @@ link-and-run-test: $(TEST_OBJECTS)
 	@$(CXX) \
 		-DTESTENV -fprofile-arcs -ftest-coverage -lgcov \
 		$(CXXFLAGS) $(INCS) $(LDLIBS) \
-		-o $(BIN_TEST) $^
+		-o $(BIN_TEST) $^ -pthread
 	@$(BIN_TEST)
 # @nvcc -DTESTENV -lgcov $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) $(INCS) -o $(BIN_TEST) $^
 
