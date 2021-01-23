@@ -19,6 +19,8 @@ LDLIBS += $(shell pkg-config --libs cppunit) # Unittest library
 LDLIBS += -lcudart # Cuda runtime (high level functions)
 LDLIBS += -lcelero
 
+BENCH=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64
+
 INCS := -Iincludes # Location of header files
 INCS += -I/usr/local/cuda-11.0/include # Cuda headers
 INCS += -L/usr/local/cuda-11.0/lib64 # Cuda libraries
@@ -62,7 +64,7 @@ TEST_OBJECTS += $(patsubst $(SOURCE_FOLDER)/%.cu,$(TEST_BUILD_FOLDER)/%.o,$(CUDA
 # Just for testing out ########################################################
 play:
 	$(CXX) $(CXXFLAGS) $(LDLIBS) $(INCS)  -o testrun bench.cpp
-	LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build ./testrun
+	$(BENCH) ./testrun
 
 # nvcc $(CUDA_FLAGS) $(INCS) $(CUDA_SOURCE) -o $(BIN_APP)
 # @./$(BIN_APP)
@@ -137,7 +139,7 @@ link-and-run-test: $(TEST_OBJECTS)
 		-DTESTENV -fprofile-arcs -ftest-coverage -lgcov \
 		$(CXXFLAGS) $(INCS) $(LDLIBS) \
 		-o $(BIN_TEST) $^ -pthread
-	@$(BIN_TEST)
+	$(BENCH) $(BIN_TEST)
 # @nvcc -DTESTENV -lgcov $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) $(INCS) -o $(BIN_TEST) $^
 
 test: | link-and-run-test
