@@ -1,5 +1,8 @@
 #include <stdio.h>
-#include <cuda_runtime.h> //for cudaDeviceProp
+#include <sstream>
+#include <string>
+
+#include <cuda_runtime_api.h> //for cudaDeviceProp
 #include "colours.hpp"
 #include "utils_gpu.hpp"
 

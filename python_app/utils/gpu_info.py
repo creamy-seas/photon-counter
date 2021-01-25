@@ -74,7 +74,6 @@ def verify_gpu_allocation(**kwargs):
             f"Too many threads allocated ({kwargs[key]} > gpu_parameters['threads_per_block'])"
         )
 
-
 def allocate_max_threads(
     user_defined_number: Optional[int] = None, verbose=False
 ) -> Tuple[int, int, int]:

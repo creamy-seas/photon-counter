@@ -43,3 +43,32 @@ https://quantum-optics-ride.gitlab.io/experimental/photon-counting/
 
 # Build #
 - `gcc 4.8.5`
+
+
+# Implementation Table #
+
+| **Functionality**        | **Python**                | **C++**                               |
+|:-------------------------|:--------------------------|---------------------------------------|
+| **SP-Digitiser Setup**   | `sp_digitizer.py`         | `ia_ADQAPI.cpp`                       |
+|                          | - extensive setup         | - essential setup                     |
+|                          | - preprocessing           |                                       |
+|                          | 🏆                        | Required only for tests               |
+|:-------------------------|:--------------------------|---------------------------------------|
+| **GPU Utils**            | `gpu_info.py`             | `utils_gpu.cpp`                       |
+|                          | - `fetch_gpu_parameters`  | - `fetch_gpu_parameters`              |
+|                          | - `verify_gpu_allocation` | -                                     |
+|                          | - `allocate_max_threads`  |                                       |
+|                          | 🏆                        | Not used                              |
+|:-------------------------|:--------------------------|---------------------------------------|
+| **Power**                | `power_kernel.py`         | `power_gpu.cu`                        |
+|                          |                           | `power_cpu.cpp`                       |
+|                          | - `verify_gpu_allocation` | use verify gpu allocation from python |
+|                          | - customizeable `kernel`  | -  parallel kernel`                   |
+|:-------------------------|:--------------------------|---------------------------------------|
+| **Power pipeline**       | `sp_digitiser_power.py`   |                                       |
+|                          | - allocation of arrays    | - allocation of arrays                |
+|                          | - calling lib function    |                                       |
+|:-------------------------|:--------------------------|---------------------------------------|
+| **Correlation**          |                           |                                       |
+|:-------------------------|:--------------------------|---------------------------------------|
+| **Correlation Pipeline** |                           |                                       |
