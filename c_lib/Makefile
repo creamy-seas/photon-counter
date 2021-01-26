@@ -12,7 +12,11 @@ CXXFLAGS += -std=c++11
 
 CUDA_FLAGS = -gencode arch=compute_61,code=compute_61 --machine 64 -ccbin=$(CXX)
 
-TFLAGS := -DTESTENV -fprofile-arcs -ftest-coverage
+TFLAGS := -DTESTENV
+TFLAGS += -D R_POINTS=1000
+TFLAGS += -D NP_POINTS=100
+TFLAGS += -D PROCESSING_ARRAY_TYPE=int
+TFLAGS += -D THREADS_PER_BLOCK=1024
 
 LDLIBS := $(shell pkg-config --libs libadq) # Digitiser library
 LDLIBS += $(shell pkg-config --libs cppunit) # Unittest library
@@ -75,10 +79,10 @@ play:
 # @echo --------------------
 # @$(CXX) -DTESTENV -fprofile-arcs -ftest-coverage -lgcov \
 # $(LDLIBS) -L/usr/local/cuda-11.0/lib64 -lcudart \
-# -o testrun test_runner.o utils_gpu.o utils_gpu_test.o
-#nvcc $(LDLIBS) -lgcov -o testrun test_runner.o utils_gpu.o utils_gpu_test.o example_test.o
+# -o testrun test_runner.o gpu_utils.o utils_gpu_test.o
+#nvcc $(LDLIBS) -lgcov -o testrun test_runner.o gpu_utils.o utils_gpu_test.o example_test.o
 # ./testrun
-#$(CXX) $(LDLIBS) $(INCS) -o testrun test_runner.o utils_gpu.o utils_gpu_test.o
+#$(CXX) $(LDLIBS) $(INCS) -o testrun test_runner.o gpu_utils.o utils_gpu_test.o
 
 ###############################################################################
 #                                    Common                                   #
@@ -115,7 +119,7 @@ $(TEST_BUILD_FOLDER)/%.o: $(TEST_FOLDER)/%.cpp
 	@mkdir -p $(TEST_BUILD_FOLDER)
 	@echo 🤖 Building [test] file: $^ ⟶ $@
 	@$(CXX) \
-		-DTESTENV -fprofile-arcs -ftest-coverage \
+		$(TFLAGS) -fprofile-arcs -ftest-coverage \
 		$(CXXFLAGS) $(INCS) $(LDLIBS) \
 		-c -o $@ $^
 
@@ -123,20 +127,20 @@ $(TEST_BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cpp
 	@mkdir -p $(TEST_BUILD_FOLDER)
 	@echo 🤖 Building [cpp] file: $^ ⟶ $@
 	@$(CXX) \
-		-DTESTENV -fprofile-arcs -ftest-coverage \
+		$(TFLAGS) -fprofile-arcs -ftest-coverage \
 		$(CXXFLAGS) $(INCS) $(LDLIBS) \
 		-c -o $@ $^
 
 $(TEST_BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cu
 	@mkdir -p $(TEST_BUILD_FOLDER)
 	@echo 🤖 Building [cuda] file: $^ ⟶ $@
-	nvcc $(CUDA_FLAGS) $(INCS) -c -o $@ $^
+	nvcc $(TFLAGS) $(CUDA_FLAGS) $(INCS) -c -o $@ $^
 # nvcc -DTESTENV $(INCS) -ccbin=$(CXX) -c -o $@ $^
 
 link-and-run-test: $(TEST_OBJECTS)
 	@echo 🤖 Linking files and running test
 	@$(CXX) \
-		-DTESTENV -fprofile-arcs -ftest-coverage -lgcov \
+		$(TFLAGS) -fprofile-arcs -ftest-coverage -lgcov \
 		$(CXXFLAGS) $(INCS) $(LDLIBS) \
 		-o $(BIN_TEST) $^ -pthread
 	$(BENCH) $(BIN_TEST)

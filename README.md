@@ -49,15 +49,15 @@ https://quantum-optics-ride.gitlab.io/experimental/photon-counting/
 
 ## SP-Digitiser Setup ##
 
-| `sp_digitizer.py` (Python) | `ia_ADQAPI.cpp` (C++)           |
-|:---------------------------|---------------------------------|
+| `sp_digitizer.py` (Python) | `ia_ADQAPI.cpp` (C++)             |
+|:---------------------------|-----------------------------------|
 | - extensive setup          | - essential setup                 |
 | - preprocessing            | - wraps some functions for python |
-| 🏆                         | Required only for tests         |
+| 🏆                         | Required only for tests           |
 
 ## GPU Utils ##
 
-| `gpu_info.py` (Python)    | `utils_gpu.cpp` (C++)         |
+| `gpu_utils.py` (Python)   | `gpu_utils.hpp` (C++)         |
 |:--------------------------|-------------------------------|
 | - `fetch_gpu_parameters`  | `fetch_gpu_parameters`        |
 | - `verify_gpu_allocation` |                               |
@@ -66,11 +66,11 @@ https://quantum-optics-ride.gitlab.io/experimental/photon-counting/
 
 ## Power ##
 
-| `power_kernel.py` (Python) | `power_gpu.cu/cpp` (C++) |
-|:---------------------------|--------------------------|
-| - `verify_gpu_allocation`  |                          |
-| - customizeable `kernel`   | - parallel `kernel`      |
-| use to check allocated GPU | 🏆                       |
+| `power_kernel.py` (Python)                         | `power_kernel.hpp` (C++)           |
+|:---------------------------------------------------|------------------------------------|
+| - customizeable `kernel`                           | - parallel `kernel`                |
+| - `verify_gpu_allocation`                          | - exposes parameters of the kernel |
+| use `verify_gpu_allocation` to check allocated GPU | 🏆                                 |
 
 ## Power pipeline ##
 

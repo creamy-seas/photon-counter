@@ -3,7 +3,7 @@
 #include <string>
 #include <math.h> // floor
 
-#include "power.hpp"
+#include "power_kernel.hpp"
 /* #include "ADQILYAAPI_x64.h" */
 /* #include "DLL_Imperium.h" */
 /* #include <fstream> */

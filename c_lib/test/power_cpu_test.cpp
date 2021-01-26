@@ -1,7 +1,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Exception.h>
 
-#include "power.hpp"
+#include "power_kernel.hpp"
 
 #ifdef TESTENV
 #define NO_POINTS 9

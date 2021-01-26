@@ -77,23 +77,23 @@ def verify_gpu_allocation(**kwargs):
 def allocate_max_threads(
     user_defined_number: Optional[int] = None, verbose=False
 ) -> Tuple[int, int, int]:
-    gpu_info = fetch_gpu_parameters()
+    gpu_param = fetch_gpu_parameters()
     if verbose:
         print(
             f"""Thread parameters:
-    > Max threads per block: {gpu_info['threads_per_block']}
-    > Max threads in x: {gpu_info['block_dim_x']}
-    > Max threads in y: {gpu_info['block_dim_y']}
-    > Max threads in z: {gpu_info['block_dim_z']}"""
+    > Max threads per block: {gpu_param['threads_per_block']}
+    > Max threads in x: {gpu_param['block_dim_x']}
+    > Max threads in y: {gpu_param['block_dim_y']}
+    > Max threads in z: {gpu_param['block_dim_z']}"""
         )
-    max_threads_approximation = int(gpu_info["threads_per_block"] ** (1 / 3))
+    max_threads_approximation = int(gpu_param["threads_per_block"] ** (1 / 3))
     if user_defined_number is not None:
         max_threads_approximation = user_defined_number
 
     max_thread_allocation = (
-        min(max_threads_approximation, gpu_info["block_dim_x"]),
-        min(max_threads_approximation, gpu_info["block_dim_y"]),
-        min(max_threads_approximation, gpu_info["block_dim_z"]),
+        min(max_threads_approximation, gpu_param["block_dim_x"]),
+        min(max_threads_approximation, gpu_param["block_dim_y"]),
+        min(max_threads_approximation, gpu_param["block_dim_z"]),
     )
     print(f"🐳 {'Allocating':<20} THREADS_PER_BLOCK = {max_thread_allocation}")
 

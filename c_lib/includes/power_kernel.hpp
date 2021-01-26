@@ -1,5 +1,7 @@
-#ifndef POWER_HPP
-#define POWER_HPP
+#include <string>
+
+#ifndef POWER_KERNEL_HPP
+#define POWER_KERNEL_HPP
 
 namespace CPU {
 
@@ -54,23 +56,42 @@ namespace CPU {
 
 namespace GPU {
 
+        /*
+         * The following will need to be defined:
+         * PROCESSING_ARRAY_TYPE
+         * R_POINTS
+         * NP_POINTS
+         * THREADS_PER_BLOCK
+         */
+
+        struct PowerKernelParameters {
+                int r_points;
+                int np_points;
+                std::string processing_array_type;
+
+                PowerKernelParameters(
+                        int r_points,
+                        int np_points,
+                        std::string processing_array_type);
+        };
+        PowerKernelParameters fetch_kernel_parameters();
+
+        // Preparation and completion of memory allocation on GPU
+        void allocate_memory_on_gpu(short *dev_chA_data, short *dev_chB_data, float *dev_sq_data);
+        void free_memory_on_gpu(short *dev_chA_data, short *dev_chB_data, float *dev_sq_data);
+
         float power_kernel(
                 short a,
                 short b);
 
         /*
-          short* chA_data, chB_data:                 raw data from the digitiser
-          unsigned int* sq_data:                     evaluate power
-          int samples_per_record, number of records  parameters for stacking arrays TODO
-          number_of_threads:                         number of threads to launch
+          short *chA_data, *chB_data:           raw data from the digitiser
+          float *sq_data:                       evaluate power
         */
         void power_kernel(
                 short* chA_data,
                 short* chB_data,
-                unsigned int* sq_data,
-                int no_points,
-                int number_of_records
-                );
+                unsigned int* sq_data);
 
         /*
           short* chA_data, chB_data:              raw data from the digitiser

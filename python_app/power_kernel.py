@@ -5,7 +5,7 @@ import numpy as np
 from numba import cuda
 from numba.cuda.cudadrv.devicearray import DeviceNDArray
 
-from python_app.utils import gpu_info
+from python_app.utils import gpu_utils
 from python_app.utils.terminal_colour import TerminalColour
 
 
@@ -58,7 +58,7 @@ class PowerKernel:
         storage_array_in_bytes = NP_POINTS * np.dtype(PROCESSING_ARRAY_TYPE).itemsize
 
         # Pass it to the global verifier ######################################
-        gpu_info.verify_gpu_allocation(
+        gpu_utils.verify_gpu_allocation(
             **{
                 "grid_dim_x": BLOCKS,
                 "block_dim_x": THREADS_PER_BLOCK,

@@ -1,7 +1,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Exception.h>
 
-#include "utils_gpu.hpp"
+#include "gpu_utils.hpp"
 
 class UtilsGpuTest : public CppUnit::TestFixture {
 

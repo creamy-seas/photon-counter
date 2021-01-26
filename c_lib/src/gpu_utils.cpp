@@ -4,7 +4,7 @@
 
 #include <cuda_runtime_api.h> //for cudaDeviceProp
 #include "colours.hpp"
-#include "utils_gpu.hpp"
+#include "gpu_utils.hpp"
 
 /*
  * Fetch and display parameters of the GPU (already done in python)
