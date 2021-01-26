@@ -47,28 +47,47 @@ https://quantum-optics-ride.gitlab.io/experimental/photon-counting/
 
 # Implementation Table #
 
-| **Functionality**        | **Python**                | **C++**                               |
-|:-------------------------|:--------------------------|---------------------------------------|
-| **SP-Digitiser Setup**   | `sp_digitizer.py`         | `ia_ADQAPI.cpp`                       |
-|                          | - extensive setup         | - essential setup                     |
-|                          | - preprocessing           |                                       |
-|                          | 🏆                        | Required only for tests               |
-|:-------------------------|:--------------------------|---------------------------------------|
-| **GPU Utils**            | `gpu_info.py`             | `utils_gpu.cpp`                       |
-|                          | - `fetch_gpu_parameters`  | - `fetch_gpu_parameters`              |
-|                          | - `verify_gpu_allocation` | -                                     |
-|                          | - `allocate_max_threads`  |                                       |
-|                          | 🏆                        | Not used                              |
-|:-------------------------|:--------------------------|---------------------------------------|
-| **Power**                | `power_kernel.py`         | `power_gpu.cu`                        |
-|                          |                           | `power_cpu.cpp`                       |
-|                          | - `verify_gpu_allocation` | use verify gpu allocation from python |
-|                          | - customizeable `kernel`  | -  parallel kernel`                   |
-|:-------------------------|:--------------------------|---------------------------------------|
-| **Power pipeline**       | `sp_digitiser_power.py`   |                                       |
-|                          | - allocation of arrays    | - allocation of arrays                |
-|                          | - calling lib function    |                                       |
-|:-------------------------|:--------------------------|---------------------------------------|
-| **Correlation**          |                           |                                       |
-|:-------------------------|:--------------------------|---------------------------------------|
-| **Correlation Pipeline** |                           |                                       |
+## SP-Digitiser Setup ##
+
+| `sp_digitizer.py` (Python) | `ia_ADQAPI.cpp` (C++)           |
+|:---------------------------|---------------------------------|
+| - extensive setup          | - essential setup                 |
+| - preprocessing            | - wraps some functions for python |
+| 🏆                         | Required only for tests         |
+
+## GPU Utils ##
+
+| `gpu_info.py` (Python)    | `utils_gpu.cpp` (C++)         |
+|:--------------------------|-------------------------------|
+| - `fetch_gpu_parameters`  | `fetch_gpu_parameters`        |
+| - `verify_gpu_allocation` |                               |
+| - `allocate_threads`      | `allocate_threads`            |
+| 🏆                        | Use macro to allocate threads |
+
+## Power ##
+
+| `power_kernel.py` (Python) | `power_gpu.cu/cpp` (C++) |
+|:---------------------------|--------------------------|
+| - `verify_gpu_allocation`  |                          |
+| - customizeable `kernel`   | - parallel `kernel`      |
+| use to check allocated GPU | 🏆                       |
+
+## Power pipeline ##
+
+| `sp_digitiser_power.py` (Python) | (C++)                  |
+|:---------------------------------|------------------------|
+| - allocation of arrays           | - allocation of arrays |
+| - call C++ lib                   |                        |
+| 🏆                               | 🏆                     |
+
+## Correlation ##
+
+| (Python) | (C++) |
+|:---------|-------|
+|          |       |
+
+## Correlation Pipeline ##
+
+| (Python) | (C++) |
+|:---------|-------|
+|          |       |
