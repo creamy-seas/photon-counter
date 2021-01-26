@@ -47,42 +47,78 @@ __global__ void magnitude_squared(int a, int b, float *c){
 GPU::PowerKernelParameters::PowerKernelParameters(
         int r_points,
         int np_points,
-        std::string processing_array_type){
+        std::string processing_array_type,
+        int blocks,
+        int threads_per_block
+        ){
         this->r_points = r_points;
         this->np_points = np_points;
         this->processing_array_type = processing_array_type;
+        this->blocks = blocks;
+        this->threads_per_block = threads_per_block;
+
+        this->print();
+}
+
+void GPU::PowerKernelParameters::print(){
+        OKBLUE("===========================================");
+        RED("          **POWER KERNEL**");
+
+        OKBLUE("Data Parameters");
+        printf("R_POINTS: %i\n", this->r_points );
+        printf("NP_POINTS: %i\n", this->np_points );
+
+        OKBLUE("Processing Parameters");
+        printf("CACHED ARRAY TYPE: %s\n", this->processing_array_type.c_str() );
+        printf("BLOCKS: %i\n", this->blocks );
+        printf("THREADS_PER_BLOCK: %i\n", this->threads_per_block );
+
+        OKBLUE("===========================================");
 }
 
 GPU::PowerKernelParameters GPU::fetch_kernel_parameters(){
         // GPU::PowerKernelParameters kp =
         return GPU::PowerKernelParameters(
                 R_POINTS,
-                N_POINTS,
-                xstr(PROCESSING_ARRAY_TYPE)
+                NP_POINTS,
+                xstr(PROCESSING_ARRAY_TYPE),
+                BLOCKS,
+                THREADS_PER_BLOCK
                 );
 }
 
 // Pass in empty pointers -> this will allocate memory on GPU
-void allocate_memory_on_gpu(
+void GPU::allocate_memory_on_gpu(
         short *dev_chA_data, short *dev_chB_data, float *dev_sq_data
         ){
-        cudamalloc((void**)&dev_chA_data,
+
+        OKBLUE("Allocating memory for power kernel on GPU");
+
+        cudaMalloc((void**)&dev_chA_data,
                    TOTAL_POINTS * sizeof(short));
 
-        cudamalloc((void**)&dev_chB_data,
+        cudaMalloc((void**)&dev_chB_data,
                    TOTAL_POINTS * sizeof(short));
 
-        cudamalloc((void**)&dev_sq_data,
-                   N_POINTS * sizeof(float));
+        cudaMalloc((void**)&dev_sq_data,
+                   NP_POINTS * sizeof(float));
+        // cudaFree(dev_sq_data);
+
+        OKGREEN("Allocation done!");
 }
 
 // Call to deallocated memory on GPU after run is complete
-void free_memory_on_gpu(
+void GPU::free_memory_on_gpu(
         short *dev_chA_data, short *dev_chB_data, float *dev_sq_data
         ){
-        cudaFree(dev_chA_data);
-        cudaFree(dev_chB_data);
-        cudaFree(dev_sq_data);
+
+        OKBLUE("Deallocating memory from GPU");
+
+        // cudaFree(dev_chA_data);
+        // cudaFree(dev_chB_data);
+        // cudaFree((void*) dev_sq_data);
+
+        OKGREEN("Memory freed!");
 }
 
 __device__ void reduction_sum(
@@ -128,37 +164,39 @@ __device__ void reduction_sum(
 __global__ void power_kernel_v1_no_background_runner(
         short *chA_data, short *chB_data, float *sq_data){
 
-        __shared__ PROCESSING_ARRAY_TYPE cache_array[R_POINTS];
+        // __shared__ PROCESSING_ARRAY_TYPE cache_array[R_POINTS];
 
-        int np_coordinate = cuda.blockIdx.x;
-        int r_coordinate,coordinate;
+        // int np_coordinate = blockIdx.x;
+        // int r_coordinate, coordinate;
 
-        while (np_coordinate < NP_POINTS) {
-                r_coordinate = cuda.threadIdx.x;
+        sq_data[0] = 67;//(float)cache_array[0] / R_POINTS;
 
-                while (r_coordinate < R_POINTS) {
-                        coordinate = r_coordinate * NP_POINTS + np_coordinate;
+        // while (np_coordinate < NP_POINTS) {
+        //         r_coordinate = threadIdx.x;
 
-                        cache_array[r_coordinate] = (
-                                chA_data[coordinate] * chA_data[coordinate]
-                                + chB_data[coordinate] * chB_data[coordinate]
-                                );
-                        // Once thread has completed, shift the
-                        // row index by the number of allocated
-                        // threads and continue summation
-                        r_coordinate += cuda.blockDim.x;
-                }
+        //         while (r_coordinate < R_POINTS) {
+        //                 coordinate = r_coordinate * NP_POINTS + np_coordinate;
 
-                // Ensure that all threads have completed execution
-                __syncthreads();
+        //                 cache_array[r_coordinate] = (
+        //                         chA_data[coordinate] * chA_data[coordinate]
+        //                         + chB_data[coordinate] * chB_data[coordinate]
+        //                         );
+        //                 // Once thread has completed, shift the
+        //                 // row index by the number of allocated
+        //                 // threads and continue summation
+        //                 r_coordinate += blockDim.x;
+        //         }
 
-                // Summation
-                reduction_sum(cache_array);
-                sq_data[np_coordinate] = (float)cache_array[0] / R_POINTS;
+        //         // Ensure that all threads have completed execution
+        //         __syncthreads();
 
-                // Shift by number of allocated blocks along main-axis
-                np_coordinate += cuda.gridDim.x;
-        }
+        //         // Summation
+        //         reduction_sum(cache_array);
+        //         sq_data[np_coordinate] = 67;//(float)cache_array[0] / R_POINTS;
+
+        //         // Shift by number of allocated blocks along main-axis
+        //         np_coordinate += gridDim.x;
+        // }
 }
 
 void GPU::power_kernel(
@@ -177,21 +215,22 @@ void GPU::power_kernel(
         // Ensure that allocate_memory_on_gpu has been called
 
         // Copy input data over to GPU
-        cudaMemcpy(dev_chA_data, chA_data, TOTAL_POINTS*sizeof(short),
-                   cudaMemcpyHostToDevice);
-        cudaMemcpy(dev_chA_data, chA_data, TOTAL_POINTS*sizeof(short),
-                   cudaMemcpyHostToDevice);
+        // cudaMemcpy(dev_chA_data, chA_data, TOTAL_POINTS*sizeof(short),
+        // cudaMemcpyHostToDevice);
+        // cudaMemcpy(dev_chB_data, chB_data, TOTAL_POINTS*sizeof(short),
+        // cudaMemcpyHostToDevice);
 
         // Run kernel
-        power_kernel_v1_no_background_runner<<BLOCKS, THREADS_PER_BLOCK>>(
+        power_kernel_v1_no_background_runner<<<1, 1>>>(
                 dev_chA_data, dev_chB_data, dev_sq_data);
 
         // Copy from device
         cudaMemcpy(
-                &sq_data,
+                sq_data,
                 dev_sq_data,
-                N_POINTS * sizeof(float),
+                NP_POINTS * sizeof(float),
                 cudaMemcpyDeviceToHost);
+        // sq_data[0]=6;
 
         // Ensure that free_memory_on_gpu is called
 }
@@ -224,7 +263,7 @@ float GPU::power_kernel(short a, short b) {
 
 
         cudaFree(dev_c);
-        OKGREEN("GPU KERNEL Complete!");
+        // OKGREEN("GPU KERNEL Complete!");
 
         return c;
 }

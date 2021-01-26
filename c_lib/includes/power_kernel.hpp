@@ -64,15 +64,21 @@ namespace GPU {
          * THREADS_PER_BLOCK
          */
 
+        // Communication of kernel parameters to python
         struct PowerKernelParameters {
                 int r_points;
                 int np_points;
+                int blocks;
+                int threads_per_block;
                 std::string processing_array_type;
 
                 PowerKernelParameters(
                         int r_points,
                         int np_points,
-                        std::string processing_array_type);
+                        std::string processing_array_type,
+                        int blocks,
+                        int threads_per_block);
+                void print();
         };
         PowerKernelParameters fetch_kernel_parameters();
 
@@ -84,14 +90,13 @@ namespace GPU {
                 short a,
                 short b);
 
-        /*
-          short *chA_data, *chB_data:           raw data from the digitiser
-          float *sq_data:                       evaluate power
-        */
         void power_kernel(
-                short* chA_data,
-                short* chB_data,
-                unsigned int* sq_data);
+                short *chA_data,
+                short *chB_data,
+                float *sq_data,
+                short *dev_chA_data,
+                short *dev_chB_data,
+                float *dev_sq_data);
 
         /*
           short* chA_data, chB_data:              raw data from the digitiser

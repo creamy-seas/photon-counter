@@ -5,31 +5,14 @@
 #include <string>
 #include <math.h>
 #include <sstream>
-#include <iomanip>      // std::setprecision
 #include <string>
 
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
-std::string seconds_to_hours(int seconds) {
-        /*
-        Convert seconds to human readable format
-        */
+std::string seconds_to_hours(int seconds);
 
-        int hours = floor(seconds / 3600);
-        int minutes = ceil((seconds - hours * 3600) / 60);
-
-        return std::to_string(hours) + "h:" + std::to_string(minutes) + "m";
-}
-
-std::string float_to_string(float numberToUse, int precision){
-        /*
-          Convert float to a string with a set precisiion value
-        */
-        std::stringstream ss;
-        ss << std::fixed << std::setprecision(precision) << numberToUse;
-        return ss.str();
-}
+std::string float_to_string(float numberToUse, int precision);
 
 template <typename T1=short, typename T2=double> void cast_arrays(
         T1** arrays_in, T2** arrays_out,

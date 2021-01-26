@@ -13,8 +13,8 @@ CXXFLAGS += -std=c++11
 CUDA_FLAGS = -gencode arch=compute_61,code=compute_61 --machine 64 -ccbin=$(CXX)
 
 TFLAGS := -DTESTENV
-TFLAGS += -D R_POINTS=1000
-TFLAGS += -D NP_POINTS=100
+TFLAGS += -D R_POINTS=3
+TFLAGS += -D NP_POINTS=4
 TFLAGS += -D PROCESSING_ARRAY_TYPE=int
 TFLAGS += -D THREADS_PER_BLOCK=1024
 
@@ -58,7 +58,8 @@ CUDA_OBJECTS := $(patsubst $(SOURCE_FOLDER)/%.cu,$(BUILD_FOLDER)/%.o,$(CUDA_SOUR
 
 OBJECTS := $(CPP_OBJECTS) $(CUDA_OBJECTS)
 
-TEST_SOURCE := $(wildcard $(TEST_FOLDER)/*.cpp)
+# TEST_SOURCE := $(wildcard $(TEST_FOLDER)/*.cpp)
+TEST_SOURCE := $(TEST_FOLDER)/power_gpu_test.cpp $(TEST_FOLDER)/test_runner.cpp
 TEST_OBJECTS := $(patsubst $(TEST_FOLDER)/%.cpp,$(TEST_BUILD_FOLDER)/%.o,$(TEST_SOURCE))
 TEST_OBJECTS += $(patsubst $(SOURCE_FOLDER)/%.cpp,$(TEST_BUILD_FOLDER)/%.o,$(CPP_SOURCE))
 TEST_OBJECTS += $(patsubst $(SOURCE_FOLDER)/%.cu,$(TEST_BUILD_FOLDER)/%.o,$(CUDA_SOURCE))
@@ -134,7 +135,7 @@ $(TEST_BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cpp
 $(TEST_BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cu
 	@mkdir -p $(TEST_BUILD_FOLDER)
 	@echo 🤖 Building [cuda] file: $^ ⟶ $@
-	nvcc $(TFLAGS) $(CUDA_FLAGS) $(INCS) -c -o $@ $^
+	@nvcc $(TFLAGS) $(CUDA_FLAGS) $(INCS) -c -o $@ $^
 # nvcc -DTESTENV $(INCS) -ccbin=$(CXX) -c -o $@ $^
 
 link-and-run-test: $(TEST_OBJECTS)
@@ -143,7 +144,7 @@ link-and-run-test: $(TEST_OBJECTS)
 		$(TFLAGS) -fprofile-arcs -ftest-coverage -lgcov \
 		$(CXXFLAGS) $(INCS) $(LDLIBS) \
 		-o $(BIN_TEST) $^ -pthread
-	$(BENCH) $(BIN_TEST)
+	$(BENCH) cuda-memcheck $(BIN_TEST)
 # @nvcc -DTESTENV -lgcov $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) $(INCS) -o $(BIN_TEST) $^
 
 test: | link-and-run-test
