@@ -1,11 +1,11 @@
-#include "colours.hpp"
-
 #include <cstring>
 #include <fstream>
 #include <string>
 #include <math.h>
 #include <sstream>
 #include <string>
+
+#include "colours.hpp"
 
 #ifndef UTILS_HPP
 #define UTILS_HPP
@@ -104,9 +104,9 @@ template <typename T> void load_arrays_from_file(
                                 y++;
                         }
                         //clear string stream
-                        ss.str(std::string());
-                        ss.clear();
-
+                        // ss.str(std::string());
+                        // ss.clear();
+                        ss = std::stringstream();
                 }
                 if (y > y_dim){
                         FAIL("Array too small in y-direction!");

@@ -23,7 +23,7 @@ LDLIBS += $(shell pkg-config --libs cppunit) # Unittest library
 LDLIBS += -lcudart # Cuda runtime (high level functions)
 LDLIBS += -lcelero
 
-BENCH=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64
+BENCH=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 #cuda-memcheck
 
 INCS := -Iincludes # Location of header files
 INCS += -I/usr/local/cuda-11.0/include # Cuda headers
@@ -60,6 +60,7 @@ OBJECTS := $(CPP_OBJECTS) $(CUDA_OBJECTS)
 
 # TEST_SOURCE := $(wildcard $(TEST_FOLDER)/*.cpp)
 TEST_SOURCE := $(TEST_FOLDER)/power_gpu_test.cpp $(TEST_FOLDER)/test_runner.cpp
+# TEST_SOURCE := $(TEST_FOLDER)/power_gpu_utils_test.cpp $(TEST_FOLDER)/test_runner.cpp
 TEST_OBJECTS := $(patsubst $(TEST_FOLDER)/%.cpp,$(TEST_BUILD_FOLDER)/%.o,$(TEST_SOURCE))
 TEST_OBJECTS += $(patsubst $(SOURCE_FOLDER)/%.cpp,$(TEST_BUILD_FOLDER)/%.o,$(CPP_SOURCE))
 TEST_OBJECTS += $(patsubst $(SOURCE_FOLDER)/%.cu,$(TEST_BUILD_FOLDER)/%.o,$(CUDA_SOURCE))
@@ -109,12 +110,6 @@ lib: src/ia_ADQAPI.cpp
 ###############################################################################
 #                                     Test                                    #
 ###############################################################################
-# Run pre-test to remove .o files for coverage information.
-# Add it as an order-only prerequisite | pre-test
-pre-test:
-	@rm -rf $(TEST_BUILD_FOLDER)/*.o
-	@echo "⚰  Removed all test .o files before test!"
-
 # First build all the object files for the test ###############################
 $(TEST_BUILD_FOLDER)/%.o: $(TEST_FOLDER)/%.cpp
 	@mkdir -p $(TEST_BUILD_FOLDER)
@@ -138,20 +133,26 @@ $(TEST_BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cu
 	@nvcc $(TFLAGS) $(CUDA_FLAGS) $(INCS) -c -o $@ $^
 # nvcc -DTESTENV $(INCS) -ccbin=$(CXX) -c -o $@ $^
 
-link-and-run-test: $(TEST_OBJECTS)
+test: $(TEST_OBJECTS)
 	@echo 🤖 Linking files and running test
 	@$(CXX) \
 		$(TFLAGS) -fprofile-arcs -ftest-coverage -lgcov \
 		$(CXXFLAGS) $(INCS) $(LDLIBS) \
 		-o $(BIN_TEST) $^ -pthread
-	$(BENCH) cuda-memcheck $(BIN_TEST)
+	$(BENCH) $(BIN_TEST)
 # @nvcc -DTESTENV -lgcov $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) $(INCS) -o $(BIN_TEST) $^
 
-test: | link-and-run-test
+post-test: | test
 	@rm -rf $(TEST_BUILD_FOLDER)/*.o
 	@echo "⚰  Removed all test .o files after test!"
 
-cov: $(TEST_OBJECTS) | test
+# Run pre-test to remove .o files for coverage information.
+# Add it as an order-only prerequisite | pre-test
+pre-test:
+	@rm -rf $(TEST_BUILD_FOLDER)/*.o
+	@echo "⚰  Removed all test .o files before test!"
+
+cov: $(TEST_OBJECTS) | pre-test link-and-run-test
 				@mkdir -p $(COVERAGE_FOLDER)
 				@gcov --branch-probabilities -o $(TEST_BUILD_FOLDER) $^
 				# Generate coverage report

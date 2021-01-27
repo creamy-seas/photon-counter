@@ -1,5 +1,28 @@
 #include <string>
 
+#define xstr(s) str(s)
+#define str(s) #s
+
+#ifndef PROCESSING_ARRAY_TYPE
+#define PROCESSING_ARRAY_TYPE int
+#endif
+
+#ifndef R_POINTS
+#define R_POINTS 1000
+#endif
+
+#ifndef NP_POINTS
+#define NP_POINTS 1000
+#endif
+
+#ifndef THREADS_PER_BLOCK
+#define THREADS_PER_BLOCK 1024
+#endif
+
+#define BLOCKS NP_POINTS
+
+#define TOTAL_POINTS NP_POINTS*R_POINTS
+
 #ifndef POWER_KERNEL_HPP
 #define POWER_KERNEL_HPP
 
@@ -83,8 +106,8 @@ namespace GPU {
         PowerKernelParameters fetch_kernel_parameters();
 
         // Preparation and completion of memory allocation on GPU
-        void allocate_memory_on_gpu(short *dev_chA_data, short *dev_chB_data, float *dev_sq_data);
-        void free_memory_on_gpu(short *dev_chA_data, short *dev_chB_data, float *dev_sq_data);
+        void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, float **dev_sq_data);
+        void free_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, float **dev_sq_data);
 
         float power_kernel(
                 short a,
@@ -94,9 +117,10 @@ namespace GPU {
                 short *chA_data,
                 short *chB_data,
                 float *sq_data,
-                short *dev_chA_data,
-                short *dev_chB_data,
-                float *dev_sq_data);
+                // for GPU memory pass in the address (&POINTER) of the memory locators
+                short **dev_chA_data,
+                short **dev_chB_data,
+                float **dev_sq_data);
 
         /*
           short* chA_data, chB_data:              raw data from the digitiser
