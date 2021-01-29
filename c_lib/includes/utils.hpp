@@ -104,9 +104,8 @@ template <typename T> void load_arrays_from_file(
                                 y++;
                         }
                         //clear string stream
-                        // ss.str(std::string());
-                        // ss.clear();
-                        ss = std::stringstream();
+                        ss.str(std::string());
+                        ss.clear();
                 }
                 if (y > y_dim){
                         FAIL("Array too small in y-direction!");

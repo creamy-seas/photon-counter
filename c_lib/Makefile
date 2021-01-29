@@ -58,9 +58,10 @@ CUDA_OBJECTS := $(patsubst $(SOURCE_FOLDER)/%.cu,$(BUILD_FOLDER)/%.o,$(CUDA_SOUR
 
 OBJECTS := $(CPP_OBJECTS) $(CUDA_OBJECTS)
 
-# TEST_SOURCE := $(wildcard $(TEST_FOLDER)/*.cpp)
-TEST_SOURCE := $(TEST_FOLDER)/power_gpu_test.cpp $(TEST_FOLDER)/test_runner.cpp
+TEST_SOURCE := $(wildcard $(TEST_FOLDER)/*.cpp)
+# TEST_SOURCE := $(TEST_FOLDER)/power_gpu_test.cpp $(TEST_FOLDER)/test_runner.cpp
 # TEST_SOURCE := $(TEST_FOLDER)/power_gpu_utils_test.cpp $(TEST_FOLDER)/test_runner.cpp
+# TEST_SOURCE := $(TEST_FOLDER)/playground_test.cpp $(TEST_FOLDER)/test_runner.cpp
 TEST_OBJECTS := $(patsubst $(TEST_FOLDER)/%.cpp,$(TEST_BUILD_FOLDER)/%.o,$(TEST_SOURCE))
 TEST_OBJECTS += $(patsubst $(SOURCE_FOLDER)/%.cpp,$(TEST_BUILD_FOLDER)/%.o,$(CPP_SOURCE))
 TEST_OBJECTS += $(patsubst $(SOURCE_FOLDER)/%.cu,$(TEST_BUILD_FOLDER)/%.o,$(CUDA_SOURCE))

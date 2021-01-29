@@ -109,10 +109,6 @@ namespace GPU {
         void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, float **dev_sq_data);
         void free_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, float **dev_sq_data);
 
-        float power_kernel(
-                short a,
-                short b);
-
         void power_kernel(
                 short *chA_data,
                 short *chB_data,

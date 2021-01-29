@@ -14,10 +14,6 @@
 #include "gpu_utils.hpp"
 #include "power_kernel.hpp"
 
-__global__ void magnitude_squared(int a, int b, float *c){
-        *c = (float)(a * a + b * b);
-}
-
 __device__ void reduction_sum(
         PROCESSING_ARRAY_TYPE cache_array[R_POINTS]){
         /*
@@ -136,37 +132,4 @@ void GPU::power_kernel(
                 FAIL("Failed to copy data FROM the GPU!");
 
         // Ensure that free_memory_on_gpu is called
-}
-
-float GPU::power_kernel(short a, short b) {
-
-        // cudaDeviceProp prop = fetch_gpu_parameters();
-
-        /* cudaDeviceProp program_prop; */
-        /* memset(&program_prop, 0, sizeof(cudaDeviceProp)); */
-        /* program_prop.maxGridSize[0] = 100; */
-
-        // Allocate device and host variables
-        float c;
-        float *dev_c;
-
-        // Memory allocation on device
-        cudaMalloc((void**) &dev_c, sizeof(float));
-
-        // Kernel invoction
-        magnitude_squared<<<1,1>>>(1,2, dev_c);
-
-        // Copy back to device
-        cudaMemcpy(
-                &c,
-                dev_c,
-                sizeof(float),
-                cudaMemcpyDeviceToHost
-                );
-
-
-        cudaFree(dev_c);
-        // OKGREEN("GPU KERNEL Complete!");
-
-        return c;
 }

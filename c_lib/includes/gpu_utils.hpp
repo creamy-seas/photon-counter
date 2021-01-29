@@ -1,8 +1,6 @@
-#include <cuda_runtime.h> //for cudaDeviceProp
+// Playground for functions during development
 
-#define CUDA_CHECK(i, message)                  \
-        if (i != 0) {                           \
-                FAIL(message);}
+#include <cuda_runtime.h> //for cudaDeviceProp
 
 #ifndef UTILS_GPU_HPP
 #define UTILS_GPU_HPP
