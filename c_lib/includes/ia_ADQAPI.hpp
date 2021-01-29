@@ -2,8 +2,8 @@
 #define _IA_ADQAPI_
 
 // Constants //////////////////////////////////////////////////////////////////
-static unsigned char FETCH_CHANNEL_A = 0x1;
-static unsigned char FETCH_CHANNEL_B = 0x2;
+// static unsigned char FETCH_CHANNEL_A = 0x1;
+// static unsigned char FETCH_CHANNEL_B = 0x2;
 static unsigned char FETCH_CHANNEL_BOTH = 0x3;
 
 #define TRIGGER_SOFTWARE 1
@@ -13,8 +13,8 @@ static unsigned char FETCH_CHANNEL_BOTH = 0x3;
 #define INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE 0
 #define INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERENCE 1
 
-static int LOW_FREQUENCY_MODE = 0;
-static int HIGH_FREQUENCY_MODE = 1;
+// static int LOW_FREQUENCY_MODE = 0;
+// static int HIGH_FREQUENCY_MODE = 1;
 
 #define BLINK 1
 #define NO_BLINK 0

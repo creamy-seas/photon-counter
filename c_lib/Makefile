@@ -5,10 +5,13 @@ CXXFLAGS += -DLINUX
 CXXFLAGS += -std=c++11
 # CXXFLAGS += -D_GLIBCXX_USE_CXX11_ABI=0
 # CXXFLAGS += -lpthread
-# CXXFLAGS += -Wall # Enable the 'all' set of warnings
+CXXFLAGS += -Wall # Enable the 'all' set of warnings
 # CXXFLAGS += -Werror=unused-variable # Treat all warnings as error
 # CXXFLAGS += -Wshadow # Warn when shadowing variables
 # CXXFLAGS += -Wextra # Enable additional warnings
+
+# PositionIndependentCode
+LIB_FLAGS = -fPIC
 
 CUDA_FLAGS = -gencode arch=compute_61,code=compute_61 --machine 64 -ccbin=$(CXX)
 
@@ -38,6 +41,7 @@ PWD := $(shell pwd)
 # Binaries
 BIN_TEST=./bin/test
 BIN_APP=./bin/run
+BIN_LIB=./bin/ia_1488.so
 
 # Folders
 SOURCE_FOLDER:=./src
@@ -88,25 +92,23 @@ play:
 #$(CXX) $(LDLIBS) $(INCS) -o testrun test_runner.o gpu_utils.o utils_gpu_test.o
 
 ###############################################################################
-#                                    Common                                   #
+#                                   Library                                   #
 ###############################################################################
-# Building of cuda object files
-$(BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cu
-	@echo 🐍 Building $^ ⟶ $@
-	@nvcc $(CUDA_FLAGS) $(INCS) -c -o $@ $^
-
 # Building of cpp object files
 $(BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cpp
 	@echo 🐋 Building $^ ⟶ $@
-	@$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -c -o $@ $^
+	@$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -fPIC -c -o $@ $^
 
-###############################################################################
-#                                   Library                                   #
-###############################################################################
-lib: src/ia_ADQAPI.cpp
-		@$(CXX) -Wall $(CXXFLAGS) $(INCS) $(LDLIBS) -shared -o $(TARGET) -fPIC $^
-		@echo Moving $(TARGET) to /usr/lib 🐳
-		@sudo cp -f $(TARGET) /usr/lib
+# Building of cuda object files
+$(BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cu
+	@echo 🐍 Building $^ ⟶ $@
+	@nvcc $(CUDA_FLAGS) $(INCS) --compiler-options -fPIC -c -o $@ $^
+
+# src/ia_ADQAPI.cpp
+lib: $(OBJECTS)
+		$(CXX) -Wall $(CXXFLAGS) $(INCS) $(LDLIBS) -shared -o $(BIN_LIB) -fPIC $^
+		@echo Moving 🐳 $(BIN_LIB) to /usr/lib
+		@sudo cp -f $(BIN_LIB) /usr/lib
 
 ###############################################################################
 #                                     Test                                    #
