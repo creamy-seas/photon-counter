@@ -5,13 +5,10 @@ CXXFLAGS += -DLINUX
 CXXFLAGS += -std=c++11
 # CXXFLAGS += -D_GLIBCXX_USE_CXX11_ABI=0
 # CXXFLAGS += -lpthread
-CXXFLAGS += -Wall # Enable the 'all' set of warnings
+# CXXFLAGS += -Wall # Enable the 'all' set of warnings
 # CXXFLAGS += -Werror=unused-variable # Treat all warnings as error
 # CXXFLAGS += -Wshadow # Warn when shadowing variables
 # CXXFLAGS += -Wextra # Enable additional warnings
-
-# PositionIndependentCode
-LIB_FLAGS = -fPIC
 
 CUDA_FLAGS = -gencode arch=compute_61,code=compute_61 --machine 64 -ccbin=$(CXX)
 
@@ -22,17 +19,18 @@ TFLAGS += -D PROCESSING_ARRAY_TYPE=int
 TFLAGS += -D THREADS_PER_BLOCK=1024
 
 LDLIBS := $(shell pkg-config --libs libadq) # Digitiser library
-LDLIBS += $(shell pkg-config --libs cppunit) # Unittest library
 LDLIBS += -lcudart # Cuda runtime (high level functions)
-LDLIBS += -lcelero
 
-BENCH=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 #cuda-memcheck
+TLDLIBS += -lcelero
+TLDLIBS += $(shell pkg-config --libs cppunit) # Unittest library
+
+BENCHMARKING=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 #cuda-memcheck
 
 INCS := -Iincludes # Location of header files
 INCS += -I/usr/local/cuda-11.0/include # Cuda headers
 INCS += -L/usr/local/cuda-11.0/lib64 # Cuda libraries
-INCS += -I./../Celero/include # Celeto headers
-INCS += -L./../Celero/build # Celeto libraries
+INCS += -I./../Celero/include # Celero headers
+INCS += -L./../Celero/build # Celero libraries
 
 #BROWSER := ns
 BROWSER := ck
@@ -54,15 +52,20 @@ COVERAGE_FOLDER:=./coverage
 COVERAGE_FILE:=$(COVERAGE_FOLDER)/coverage.info
 
 # Source and object files
+# CPP_SOURCE := ./src/ia_ADQAPI.cpp
 CPP_SOURCE := $(wildcard $(SOURCE_FOLDER)/*.cpp)
 CPP_OBJECTS := $(patsubst $(SOURCE_FOLDER)/%.cpp,$(BUILD_FOLDER)/%.o,$(CPP_SOURCE))
+
+# C_SOURCE := $(wildcard $(SOURCE_FOLDER)/*.c)
+# C_OBJECTS += $(patsubst $(SOURCE_FOLDER)/%.c,$(BUILD_FOLDER)/%.o,$(C_SOURCE))
 
 CUDA_SOURCE := $(wildcard $(SOURCE_FOLDER)/*.cu)
 CUDA_OBJECTS := $(patsubst $(SOURCE_FOLDER)/%.cu,$(BUILD_FOLDER)/%.o,$(CUDA_SOURCE))
 
-OBJECTS := $(CPP_OBJECTS) $(CUDA_OBJECTS)
+OBJECTS := $(CPP_OBJECTS) $(CUDA_OBJECTS) $(C_OBJECTS)
 
-TEST_SOURCE := $(wildcard $(TEST_FOLDER)/*.cpp)
+# TEST_SOURCE := $(wildcard $(TEST_FOLDER)/*.cpp)
+TEST_SOURCE = ./test/test_runner.cpp ./test/utils_test.cpp
 # TEST_SOURCE := $(TEST_FOLDER)/power_gpu_test.cpp $(TEST_FOLDER)/test_runner.cpp
 # TEST_SOURCE := $(TEST_FOLDER)/power_gpu_utils_test.cpp $(TEST_FOLDER)/test_runner.cpp
 # TEST_SOURCE := $(TEST_FOLDER)/playground_test.cpp $(TEST_FOLDER)/test_runner.cpp
@@ -72,43 +75,33 @@ TEST_OBJECTS += $(patsubst $(SOURCE_FOLDER)/%.cu,$(TEST_BUILD_FOLDER)/%.o,$(CUDA
 
 .PHONY: clean test
 
-# Just for testing out ########################################################
+
 play:
-	$(CXX) $(CXXFLAGS) $(LDLIBS) $(INCS)  -o testrun bench.cpp
-	$(BENCH) ./testrun
-
-# nvcc $(CUDA_FLAGS) $(INCS) $(CUDA_SOURCE) -o $(BIN_APP)
-# @./$(BIN_APP)
-
-# $(CXX) -DTESTENV -fprofile-arcs -ftest-coverage $(CXXFLAGS) $(LDLIBS) $(INCS) -c test/test_runner.cpp test/utils_gpu_test.cpp
-# g++ $(INCS) -c src/utils_gpu.cpp
-# nvcc $(INCS) -c src/utils_gpu.cu
-# @echo --------------------
-# @$(CXX) -DTESTENV -fprofile-arcs -ftest-coverage -lgcov \
-# $(LDLIBS) -L/usr/local/cuda-11.0/lib64 -lcudart \
-# -o testrun test_runner.o gpu_utils.o utils_gpu_test.o
-#nvcc $(LDLIBS) -lgcov -o testrun test_runner.o gpu_utils.o utils_gpu_test.o example_test.o
-# ./testrun
-#$(CXX) $(LDLIBS) $(INCS) -o testrun test_runner.o gpu_utils.o utils_gpu_test.o
+	$(CXX) $(CXXFLAGS) $(LDLIBS) $(INCS)  -o $(BIN_APP) bench.cpp
+	$(BENCHMARKING) $(BIN_APP)
 
 ###############################################################################
 #                                   Library                                   #
 ###############################################################################
+# PositionIndependentCode
 # Building of cpp object files
 $(BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cpp
-	@echo 🐋 Building $^ ⟶ $@
-	@$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -fPIC -c -o $@ $^
+		@echo 🐋 [cpp] Building $^ ⟶ $@
+		$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -fPIC -c -o $@ $^
+
+# Building of c object files
+# $(BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.c
+#		@echo 🐋 [c] Building $^ ⟶ $@
+#		$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -fPIC -c -o $@ $^
 
 # Building of cuda object files
 $(BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cu
-	@echo 🐍 Building $^ ⟶ $@
+	@echo 🐍 [cu] Building $^ ⟶ $@
 	@nvcc $(CUDA_FLAGS) $(INCS) --compiler-options -fPIC -c -o $@ $^
 
 # src/ia_ADQAPI.cpp
 lib: $(OBJECTS)
-		$(CXX) -Wall $(CXXFLAGS) $(INCS) $(LDLIBS) -shared -o $(BIN_LIB) -fPIC $^
-		@echo Moving 🐳 $(BIN_LIB) to /usr/lib
-		@sudo cp -f $(BIN_LIB) /usr/lib
+		$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -shared -o $(BIN_LIB) $^
 
 ###############################################################################
 #                                     Test                                    #
@@ -119,7 +112,7 @@ $(TEST_BUILD_FOLDER)/%.o: $(TEST_FOLDER)/%.cpp
 	@echo 🤖 Building [test] file: $^ ⟶ $@
 	@$(CXX) \
 		$(TFLAGS) -fprofile-arcs -ftest-coverage \
-		$(CXXFLAGS) $(INCS) $(LDLIBS) \
+		$(CXXFLAGS) $(INCS) $(LDLIBS) $(TLDLIBS) \
 		-c -o $@ $^
 
 $(TEST_BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cpp
@@ -127,23 +120,21 @@ $(TEST_BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cpp
 	@echo 🤖 Building [cpp] file: $^ ⟶ $@
 	@$(CXX) \
 		$(TFLAGS) -fprofile-arcs -ftest-coverage \
-		$(CXXFLAGS) $(INCS) $(LDLIBS) \
+		$(CXXFLAGS) $(INCS) $(LDLIBS) $(TLDLIBS) \
 		-c -o $@ $^
 
 $(TEST_BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cu
 	@mkdir -p $(TEST_BUILD_FOLDER)
 	@echo 🤖 Building [cuda] file: $^ ⟶ $@
 	@nvcc $(TFLAGS) $(CUDA_FLAGS) $(INCS) -c -o $@ $^
-# nvcc -DTESTENV $(INCS) -ccbin=$(CXX) -c -o $@ $^
 
 test: $(TEST_OBJECTS)
 	@echo 🤖 Linking files and running test
 	@$(CXX) \
 		$(TFLAGS) -fprofile-arcs -ftest-coverage -lgcov \
-		$(CXXFLAGS) $(INCS) $(LDLIBS) \
+		$(CXXFLAGS) $(INCS) $(LDLIBS) $(TLDLIBS)\
 		-o $(BIN_TEST) $^ -pthread
-	$(BENCH) $(BIN_TEST)
-# @nvcc -DTESTENV -lgcov $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) $(INCS) -o $(BIN_TEST) $^
+	$(BENCHMARKING) $(BIN_TEST)
 
 post-test: | test
 	@rm -rf $(TEST_BUILD_FOLDER)/*.o
@@ -171,4 +162,4 @@ cov: $(TEST_OBJECTS) | pre-test link-and-run-test
 
 clean:
 		@echo "🖌 Cleaning build objects"
-		@rm -rf *.out $(TEST_BUILD_FOLDER) $(BUILD_FOLDER)/*.o *.gcda *.gcno *.log *.o
+		@rm -rfv *.out $(TEST_BUILD_FOLDER) $(BUILD_FOLDER)/*.o *.gcda *.gcno *.log *.o ./bin/*

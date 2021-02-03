@@ -37,6 +37,16 @@ https://quantum-optics-ride.gitlab.io/experimental/photon-counting/
 - https://stackoverflow.com/questions/242894/cuda-driver-api-vs-cuda-runtime
 - https://stackoverflow.com/questions/17278932/cuda-shared-library-linking-undefined-reference-to-cudaregisterlinkedbinary
 
+# Choice #
+I have though about c over cpp - the first being less bloated
+
+| C    | Cpp                                                    |
+|------|--------------------------------------------------------|
+| Slim | Will be required for unit tests                        |
+|      | Can overload functions - nice for consistent interface |
+|      | Can throw exceptions                                   |
+|      | Threads?                                               |
+
 # Cuda notes #
 - Use cuda-11.0
 - `nvcc` will automatically lookup relevant headers and libraries, so it can be used for compilation. It can even pass the non-gpu code to the standard compuler. But it will not be able to inject `-fprofile-arcs` and `-ftest-coverage` so it is better to use it for only building object files and not the total compilation.

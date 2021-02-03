@@ -1,7 +1,7 @@
 #include <string>
 
-#define xstr(s) str(s)
-#define str(s) #s
+#define xstr(s) _str(s)
+#define _str(s) #s
 
 #ifndef PROCESSING_ARRAY_TYPE
 #define PROCESSING_ARRAY_TYPE int

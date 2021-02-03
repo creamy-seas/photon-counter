@@ -18,10 +18,10 @@ try:
 except Exception as err:
     raise RuntimeError(f"Failed to load the ADQ library - see below for details: {err}")
 try:
-    ia_ADQAPI = cdll.LoadLibrary("/usr/lib/ia_ADQAPI.os")
+    ia_ADQAPI = cdll.LoadLibrary("./bin/ia_1488.so")
 except Exception as err:
     raise RuntimeError(
-        f"Failed to load the custom ADQ library - make sure that it has been built!: {err}"
+        f"Failed to load the custom photon-counting library - make sure that it has been built!: {err}"
     )
 
 ADQAPI.CreateADQControlUnit.restype = ctypes.c_void_p

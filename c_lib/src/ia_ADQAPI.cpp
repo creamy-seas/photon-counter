@@ -1,12 +1,10 @@
 #include "ADQAPI.h"
 #include <stdio.h>
-#include <stdexcept>
 
 // Project Libraries
 #include "colours.hpp"
 #include "ia_ADQAPI.hpp"
 
-#define ADQ1 (adq_cu_ptr, 1)
 #define INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERECNCE
 
 int GetMaxNofSamplesFromNofRecords(void* adq_cu_ptr, int no_of_records){
@@ -32,7 +30,6 @@ void* master_setup(int blink, int clock_source, unsigned int trigger_mode) {
         int no_of_devices = ADQControlUnit_FindDevices(adq_cu_ptr);
         if(no_of_devices == 0) {
                 FAIL("No devices found! Make sure all programs refferencing devices are closed");
-                throw std::runtime_error("Failed to find devices");
         }
 
         // Hard coded /////////////////////////////////////////////////////////
@@ -59,10 +56,9 @@ void* master_setup(int blink, int clock_source, unsigned int trigger_mode) {
                 WARNING("External trigger!");
                 break;
         case TRIGGER_LEVEL:
-                WARNING("Level trigger!");
-                throw "Level trigger is not setup!";
+                FAIL("Level trigger!");
         default :
-                throw "Please select valid trigger!";
+                FAIL("Please select valid trigger!");
         }
         ADQ_SetTriggerMode(adq_cu_ptr, 1, trigger_mode);
 
