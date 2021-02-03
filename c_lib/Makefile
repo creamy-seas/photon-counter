@@ -64,8 +64,7 @@ CUDA_OBJECTS := $(patsubst $(SOURCE_FOLDER)/%.cu,$(BUILD_FOLDER)/%.o,$(CUDA_SOUR
 
 OBJECTS := $(CPP_OBJECTS) $(CUDA_OBJECTS) $(C_OBJECTS)
 
-# TEST_SOURCE := $(wildcard $(TEST_FOLDER)/*.cpp)
-TEST_SOURCE = ./test/test_runner.cpp ./test/utils_test.cpp
+TEST_SOURCE := $(wildcard $(TEST_FOLDER)/*.cpp)
 # TEST_SOURCE := $(TEST_FOLDER)/power_gpu_test.cpp $(TEST_FOLDER)/test_runner.cpp
 # TEST_SOURCE := $(TEST_FOLDER)/power_gpu_utils_test.cpp $(TEST_FOLDER)/test_runner.cpp
 # TEST_SOURCE := $(TEST_FOLDER)/playground_test.cpp $(TEST_FOLDER)/test_runner.cpp
@@ -146,7 +145,7 @@ pre-test:
 	@rm -rf $(TEST_BUILD_FOLDER)/*.o
 	@echo "⚰  Removed all test .o files before test!"
 
-cov: $(TEST_OBJECTS) | pre-test link-and-run-test
+cov: $(TEST_OBJECTS) | test pre-test
 				@mkdir -p $(COVERAGE_FOLDER)
 				@gcov --branch-probabilities -o $(TEST_BUILD_FOLDER) $^
 				# Generate coverage report
