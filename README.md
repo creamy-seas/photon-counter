@@ -48,9 +48,48 @@ I have though about c over cpp - the first being less bloated
 |      | Can throw exceptions                                   |
 |      | Threads?                                               |
 
+# Python-c notes #
+- Export with C linkage to not mangle the function names. **This will prevent function overloading!** (function with the same name are not allowed)
+```text
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+        namespace GPU {
+                float example_gpu_func(
+                        short a,
+                        short b);
+        }
+
+#ifdef __cplusplus
+}
+#endif
+```
+- Load in python and define return types if they are not integers
+```python
+import ctypes
+from ctypes import cdll
+
+ia_ADQAPI = cdll.LoadLibrary("./bin/ia_1488.so")
+ia_ADQAPI.example_gpu_func.restype = ctypes.c_float
+
+print(ia_ADQAPI.example_gpu_func(10,2))
+```
+
 # Cuda notes #
 - Use cuda-11.0
 - `nvcc` will automatically lookup relevant headers and libraries, so it can be used for compilation. It can even pass the non-gpu code to the standard compuler. But it will not be able to inject `-fprofile-arcs` and `-ftest-coverage` so it is better to use it for only building object files and not the total compilation.
+
+# Tools #
+- Check the objects in a library file
+```shell
+nm ./bin/ia_1488.so
+```
+
+- Check dependenices of library
+```shell
+ldd ./bin/ia_1488.so
+```
 
 # Build #
 - `gcc 4.8.5`

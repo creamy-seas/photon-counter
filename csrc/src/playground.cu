@@ -1,4 +1,6 @@
+#include <iostream>
 #include "playground.hpp"
+#include "colours.hpp"
 
 __global__ void example_gpu_func_kernel(int a, int b, float *c){
         *c = (float)(a * a + b * b);
@@ -20,7 +22,7 @@ float GPU::example_gpu_func(short a, short b) {
         cudaMalloc((void**) &dev_c, sizeof(float));
 
         // Kernel invoction
-        example_gpu_func_kernel<<<1,1>>>(1,2, dev_c);
+        example_gpu_func_kernel<<<1,1>>>(a, b, dev_c);
 
         // Copy back to device
         cudaMemcpy(
@@ -32,7 +34,9 @@ float GPU::example_gpu_func(short a, short b) {
 
 
         cudaFree(dev_c);
-        // OKGREEN("GPU KERNEL Complete!");
+        OKGREEN("GPU KERNEL Complete!");
+
+        std::cout << c << std::endl;
 
         return c;
 }
