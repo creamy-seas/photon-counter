@@ -5,9 +5,12 @@
 ```elisp
 ((nil
   (company-clang-arguments . ("-I/usr/include"
-                              "-I/home/antonov/photon_counting/csrc/includes"
+                              "-I/home/antonov/photon_counting/csrc/include"
+                              "-I/usr/local/cuda-11.0/include"
                               "-std=c++11"))
-  (flycheck-clang-include-path . ("/home/antonov/photon_counting/csrc/includes"))
+  (flycheck-clang-include-path . ("/home/antonov/photon_counting/csrc/include"
+                                  "/usr/local/cuda-11.0/include"
+                                  ))
   (flycheck-clang-definitions . ("LINUX")) ;; -D flags
   )
  (c++-mode
@@ -22,7 +25,7 @@
 sudo apt-get install libcppunit-dev lcov
 ```
 
-4. Install `Celeto` for benchmarking
+4. Install `Celero` for benchmarking
 ```shell
 git submodule update --init --recursive
 cd Celero
@@ -32,7 +35,7 @@ make
 
 # Test coverage
 
-https://quantum-optics-ride.gitlab.io/experimental/photon-counting/
+https://quantum-optics-ride.gitlab.io/photon-counting/
 
 # Links #
 - https://stackoverflow.com/questions/242894/cuda-driver-api-vs-cuda-runtime

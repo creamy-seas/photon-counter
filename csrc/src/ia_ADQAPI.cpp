@@ -29,7 +29,7 @@ void* master_setup(int blink, int clock_source, unsigned int trigger_mode) {
         //2. Find all ADQ units connect them. Store the address in adq_cu_ptr variable
         int no_of_devices = ADQControlUnit_FindDevices(adq_cu_ptr);
         if(no_of_devices == 0) {
-                FAIL("No devices found! Make sure all programs refferencing devices are closed");
+                FAIL("No devices found! Make sure all programs refferencing devices are closed and that the box is switched on.");
         }
 
         // Hard coded /////////////////////////////////////////////////////////

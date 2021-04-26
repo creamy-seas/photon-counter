@@ -1,3 +1,6 @@
+///////////////////////////////////////////////////////////////////////////////
+//             Functions for gpu processing of power measurements            //
+///////////////////////////////////////////////////////////////////////////////
 #include <string>
 
 #define xstr(s) _str(s)
@@ -30,7 +33,7 @@ namespace CPU {
 
         /*
           short* chA_data, chB_data:              raw data from the digitiser
-          unsigned int* sq_data:                  evaluate power
+          unsigned int* sq_data:                  evaluated power
           int no_points = samples_per_record * number of records
           number_of_threads:                      number of threads to launch
         */
@@ -44,10 +47,10 @@ namespace CPU {
 
         /*
           short* chA_data, chB_data:              raw data from the digitiser
-          unsigned int* sq_data:                  evaluate power
-          short chA_back, chB_back:               background set of measurements
+          unsigned int* sq_data:                  evaluated power
+          short chA_back, chB_back:               background average on both channels
           int no_points = samples_per_record * number of records
-          number_of_threads:                      number of threads to launch
+          int number_of_threads:                  number of threads to launch
         */
         void power_kernel(
                 short *chA_data,
@@ -61,10 +64,10 @@ namespace CPU {
 
         /*
           short* chA_data, chB_data:              raw data from the digitiser
-          unsigned int* sq_data:                  evaluate power
-          short* chA_back, chB_back:              background set of measurements
+          unsigned int* sq_data:                  evaluated power
+          short* chA_back, chB_back:              background set of measurements for both channels
           int no_points = samples_per_record * number of records
-          number_of_threads:                      number of threads to launch
+          int number_of_threads:                  number of threads to launch
         */
         void power_kernel(
                 short *chA_data,

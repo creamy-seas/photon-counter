@@ -17,7 +17,7 @@ private:
 
 public:
         void setUp(){
-                }
+        }
         void tearDown(){
         }
 

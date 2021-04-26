@@ -8,6 +8,7 @@
  P: Period of a pulse
 */
 
+#include <stdexcept>
 #include <stdio.h>
 #include <string>
 #include "colours.hpp"
@@ -57,6 +58,19 @@ __device__ void reduction_sum(
 __global__ void power_kernel_v1_no_background_runner(
         short *chA_data, short *chB_data, float *sq_data){
 
+        /*
+          chA
+          * 1  2   3   4    -> main axis (NP_POINTS=4)
+          * 5  6   7   8
+          * 9  10  11  12
+          * |
+          * repetition axis (R_POINTS=3)
+
+          * chB
+          * 0  1   0   1
+          * 1  0   1   0
+          * 2  2   2   2
+         */
         __shared__ PROCESSING_ARRAY_TYPE cache_array[R_POINTS];
 
         int np_coordinate = blockIdx.x;
@@ -82,8 +96,8 @@ __global__ void power_kernel_v1_no_background_runner(
                 __syncthreads();
 
                 // Summation
-                // reduction_sum(cache_array);
-                sq_data[np_coordinate] = (float)cache_array[0];// / R_POINTS;
+                reduction_sum(cache_array);
+                sq_data[np_coordinate] = (float)cache_array[0] / R_POINTS;
 
                 // Shift by number of allocated blocks along main-axis
                 np_coordinate += gridDim.x;
@@ -103,10 +117,14 @@ void GPU::power_kernel(
          a1 a2 a3 a4 ... b1 b2 b3 b4 ... c1 c2 c3 c4 ...
         */
 
-        // Ensure that allocate_memory_on_gpu has been called
+        // ==> Ensure that allocate_memory_on_gpu has been called
+
+#if R_POINTS %2 != 0
+        throw std::runtime_error("R_POINTS needs to be a even number");
+#endif
 
         // Copy input data over to GPU.
-        // Dereference the dev_xxx (which is the address where the GPU memory location is kept)
+        // Dereference the dev_ch? (which is the address where the GPU memory location is kept)
         // in order to get the actual memory location
         int success = 0;
         success += cudaMemcpy(*dev_chA_data, chA_data,
@@ -131,5 +149,5 @@ void GPU::power_kernel(
         if (success != 0)
                 FAIL("Failed to copy data FROM the GPU!");
 
-        // Ensure that free_memory_on_gpu is called
+        // Ensure that free_memory_on_gpu is called ==>
 }

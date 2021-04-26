@@ -13,8 +13,8 @@ CXXFLAGS += -std=c++11
 CUDA_FLAGS = -gencode arch=compute_61,code=compute_61 --machine 64 -ccbin=$(CXX)
 
 TFLAGS := -DTESTENV
-TFLAGS += -D R_POINTS=3
-TFLAGS += -D NP_POINTS=4
+TFLAGS += -D R_POINTS=4
+TFLAGS += -D NP_POINTS=3
 TFLAGS += -D PROCESSING_ARRAY_TYPE=int
 TFLAGS += -D THREADS_PER_BLOCK=1024
 
@@ -26,7 +26,7 @@ TLDLIBS += $(shell pkg-config --libs cppunit) # Unittest library
 
 BENCHMARKING=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 #cuda-memcheck
 
-INCS := -Iincludes # Location of header files
+INCS := -Iinclude # Location of header files
 INCS += -I/usr/local/cuda-11.0/include # Cuda headers
 INCS += -L/usr/local/cuda-11.0/lib64 # Cuda libraries
 INCS += -I./../Celero/include # Celero headers
@@ -52,22 +52,16 @@ COVERAGE_FOLDER:=./coverage
 COVERAGE_FILE:=$(COVERAGE_FOLDER)/coverage.info
 
 # Source and object files
-# CPP_SOURCE := ./src/ia_ADQAPI.cpp
+# CPP_SOURCE := ./src/ia_ADQAPI.cpp #example
 CPP_SOURCE := $(wildcard $(SOURCE_FOLDER)/*.cpp)
 CPP_OBJECTS := $(patsubst $(SOURCE_FOLDER)/%.cpp,$(BUILD_FOLDER)/%.o,$(CPP_SOURCE))
-
-# C_SOURCE := $(wildcard $(SOURCE_FOLDER)/*.c)
-# C_OBJECTS += $(patsubst $(SOURCE_FOLDER)/%.c,$(BUILD_FOLDER)/%.o,$(C_SOURCE))
-
 CUDA_SOURCE := $(wildcard $(SOURCE_FOLDER)/*.cu)
 CUDA_OBJECTS := $(patsubst $(SOURCE_FOLDER)/%.cu,$(BUILD_FOLDER)/%.o,$(CUDA_SOURCE))
 
-OBJECTS := $(CPP_OBJECTS) $(CUDA_OBJECTS) $(C_OBJECTS)
+OBJECTS := $(CPP_OBJECTS) $(CUDA_OBJECTS)
 
 TEST_SOURCE := $(wildcard $(TEST_FOLDER)/*.cpp)
-# TEST_SOURCE := $(TEST_FOLDER)/power_gpu_test.cpp $(TEST_FOLDER)/test_runner.cpp
-# TEST_SOURCE := $(TEST_FOLDER)/power_gpu_utils_test.cpp $(TEST_FOLDER)/test_runner.cpp
-# TEST_SOURCE := $(TEST_FOLDER)/playground_test.cpp $(TEST_FOLDER)/test_runner.cpp
+# TEST_SOURCE := $(TEST_FOLDER)/power_gpu_test.cpp $(TEST_FOLDER)/test_runner.cpp #example
 TEST_OBJECTS := $(patsubst $(TEST_FOLDER)/%.cpp,$(TEST_BUILD_FOLDER)/%.o,$(TEST_SOURCE))
 TEST_OBJECTS += $(patsubst $(SOURCE_FOLDER)/%.cpp,$(TEST_BUILD_FOLDER)/%.o,$(CPP_SOURCE))
 TEST_OBJECTS += $(patsubst $(SOURCE_FOLDER)/%.cu,$(TEST_BUILD_FOLDER)/%.o,$(CUDA_SOURCE))
@@ -88,17 +82,11 @@ $(BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cpp
 		@echo 🐋 [cpp] Building $^ ⟶ $@
 		$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -fPIC -c -o $@ $^
 
-# Building of c object files
-# $(BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.c
-#		@echo 🐋 [c] Building $^ ⟶ $@
-#		$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -fPIC -c -o $@ $^
-
 # Building of cuda object files
 $(BUILD_FOLDER)/%.o: $(SOURCE_FOLDER)/%.cu
 	@echo 🐍 [cu] Building $^ ⟶ $@
 	@nvcc $(CUDA_FLAGS) $(INCS) --compiler-options -fPIC -c -o $@ $^
 
-# src/ia_ADQAPI.cpp
 lib: $(OBJECTS)
 		$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -shared -o $(BIN_LIB) $^
 

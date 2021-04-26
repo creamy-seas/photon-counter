@@ -10,7 +10,6 @@ class UtilsTest : public CppUnit::TestFixture {
         CPPUNIT_TEST_SUITE( UtilsTest );
 
         // Population with tests
-        // CPPUNIT_TEST_EXCEPTION( 🐙, CppUnit::Exception );
         CPPUNIT_TEST( test_seconds_to_hours );
         CPPUNIT_TEST( test_float_to_string );
         CPPUNIT_TEST( test_copy );
