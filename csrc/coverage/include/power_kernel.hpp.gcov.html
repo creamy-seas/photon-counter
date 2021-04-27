@@ -1,0 +1,235 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - 🐋 Test Coverage - include/power_kernel.hpp</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">include</a> - power_kernel.hpp<span style="font-size: 80%;"> (source / <a href="power_kernel.hpp.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">🐋 Test Coverage</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-27 15:16:36</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : ///////////////////////////////////////////////////////////////////////////////</a>
+<span class="lineNum">       2 </span>            : //             Functions for gpu processing of power measurements            //
+<span class="lineNum">       3 </span>            : ///////////////////////////////////////////////////////////////////////////////
+<span class="lineNum">       4 </span>            : #include &lt;string&gt;
+<span class="lineNum">       5 </span>            : 
+<span class="lineNum">       6 </span>            : #define xstr(s) _str(s)
+<span class="lineNum">       7 </span>            : #define _str(s) #s
+<span class="lineNum">       8 </span>            : 
+<span class="lineNum">       9 </span>            : #ifndef PROCESSING_ARRAY_TYPE
+<span class="lineNum">      10 </span>            : #define PROCESSING_ARRAY_TYPE int
+<span class="lineNum">      11 </span>            : #endif
+<span class="lineNum">      12 </span>            : 
+<span class="lineNum">      13 </span>            : #ifndef R_POINTS
+<span class="lineNum">      14 </span>            : #define R_POINTS 1000
+<span class="lineNum">      15 </span>            : #endif
+<span class="lineNum">      16 </span>            : 
+<span class="lineNum">      17 </span>            : #ifndef NP_POINTS
+<span class="lineNum">      18 </span>            : #define NP_POINTS 1000
+<span class="lineNum">      19 </span>            : #endif
+<span class="lineNum">      20 </span>            : 
+<span class="lineNum">      21 </span>            : #ifndef THREADS_PER_BLOCK
+<span class="lineNum">      22 </span>            : #define THREADS_PER_BLOCK 1024
+<span class="lineNum">      23 </span>            : #endif
+<span class="lineNum">      24 </span>            : 
+<span class="lineNum">      25 </span>            : #define BLOCKS NP_POINTS
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span>            : #define TOTAL_POINTS NP_POINTS*R_POINTS
+<span class="lineNum">      28 </span>            : 
+<span class="lineNum">      29 </span>            : #ifndef POWER_KERNEL_HPP
+<span class="lineNum">      30 </span>            : #define POWER_KERNEL_HPP
+<span class="lineNum">      31 </span>            : 
+<span class="lineNum">      32 </span>            : namespace CPU {
+<span class="lineNum">      33 </span>            : 
+<span class="lineNum">      34 </span>            :         /*
+<span class="lineNum">      35 </span>            :           short* chA_data, chB_data:              raw data from the digitiser
+<span class="lineNum">      36 </span>            :           unsigned int* sq_data:                  evaluated power
+<span class="lineNum">      37 </span>            :           int no_points = samples_per_record * number of records
+<span class="lineNum">      38 </span>            :           number_of_threads:                      number of threads to launch
+<span class="lineNum">      39 </span>            :         */
+<span class="lineNum">      40 </span>            :         void power_kernel(
+<span class="lineNum">      41 </span>            :                 short* chA_data,
+<span class="lineNum">      42 </span>            :                 short* chB_data,
+<span class="lineNum">      43 </span>            :                 unsigned int* sq_data,
+<span class="lineNum">      44 </span>            :                 int no_points,
+<span class="lineNum">      45 </span>            :                 int number_of_threads
+<span class="lineNum">      46 </span>            :                 );
+<span class="lineNum">      47 </span>            : 
+<span class="lineNum">      48 </span>            :         /*
+<span class="lineNum">      49 </span>            :           short* chA_data, chB_data:              raw data from the digitiser
+<span class="lineNum">      50 </span>            :           unsigned int* sq_data:                  evaluated power
+<span class="lineNum">      51 </span>            :           short chA_back, chB_back:               background average on both channels
+<span class="lineNum">      52 </span>            :           int no_points = samples_per_record * number of records
+<span class="lineNum">      53 </span>            :           int number_of_threads:                  number of threads to launch
+<span class="lineNum">      54 </span>            :         */
+<span class="lineNum">      55 </span>            :         void power_kernel(
+<span class="lineNum">      56 </span>            :                 short *chA_data,
+<span class="lineNum">      57 </span>            :                 short *chB_data,
+<span class="lineNum">      58 </span>            :                 unsigned int *sq_data,
+<span class="lineNum">      59 </span>            :                 short chA_back,
+<span class="lineNum">      60 </span>            :                 short chB_back,
+<span class="lineNum">      61 </span>            :                 int no_points,
+<span class="lineNum">      62 </span>            :                 int number_of_threads
+<span class="lineNum">      63 </span>            :                 );
+<span class="lineNum">      64 </span>            : 
+<span class="lineNum">      65 </span>            :         /*
+<span class="lineNum">      66 </span>            :           short* chA_data, chB_data:              raw data from the digitiser
+<span class="lineNum">      67 </span>            :           unsigned int* sq_data:                  evaluated power
+<span class="lineNum">      68 </span>            :           short* chA_back, chB_back:              background set of measurements for both channels
+<span class="lineNum">      69 </span>            :           int no_points = samples_per_record * number of records
+<span class="lineNum">      70 </span>            :           int number_of_threads:                  number of threads to launch
+<span class="lineNum">      71 </span>            :         */
+<span class="lineNum">      72 </span>            :         void power_kernel(
+<span class="lineNum">      73 </span>            :                 short *chA_data,
+<span class="lineNum">      74 </span>            :                 short *chB_data,
+<span class="lineNum">      75 </span>            :                 unsigned int *sq_data,
+<span class="lineNum">      76 </span>            :                 short *chA_back,
+<span class="lineNum">      77 </span>            :                 short *chB_back,
+<span class="lineNum">      78 </span>            :                 int no_points,
+<span class="lineNum">      79 </span>            :                 int number_of_threads
+<span class="lineNum">      80 </span>            :                 );
+<span class="lineNum">      81 </span>            : }
+<span class="lineNum">      82 </span>            : 
+<span class="lineNum">      83 </span>            : namespace GPU {
+<span class="lineNum">      84 </span>            :     /*
+<span class="lineNum">      85 </span>            :      * The following will need to be defined:
+<span class="lineNum">      86 </span>            :      * PROCESSING_ARRAY_TYPE
+<span class="lineNum">      87 </span>            :      * R_POINTS
+<span class="lineNum">      88 </span>            :      * NP_POINTS
+<span class="lineNum">      89 </span>            :      * THREADS_PER_BLOCK
+<span class="lineNum">      90 </span>            :      */
+<a name="91"><span class="lineNum">      91 </span>            : </a>
+<span class="lineNum">      92 </span>            :     // Communication of kernel parameters to python
+<span class="lineNum">      93 </span><span class="lineCov">          1 :     struct PowerKernelParameters {</span>
+<span class="lineNum">      94 </span>            :         int r_points;
+<span class="lineNum">      95 </span>            :         int np_points;
+<span class="lineNum">      96 </span>            :         int blocks;
+<span class="lineNum">      97 </span>            :         int threads_per_block;
+<span class="lineNum">      98 </span>            :         std::string processing_array_type;
+<span class="lineNum">      99 </span>            : 
+<span class="lineNum">     100 </span>            :         PowerKernelParameters(
+<span class="lineNum">     101 </span>            :             int r_points,
+<span class="lineNum">     102 </span>            :             int np_points,
+<span class="lineNum">     103 </span>            :             std::string processing_array_type,
+<span class="lineNum">     104 </span>            :             int blocks,
+<span class="lineNum">     105 </span>            :             int threads_per_block);
+<span class="lineNum">     106 </span>            :         void print();
+<span class="lineNum">     107 </span>            :     };
+<span class="lineNum">     108 </span>            :     PowerKernelParameters fetch_kernel_parameters();
+<span class="lineNum">     109 </span>            :     void check_parameters();
+<span class="lineNum">     110 </span>            : 
+<span class="lineNum">     111 </span>            :     // Preparation and completion of memory allocation on GPU
+<span class="lineNum">     112 </span>            :     void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, float **dev_sq_data);
+<span class="lineNum">     113 </span>            :     void free_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, float **dev_sq_data);
+<span class="lineNum">     114 </span>            :     void copy_background_arrays_to_gpu(short *chA_background, short *chB_background);
+<span class="lineNum">     115 </span>            : 
+<span class="lineNum">     116 </span>            :     void power_kernel_v1_no_background(
+<span class="lineNum">     117 </span>            :         short *chA_data,
+<span class="lineNum">     118 </span>            :         short *chB_data,
+<span class="lineNum">     119 </span>            :         float *sq_data,
+<span class="lineNum">     120 </span>            :         // for GPU memory pass in the address (&amp;POINTER) of the memory locators
+<span class="lineNum">     121 </span>            :         short **dev_chA_data,
+<span class="lineNum">     122 </span>            :         short **dev_chB_data,
+<span class="lineNum">     123 </span>            :         float **dev_sq_data);
+<span class="lineNum">     124 </span>            :     /*
+<span class="lineNum">     125 </span>            :       short* chA_data, chB_data:              raw data from the digitiser
+<span class="lineNum">     126 </span>            :       unsigned int* sq_data:                  evaluated power
+<span class="lineNum">     127 </span>            :       short chA_back, chB_back:               background average on both channels
+<span class="lineNum">     128 </span>            :       int no_points = samples_per_record * number of records
+<span class="lineNum">     129 </span>            :       int number_of_threads:                  number of threads to launch
+<span class="lineNum">     130 </span>            :     */
+<span class="lineNum">     131 </span>            :     void power_kernel_v2_const_background(
+<span class="lineNum">     132 </span>            :         short *chA_data,
+<span class="lineNum">     133 </span>            :         short *chB_data,
+<span class="lineNum">     134 </span>            :         float *sq_data,
+<span class="lineNum">     135 </span>            :         short chA_back,
+<span class="lineNum">     136 </span>            :         short chB_back,
+<span class="lineNum">     137 </span>            :         short **dev_chA_data,
+<span class="lineNum">     138 </span>            :         short **dev_chB_data,
+<span class="lineNum">     139 </span>            :         float **dev_sq_data
+<span class="lineNum">     140 </span>            :         );
+<span class="lineNum">     141 </span>            : 
+<span class="lineNum">     142 </span>            :     /*
+<span class="lineNum">     143 </span>            :       short* chA_data, chB_data:              raw data from the digitiser
+<span class="lineNum">     144 </span>            :       unsigned int* sq_data:                  evaluated power
+<span class="lineNum">     145 </span>            :       short chA_back, chB_back:               background average on both channels
+<span class="lineNum">     146 </span>            :       int no_points = samples_per_record * number of records
+<span class="lineNum">     147 </span>            :       int number_of_threads:                  number of threads to launch
+<span class="lineNum">     148 </span>            :     */
+<span class="lineNum">     149 </span>            :     void power_kernel_v3_background(
+<span class="lineNum">     150 </span>            :         short *chA_data,
+<span class="lineNum">     151 </span>            :         short *chB_data,
+<span class="lineNum">     152 </span>            :         float *sq_data,
+<span class="lineNum">     153 </span>            :         short **dev_chA_data,
+<span class="lineNum">     154 </span>            :         short **dev_chB_data,
+<span class="lineNum">     155 </span>            :         float **dev_sq_data
+<span class="lineNum">     156 </span>            :         );
+<span class="lineNum">     157 </span>            : }
+<span class="lineNum">     158 </span>            : 
+<span class="lineNum">     159 </span>            : #endif
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2021-02-03 20:28:38</td>
+            <td class="headerValue">2021-04-27 15:16:36</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">9</td>
@@ -62,38 +62,38 @@
 <pre class="source">
 <a name="1"><span class="lineNum">       1 </span>            : #include &quot;progress_bar.hpp&quot;</a>
 <span class="lineNum">       2 </span>            : 
-<a name="3"><span class="lineNum">       3 </span><span class="lineCov">          2 : ProgressBar::ProgressBar() {}</span></a>
+<a name="3"><span class="lineNum">       3 </span><span class="lineCov">          1 : ProgressBar::ProgressBar() {}</span></a>
 <span class="lineNum">       4 </span>            : 
-<span class="lineNum">       5 </span><span class="lineCov">          4 : ProgressBar::ProgressBar(unsigned long n_, const char* description_, std::ostream&amp; out_){</span>
+<span class="lineNum">       5 </span><span class="lineCov">          2 : ProgressBar::ProgressBar(unsigned long n_, const char* description_, std::ostream&amp; out_){</span>
 <span class="lineNum">       6 </span>            : 
-<span class="lineNum">       7 </span><span class="lineCov">          4 :         n = n_;</span>
-<span class="lineNum">       8 </span><span class="lineCov">          4 :         frequency_update = n_;</span>
-<span class="lineNum">       9 </span><span class="lineCov">          4 :         description = description_;</span>
-<span class="lineNum">      10 </span><span class="lineCov">          4 :         out = &amp;out_;</span>
+<span class="lineNum">       7 </span><span class="lineCov">          2 :         n = n_;</span>
+<span class="lineNum">       8 </span><span class="lineCov">          2 :         frequency_update = n_;</span>
+<span class="lineNum">       9 </span><span class="lineCov">          2 :         description = description_;</span>
+<span class="lineNum">      10 </span><span class="lineCov">          2 :         out = &amp;out_;</span>
 <span class="lineNum">      11 </span>            : 
-<span class="lineNum">      12 </span><span class="lineCov">          4 :         unit_bar = &quot;=&quot;;</span>
-<span class="lineNum">      13 </span><span class="lineCov">          4 :         unit_space = &quot; &quot;;</span>
-<span class="lineNum">      14 </span><span class="lineCov">          4 :         desc_width = std::strlen(description);  // character width of description field</span>
+<span class="lineNum">      12 </span><span class="lineCov">          2 :         unit_bar = &quot;=&quot;;</span>
+<span class="lineNum">      13 </span><span class="lineCov">          2 :         unit_space = &quot; &quot;;</span>
+<span class="lineNum">      14 </span><span class="lineCov">          2 :         desc_width = std::strlen(description);  // character width of description field</span>
 <span class="lineNum">      15 </span>            : 
-<a name="16"><span class="lineNum">      16 </span><span class="lineCov">          4 : }</span></a>
+<a name="16"><span class="lineNum">      16 </span><span class="lineCov">          2 : }</span></a>
 <span class="lineNum">      17 </span>            : 
-<span class="lineNum">      18 </span><span class="lineCov">          4 : void ProgressBar::SetFrequencyUpdate(unsigned long frequency_update_){</span>
+<span class="lineNum">      18 </span><span class="lineCov">          2 : void ProgressBar::SetFrequencyUpdate(unsigned long frequency_update_){</span>
 <span class="lineNum">      19 </span>            : 
-<span class="lineNum">      20 </span><span class="lineCov">          4 :         if(frequency_update_ &gt; n){</span>
-<span class="lineNum">      21 </span><span class="lineCov">          2 :                 frequency_update = n;    // prevents crash if freq_updates_ &gt; n_</span>
+<span class="lineNum">      20 </span><span class="lineCov">          2 :         if(frequency_update_ &gt; n){</span>
+<span class="lineNum">      21 </span><span class="lineCov">          1 :                 frequency_update = n;    // prevents crash if freq_updates_ &gt; n_</span>
 <span class="lineNum">      22 </span>            :         }
 <span class="lineNum">      23 </span>            :         else{
-<span class="lineNum">      24 </span><span class="lineCov">          2 :                 frequency_update = frequency_update_;</span>
+<span class="lineNum">      24 </span><span class="lineCov">          1 :                 frequency_update = frequency_update_;</span>
 <span class="lineNum">      25 </span>            :         }
-<a name="26"><span class="lineNum">      26 </span><span class="lineCov">          4 : }</span></a>
+<a name="26"><span class="lineNum">      26 </span><span class="lineCov">          2 : }</span></a>
 <span class="lineNum">      27 </span>            : 
-<span class="lineNum">      28 </span><span class="lineCov">          2 : void ProgressBar::SetStyle(const char* unit_bar_, const char* unit_space_){</span>
+<span class="lineNum">      28 </span><span class="lineCov">          1 : void ProgressBar::SetStyle(const char* unit_bar_, const char* unit_space_){</span>
 <span class="lineNum">      29 </span>            : 
-<span class="lineNum">      30 </span><span class="lineCov">          2 :         unit_bar = unit_bar_;</span>
-<span class="lineNum">      31 </span><span class="lineCov">          2 :         unit_space = unit_space_;</span>
-<a name="32"><span class="lineNum">      32 </span><span class="lineCov">          2 : }</span></a>
+<span class="lineNum">      30 </span><span class="lineCov">          1 :         unit_bar = unit_bar_;</span>
+<span class="lineNum">      31 </span><span class="lineCov">          1 :         unit_space = unit_space_;</span>
+<a name="32"><span class="lineNum">      32 </span><span class="lineCov">          1 : }</span></a>
 <span class="lineNum">      33 </span>            : 
-<span class="lineNum">      34 </span><span class="lineCov">         10 : int ProgressBar::GetConsoleWidth(){</span>
+<span class="lineNum">      34 </span><span class="lineCov">          5 : int ProgressBar::GetConsoleWidth(){</span>
 <span class="lineNum">      35 </span>            : 
 <span class="lineNum">      36 </span>            :         int width;
 <span class="lineNum">      37 </span>            : 
@@ -103,20 +103,20 @@
 <span class="lineNum">      41 </span>            :         width = csbi.srWindow.Right - csbi.srWindow.Left;
 <span class="lineNum">      42 </span>            : #else
 <span class="lineNum">      43 </span>            :         struct winsize win;
-<span class="lineNum">      44 </span><span class="lineCov">         10 :         ioctl(0, TIOCGWINSZ, &amp;win);</span>
-<span class="lineNum">      45 </span><span class="lineCov">         10 :         width = win.ws_col;</span>
+<span class="lineNum">      44 </span><span class="lineCov">          5 :         ioctl(0, TIOCGWINSZ, &amp;win);</span>
+<span class="lineNum">      45 </span><span class="lineCov">          5 :         width = win.ws_col;</span>
 <span class="lineNum">      46 </span>            : #endif
 <span class="lineNum">      47 </span>            : 
-<span class="lineNum">      48 </span><span class="lineCov">         10 :         return width;</span>
+<span class="lineNum">      48 </span><span class="lineCov">          5 :         return width;</span>
 <a name="49"><span class="lineNum">      49 </span>            : }</a>
 <span class="lineNum">      50 </span>            : 
-<span class="lineNum">      51 </span><span class="lineCov">         10 : int ProgressBar::GetBarLength(){</span>
+<span class="lineNum">      51 </span><span class="lineCov">          5 : int ProgressBar::GetBarLength(){</span>
 <span class="lineNum">      52 </span>            : 
 <span class="lineNum">      53 </span>            :         // get console width and according adjust the length of the progress bar
 <span class="lineNum">      54 </span>            : 
-<span class="lineNum">      55 </span><span class="lineCov">         10 :         int bar_length = static_cast&lt;int&gt;((GetConsoleWidth() - desc_width - CHARACTER_WIDTH_PERCENTAGE) / 2.);</span>
+<span class="lineNum">      55 </span><span class="lineCov">          5 :         int bar_length = static_cast&lt;int&gt;((GetConsoleWidth() - desc_width - CHARACTER_WIDTH_PERCENTAGE) / 2.);</span>
 <span class="lineNum">      56 </span>            : 
-<span class="lineNum">      57 </span><span class="lineCov">         10 :         return bar_length;</span>
+<span class="lineNum">      57 </span><span class="lineCov">          5 :         return bar_length;</span>
 <a name="58"><span class="lineNum">      58 </span>            : }</a>
 <span class="lineNum">      59 </span>            : 
 <span class="lineNum">      60 </span><span class="lineNoCov">          0 : void ProgressBar::ClearBarField(){</span>
@@ -127,43 +127,43 @@
 <span class="lineNum">      65 </span><span class="lineNoCov">          0 :         *out &lt;&lt; &quot;\r&quot; &lt;&lt; std::flush;</span>
 <a name="66"><span class="lineNum">      66 </span><span class="lineNoCov">          0 : }</span></a>
 <span class="lineNum">      67 </span>            : 
-<span class="lineNum">      68 </span><span class="lineCov">        202 : void ProgressBar::Progressed(unsigned long idx_)</span>
+<span class="lineNum">      68 </span><span class="lineCov">        101 : void ProgressBar::Progressed(unsigned long idx_)</span>
 <span class="lineNum">      69 </span>            : {
 <span class="lineNum">      70 </span>            :         try{
-<span class="lineNum">      71 </span><span class="lineCov">        202 :                 if(idx_ &gt; n) throw idx_;</span>
+<span class="lineNum">      71 </span><span class="lineCov">        101 :                 if(idx_ &gt; n) throw idx_;</span>
 <span class="lineNum">      72 </span>            : 
 <span class="lineNum">      73 </span>            :                 // determines whether to update the progress bar from frequency_update
-<span class="lineNum">      74 </span><span class="lineCov">        404 :                 if ((idx_ != n) &amp;&amp; (idx_ % (n/frequency_update) != 0)) return;</span>
+<span class="lineNum">      74 </span><span class="lineCov">        202 :                 if ((idx_ != n) &amp;&amp; (idx_ % (n/frequency_update) != 0)) return;</span>
 <span class="lineNum">      75 </span>            : 
 <span class="lineNum">      76 </span>            :                 // calculate the size of the progress bar
-<span class="lineNum">      77 </span><span class="lineCov">         10 :                 int bar_size = GetBarLength();</span>
+<span class="lineNum">      77 </span><span class="lineCov">          5 :                 int bar_size = GetBarLength();</span>
 <span class="lineNum">      78 </span>            : 
 <span class="lineNum">      79 </span>            :                 // calculate percentage of progress
-<span class="lineNum">      80 </span><span class="lineCov">         10 :                 double progress_percent = idx_* TOTAL_PERCENTAGE/n;</span>
+<span class="lineNum">      80 </span><span class="lineCov">          5 :                 double progress_percent = idx_* TOTAL_PERCENTAGE/n;</span>
 <span class="lineNum">      81 </span>            : 
 <span class="lineNum">      82 </span>            :                 // calculate the percentage value of a unit bar
-<span class="lineNum">      83 </span><span class="lineCov">         10 :                 double percent_per_unit_bar = TOTAL_PERCENTAGE/bar_size;</span>
+<span class="lineNum">      83 </span><span class="lineCov">          5 :                 double percent_per_unit_bar = TOTAL_PERCENTAGE/bar_size;</span>
 <span class="lineNum">      84 </span>            : 
 <span class="lineNum">      85 </span>            :                 // display progress bar
-<span class="lineNum">      86 </span><span class="lineCov">         10 :                 *out &lt;&lt; &quot; &quot; &lt;&lt; description &lt;&lt; &quot; [&quot;;</span>
+<span class="lineNum">      86 </span><span class="lineCov">          5 :                 *out &lt;&lt; &quot; &quot; &lt;&lt; description &lt;&lt; &quot; [&quot;;</span>
 <span class="lineNum">      87 </span>            : 
-<span class="lineNum">      88 </span><span class="lineCov">        320 :                 for(int bar_length=0;bar_length&lt;=bar_size-1;++bar_length){</span>
-<span class="lineNum">      89 </span><span class="lineCov">        310 :                         if(bar_length*percent_per_unit_bar&lt;progress_percent){</span>
-<span class="lineNum">      90 </span><span class="lineCov">        188 :                                 *out &lt;&lt; unit_bar;</span>
+<span class="lineNum">      88 </span><span class="lineCov">        545 :                 for(int bar_length=0;bar_length&lt;=bar_size-1;++bar_length){</span>
+<span class="lineNum">      89 </span><span class="lineCov">        540 :                         if(bar_length*percent_per_unit_bar&lt;progress_percent){</span>
+<span class="lineNum">      90 </span><span class="lineCov">        323 :                                 *out &lt;&lt; unit_bar;</span>
 <span class="lineNum">      91 </span>            :                         }
 <span class="lineNum">      92 </span>            :                         else{
-<span class="lineNum">      93 </span><span class="lineCov">        122 :                                 *out &lt;&lt; unit_space;</span>
+<span class="lineNum">      93 </span><span class="lineCov">        217 :                                 *out &lt;&lt; unit_space;</span>
 <span class="lineNum">      94 </span>            :                         }
 <span class="lineNum">      95 </span>            :                 }
 <span class="lineNum">      96 </span>            : 
-<span class="lineNum">      97 </span><span class="lineCov">         10 :                 *out &lt;&lt; &quot;]&quot; &lt;&lt; std::setw(CHARACTER_WIDTH_PERCENTAGE + 1) &lt;&lt; std::setprecision(1) &lt;&lt; std::fixed &lt;&lt; progress_percent &lt;&lt; &quot;%\r&quot; &lt;&lt; std::flush;</span>
+<span class="lineNum">      97 </span><span class="lineCov">          5 :                 *out &lt;&lt; &quot;]&quot; &lt;&lt; std::setw(CHARACTER_WIDTH_PERCENTAGE + 1) &lt;&lt; std::setprecision(1) &lt;&lt; std::fixed &lt;&lt; progress_percent &lt;&lt; &quot;%\r&quot; &lt;&lt; std::flush;</span>
 <span class="lineNum">      98 </span>            :         }
 <span class="lineNum">      99 </span><span class="lineNoCov">          0 :         catch(unsigned long e){</span>
 <span class="lineNum">     100 </span><span class="lineNoCov">          0 :                 ClearBarField();</span>
 <span class="lineNum">     101 </span><span class="lineNoCov">          0 :                 std::cerr &lt;&lt; &quot;PROGRESS_BAR_EXCEPTION: _idx (&quot; &lt;&lt; e &lt;&lt; &quot;) went out of bounds, greater than n (&quot; &lt;&lt; n &lt;&lt; &quot;).&quot; &lt;&lt; std::endl &lt;&lt; std::flush;</span>
 <a name="102"><span class="lineNum">     102 </span>            :         }</a>
 <span class="lineNum">     103 </span>            : 
-<span class="lineNum">     104 </span><span class="lineCov">          6 : }</span>
+<span class="lineNum">     104 </span><span class="lineCov">          3 : }</span>
 </pre>
       </td>
     </tr>

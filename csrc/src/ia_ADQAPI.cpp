@@ -8,40 +8,40 @@
 #define INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERECNCE
 
 int GetMaxNofSamplesFromNofRecords(void* adq_cu_ptr, int no_of_records){
-        unsigned int max_number_of_samples = 0;
-        ADQ_GetMaxNofRecordsFromNofSamples(adq_cu_ptr, 1, no_of_records, &max_number_of_samples);
-        return max_number_of_samples;
+    unsigned int max_number_of_samples = 0;
+    ADQ_GetMaxNofRecordsFromNofSamples(adq_cu_ptr, 1, no_of_records, &max_number_of_samples);
+    return max_number_of_samples;
 }
 
 int GetMaxNofRecordsFromNofSamples(void* adq_cu_ptr, int no_of_samples){
-        unsigned int max_number_of_records = 0;
-        ADQ_GetMaxNofRecordsFromNofSamples(adq_cu_ptr, 1, no_of_samples, &max_number_of_records);
-        return max_number_of_records;
+    unsigned int max_number_of_records = 0;
+    ADQ_GetMaxNofRecordsFromNofSamples(adq_cu_ptr, 1, no_of_samples, &max_number_of_records);
+    return max_number_of_records;
 }
 
 // Connect to the ADQ unit and setup 400MHz data acquisition
 void* master_setup(int blink, int clock_source, unsigned int trigger_mode) {
 
-        //1. Create an instance of the ADQControlUnit, required to find and setup ADQ devices
-        void* adq_cu_ptr = CreateADQControlUnit();
-        ADQControlUnit_EnableErrorTrace(adq_cu_ptr, LOG_LEVEL_INFO, ".");
+    //1. Create an instance of the ADQControlUnit, required to find and setup ADQ devices
+    void* adq_cu_ptr = CreateADQControlUnit();
+    ADQControlUnit_EnableErrorTrace(adq_cu_ptr, LOG_LEVEL_INFO, ".");
 
-        //2. Find all ADQ units connect them. Store the address in adq_cu_ptr variable
-        int no_of_devices = ADQControlUnit_FindDevices(adq_cu_ptr);
-        if(no_of_devices == 0) {
-                FAIL("No devices found! Make sure all programs refferencing devices are closed and that the box is switched on.");
-        }
+    //2. Find all ADQ units connect them. Store the address in adq_cu_ptr variable
+    int no_of_devices = ADQControlUnit_FindDevices(adq_cu_ptr);
+    if(no_of_devices == 0) {
+        FAIL("No devices found! Make sure all programs refferencing devices are closed and that the box is switched on.");
+    }
 
-        // Hard coded /////////////////////////////////////////////////////////
-        // Set the data format to 14 bit unpacked, to map 1to1 the collected data memory inefficiently, but quickly
-        ADQ_SetDataFormat(adq_cu_ptr, 1, 1);
+    // Hard coded /////////////////////////////////////////////////////////
+    // Set the data format to 14 bit unpacked, to map 1to1 the collected data memory inefficiently, but quickly
+    ADQ_SetDataFormat(adq_cu_ptr, 1, 1);
 
-        // Synthesise 400MHz signal from the 10MHz one
-        // (phase locked loop generates a clock @ f*800/divider_value, so in this case its 400MHz. That is the sampling frequency)
-        ADQ_SetPllFreqDivider(adq_cu_ptr, 1, 2);
+    // Synthesise 400MHz signal from the 10MHz one
+    // (phase locked loop generates a clock @ f*800/divider_value, so in this case its 400MHz. That is the sampling frequency)
+    ADQ_SetPllFreqDivider(adq_cu_ptr, 1, 2);
 
-        // Variable
-        if (blink == 1) {
+    // Variable
+    if (blink == 1) {
                 YELLOWBG("Blinking");
                 ADQ_Blink(adq_cu_ptr, 1);
                 OKGREEN("Blinking complete!");

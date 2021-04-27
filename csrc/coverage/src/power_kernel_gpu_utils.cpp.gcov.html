@@ -31,17 +31,17 @@
             <td class="headerValue">🐋 Test Coverage</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntry">41</td>
             <td class="headerCovTableEntry">43</td>
-            <td class="headerCovTableEntryHi">95.3 %</td>
+            <td class="headerCovTableEntry">45</td>
+            <td class="headerCovTableEntryHi">95.6 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2021-02-03 20:28:38</td>
+            <td class="headerValue">2021-04-27 15:16:36</td>
             <td></td>
             <td class="headerItem">Functions:</td>
-            <td class="headerCovTableEntry">5</td>
-            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntry">6</td>
+            <td class="headerCovTableEntry">6</td>
             <td class="headerCovTableEntryHi">100.0 %</td>
           </tr>
           <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
@@ -71,90 +71,95 @@
 <span class="lineNum">       9 </span>            : /*
 <a name="10"><span class="lineNum">      10 </span>            :   Suite for referencing the parametesr that the GPU kernel was compiled with</a>
 <span class="lineNum">      11 </span>            : */
-<span class="lineNum">      12 </span><span class="lineCov">          2 : GPU::PowerKernelParameters::PowerKernelParameters(</span>
-<span class="lineNum">      13 </span>            :         int r_points,
-<span class="lineNum">      14 </span>            :         int np_points,
-<span class="lineNum">      15 </span>            :         std::string processing_array_type,
-<span class="lineNum">      16 </span>            :         int blocks,
-<span class="lineNum">      17 </span>            :         int threads_per_block
-<span class="lineNum">      18 </span><span class="lineCov">          2 :         ){</span>
-<span class="lineNum">      19 </span><span class="lineCov">          2 :         this-&gt;r_points = r_points;</span>
-<span class="lineNum">      20 </span><span class="lineCov">          2 :         this-&gt;np_points = np_points;</span>
-<span class="lineNum">      21 </span><span class="lineCov">          2 :         this-&gt;processing_array_type = processing_array_type;</span>
-<span class="lineNum">      22 </span><span class="lineCov">          2 :         this-&gt;blocks = blocks;</span>
-<span class="lineNum">      23 </span><span class="lineCov">          2 :         this-&gt;threads_per_block = threads_per_block;</span>
+<span class="lineNum">      12 </span><span class="lineCov">          1 : GPU::PowerKernelParameters::PowerKernelParameters(</span>
+<span class="lineNum">      13 </span>            :     int r_points,
+<span class="lineNum">      14 </span>            :     int np_points,
+<span class="lineNum">      15 </span>            :     std::string processing_array_type,
+<span class="lineNum">      16 </span>            :     int blocks,
+<span class="lineNum">      17 </span>            :     int threads_per_block
+<span class="lineNum">      18 </span><span class="lineCov">          1 :     ){</span>
+<span class="lineNum">      19 </span><span class="lineCov">          1 :     this-&gt;r_points = r_points;</span>
+<span class="lineNum">      20 </span><span class="lineCov">          1 :     this-&gt;np_points = np_points;</span>
+<span class="lineNum">      21 </span><span class="lineCov">          1 :     this-&gt;processing_array_type = processing_array_type;</span>
+<span class="lineNum">      22 </span><span class="lineCov">          1 :     this-&gt;blocks = blocks;</span>
+<span class="lineNum">      23 </span><span class="lineCov">          1 :     this-&gt;threads_per_block = threads_per_block;</span>
 <span class="lineNum">      24 </span>            : 
-<span class="lineNum">      25 </span><span class="lineCov">          2 :         this-&gt;print();</span>
-<a name="26"><span class="lineNum">      26 </span><span class="lineCov">          2 : }</span></a>
+<span class="lineNum">      25 </span><span class="lineCov">          1 :     this-&gt;print();</span>
+<a name="26"><span class="lineNum">      26 </span><span class="lineCov">          1 : }</span></a>
 <span class="lineNum">      27 </span>            : 
-<span class="lineNum">      28 </span><span class="lineCov">          2 : void GPU::PowerKernelParameters::print(){</span>
-<span class="lineNum">      29 </span><span class="lineCov">          2 :         OKBLUE(&quot;===========================================&quot;);</span>
-<span class="lineNum">      30 </span><span class="lineCov">          2 :         RED(&quot;          **POWER KERNEL**&quot;);</span>
-<span class="lineNum">      31 </span>            : 
-<span class="lineNum">      32 </span><span class="lineCov">          2 :         OKBLUE(&quot;Data Parameters&quot;);</span>
-<span class="lineNum">      33 </span><span class="lineCov">          2 :         printf(&quot;R_POINTS: %i\n&quot;, this-&gt;r_points );</span>
-<span class="lineNum">      34 </span><span class="lineCov">          2 :         printf(&quot;NP_POINTS: %i\n&quot;, this-&gt;np_points );</span>
-<span class="lineNum">      35 </span>            : 
-<span class="lineNum">      36 </span><span class="lineCov">          2 :         OKBLUE(&quot;Processing Parameters&quot;);</span>
-<span class="lineNum">      37 </span><span class="lineCov">          2 :         printf(&quot;CACHED ARRAY TYPE: %s\n&quot;, this-&gt;processing_array_type.c_str() );</span>
-<span class="lineNum">      38 </span><span class="lineCov">          2 :         printf(&quot;BLOCKS: %i\n&quot;, this-&gt;blocks );</span>
-<span class="lineNum">      39 </span><span class="lineCov">          2 :         printf(&quot;THREADS_PER_BLOCK: %i\n&quot;, this-&gt;threads_per_block );</span>
+<span class="lineNum">      28 </span><span class="lineCov">          2 : void GPU::check_parameters() {</span>
+<span class="lineNum">      29 </span>            :     if (R_POINTS % 2 != 0)
+<span class="lineNum">      30 </span>            :         throw std::runtime_error(&quot;R_POINTS needs to be a even number&quot;);
+<a name="31"><span class="lineNum">      31 </span><span class="lineCov">          2 : }</span></a>
+<span class="lineNum">      32 </span>            : 
+<span class="lineNum">      33 </span><span class="lineCov">          1 : void GPU::PowerKernelParameters::print(){</span>
+<span class="lineNum">      34 </span><span class="lineCov">          1 :     OKBLUE(&quot;===========================================&quot;);</span>
+<span class="lineNum">      35 </span><span class="lineCov">          1 :     RED(&quot;          **POWER KERNEL**&quot;);</span>
+<span class="lineNum">      36 </span>            : 
+<span class="lineNum">      37 </span><span class="lineCov">          1 :     OKBLUE(&quot;Data Parameters&quot;);</span>
+<span class="lineNum">      38 </span><span class="lineCov">          1 :     printf(&quot;R_POINTS: %i\n&quot;, this-&gt;r_points );</span>
+<span class="lineNum">      39 </span><span class="lineCov">          1 :     printf(&quot;NP_POINTS: %i\n&quot;, this-&gt;np_points );</span>
 <span class="lineNum">      40 </span>            : 
-<span class="lineNum">      41 </span><span class="lineCov">          2 :         OKBLUE(&quot;===========================================&quot;);</span>
-<a name="42"><span class="lineNum">      42 </span><span class="lineCov">          2 : }</span></a>
-<span class="lineNum">      43 </span>            : 
-<span class="lineNum">      44 </span><span class="lineCov">          2 : GPU::PowerKernelParameters GPU::fetch_kernel_parameters(){</span>
-<span class="lineNum">      45 </span>            :         // GPU::PowerKernelParameters kp =
-<span class="lineNum">      46 </span>            :         return GPU::PowerKernelParameters(
-<span class="lineNum">      47 </span>            :                 R_POINTS,
-<span class="lineNum">      48 </span>            :                 NP_POINTS,
-<span class="lineNum">      49 </span>            :                 xstr(PROCESSING_ARRAY_TYPE),
-<span class="lineNum">      50 </span>            :                 BLOCKS,
-<span class="lineNum">      51 </span>            :                 THREADS_PER_BLOCK
-<span class="lineNum">      52 </span><span class="lineCov">          2 :                 );</span>
-<span class="lineNum">      53 </span>            : }
-<a name="54"><span class="lineNum">      54 </span>            : </a>
-<span class="lineNum">      55 </span>            : // Pass in ADDRESS of pointers (&amp;POINTER) -&gt; this will allocate memory on GPU
-<span class="lineNum">      56 </span><span class="lineCov">          4 : void GPU::allocate_memory_on_gpu(</span>
-<span class="lineNum">      57 </span>            :         short **dev_chA_data,
-<span class="lineNum">      58 </span>            :         short **dev_chB_data,
-<span class="lineNum">      59 </span>            :         float **dev_sq_data
-<span class="lineNum">      60 </span>            :         ){
-<span class="lineNum">      61 </span>            : 
-<span class="lineNum">      62 </span><span class="lineCov">          4 :         OKBLUE(&quot;Allocating memory for power kernel on GPU&quot;);</span>
-<span class="lineNum">      63 </span>            : 
-<span class="lineNum">      64 </span><span class="lineCov">          4 :         int success = 0;</span>
-<span class="lineNum">      65 </span>            :         success += cudaMalloc((void**)dev_chA_data,
-<span class="lineNum">      66 </span><span class="lineCov">          4 :                               TOTAL_POINTS * sizeof(short));</span>
-<span class="lineNum">      67 </span>            :         success += cudaMalloc((void**)dev_chB_data,
-<span class="lineNum">      68 </span><span class="lineCov">          4 :                               TOTAL_POINTS * sizeof(short));</span>
-<span class="lineNum">      69 </span>            :         success += cudaMalloc((void**)dev_sq_data,
-<span class="lineNum">      70 </span><span class="lineCov">          4 :                               NP_POINTS * sizeof(float));</span>
-<span class="lineNum">      71 </span>            : 
-<span class="lineNum">      72 </span><span class="lineCov">          4 :         if (success != 0)</span>
-<span class="lineNum">      73 </span><span class="lineNoCov">          0 :                 FAIL(&quot;Failed to allocate memory on GPU&quot;);</span>
-<span class="lineNum">      74 </span>            : 
-<span class="lineNum">      75 </span><span class="lineCov">          4 :         OKGREEN(&quot;Allocation done!&quot;);</span>
-<span class="lineNum">      76 </span><span class="lineCov">          4 : }</span>
-<a name="77"><span class="lineNum">      77 </span>            : </a>
-<span class="lineNum">      78 </span>            : // Call to deallocated memory on GPU after run is complete
-<span class="lineNum">      79 </span><span class="lineCov">          4 : void GPU::free_memory_on_gpu(</span>
-<span class="lineNum">      80 </span>            :         short **dev_chA_data,
-<span class="lineNum">      81 </span>            :         short **dev_chB_data,
-<span class="lineNum">      82 </span>            :         float **dev_sq_data
-<span class="lineNum">      83 </span>            :         ){
-<span class="lineNum">      84 </span>            : 
-<span class="lineNum">      85 </span><span class="lineCov">          4 :         OKBLUE(&quot;Deallocating memory from GPU&quot;);</span>
-<span class="lineNum">      86 </span>            : 
-<span class="lineNum">      87 </span><span class="lineCov">          4 :         int success = 0;</span>
-<span class="lineNum">      88 </span><span class="lineCov">          4 :         success += cudaFree(*dev_chA_data);</span>
-<span class="lineNum">      89 </span><span class="lineCov">          4 :         success += cudaFree(*dev_chB_data);</span>
-<span class="lineNum">      90 </span><span class="lineCov">          4 :         success += cudaFree(*dev_sq_data);</span>
-<span class="lineNum">      91 </span><span class="lineCov">          4 :         if (success != 0)</span>
-<span class="lineNum">      92 </span><span class="lineNoCov">          0 :                 FAIL(&quot;Failed to allocate memory on GPU&quot;);</span>
-<span class="lineNum">      93 </span>            : 
-<span class="lineNum">      94 </span><span class="lineCov">          4 :         OKGREEN(&quot;Memory freed!&quot;);</span>
-<span class="lineNum">      95 </span><span class="lineCov">          4 : }</span>
+<span class="lineNum">      41 </span><span class="lineCov">          1 :     OKBLUE(&quot;Processing Parameters&quot;);</span>
+<span class="lineNum">      42 </span><span class="lineCov">          1 :     printf(&quot;CACHED ARRAY TYPE: %s\n&quot;, this-&gt;processing_array_type.c_str() );</span>
+<span class="lineNum">      43 </span><span class="lineCov">          1 :     printf(&quot;BLOCKS: %i\n&quot;, this-&gt;blocks );</span>
+<span class="lineNum">      44 </span><span class="lineCov">          1 :     printf(&quot;THREADS_PER_BLOCK: %i\n&quot;, this-&gt;threads_per_block );</span>
+<span class="lineNum">      45 </span>            : 
+<span class="lineNum">      46 </span><span class="lineCov">          1 :     OKBLUE(&quot;===========================================&quot;);</span>
+<a name="47"><span class="lineNum">      47 </span><span class="lineCov">          1 : }</span></a>
+<span class="lineNum">      48 </span>            : 
+<span class="lineNum">      49 </span><span class="lineCov">          1 : GPU::PowerKernelParameters GPU::fetch_kernel_parameters(){</span>
+<span class="lineNum">      50 </span>            :     // GPU::PowerKernelParameters kp =
+<span class="lineNum">      51 </span>            :     return GPU::PowerKernelParameters(
+<span class="lineNum">      52 </span>            :         R_POINTS,
+<span class="lineNum">      53 </span>            :         NP_POINTS,
+<span class="lineNum">      54 </span>            :         xstr(PROCESSING_ARRAY_TYPE),
+<span class="lineNum">      55 </span>            :         BLOCKS,
+<span class="lineNum">      56 </span>            :         THREADS_PER_BLOCK
+<span class="lineNum">      57 </span><span class="lineCov">          1 :         );</span>
+<span class="lineNum">      58 </span>            : }
+<a name="59"><span class="lineNum">      59 </span>            : </a>
+<span class="lineNum">      60 </span>            : // Pass in ADDRESS of pointers (&amp;POINTER) -&gt; this will allocate memory on GPU
+<span class="lineNum">      61 </span><span class="lineCov">          4 : void GPU::allocate_memory_on_gpu(</span>
+<span class="lineNum">      62 </span>            :     short **dev_chA_data,
+<span class="lineNum">      63 </span>            :     short **dev_chB_data,
+<span class="lineNum">      64 </span>            :     float **dev_sq_data
+<span class="lineNum">      65 </span>            :     ){
+<span class="lineNum">      66 </span>            : 
+<span class="lineNum">      67 </span><span class="lineCov">          4 :     OKBLUE(&quot;Allocating memory for power kernel on GPU&quot;);</span>
+<span class="lineNum">      68 </span>            : 
+<span class="lineNum">      69 </span><span class="lineCov">          4 :     int success = 0;</span>
+<span class="lineNum">      70 </span>            :     success += cudaMalloc((void**)dev_chA_data,
+<span class="lineNum">      71 </span><span class="lineCov">          4 :                           TOTAL_POINTS * sizeof(short));</span>
+<span class="lineNum">      72 </span>            :     success += cudaMalloc((void**)dev_chB_data,
+<span class="lineNum">      73 </span><span class="lineCov">          4 :                           TOTAL_POINTS * sizeof(short));</span>
+<span class="lineNum">      74 </span>            :     success += cudaMalloc((void**)dev_sq_data,
+<span class="lineNum">      75 </span><span class="lineCov">          4 :                           NP_POINTS * sizeof(float));</span>
+<span class="lineNum">      76 </span>            : 
+<span class="lineNum">      77 </span><span class="lineCov">          4 :     if (success != 0)</span>
+<span class="lineNum">      78 </span><span class="lineNoCov">          0 :         FAIL(&quot;Failed to allocate memory on GPU&quot;);</span>
+<span class="lineNum">      79 </span>            : 
+<span class="lineNum">      80 </span><span class="lineCov">          4 :     OKGREEN(&quot;Allocation done!&quot;);</span>
+<span class="lineNum">      81 </span><span class="lineCov">          4 : }</span>
+<a name="82"><span class="lineNum">      82 </span>            : </a>
+<span class="lineNum">      83 </span>            : // Call to deallocated memory on GPU after run is complete
+<span class="lineNum">      84 </span><span class="lineCov">          4 : void GPU::free_memory_on_gpu(</span>
+<span class="lineNum">      85 </span>            :     short **dev_chA_data,
+<span class="lineNum">      86 </span>            :     short **dev_chB_data,
+<span class="lineNum">      87 </span>            :     float **dev_sq_data
+<span class="lineNum">      88 </span>            :     ){
+<span class="lineNum">      89 </span>            : 
+<span class="lineNum">      90 </span><span class="lineCov">          4 :     OKBLUE(&quot;Deallocating memory from GPU&quot;);</span>
+<span class="lineNum">      91 </span>            : 
+<span class="lineNum">      92 </span><span class="lineCov">          4 :     int success = 0;</span>
+<span class="lineNum">      93 </span><span class="lineCov">          4 :     success += cudaFree(*dev_chA_data);</span>
+<span class="lineNum">      94 </span><span class="lineCov">          4 :     success += cudaFree(*dev_chB_data);</span>
+<span class="lineNum">      95 </span><span class="lineCov">          4 :     success += cudaFree(*dev_sq_data);</span>
+<span class="lineNum">      96 </span><span class="lineCov">          4 :     if (success != 0)</span>
+<span class="lineNum">      97 </span><span class="lineNoCov">          0 :         FAIL(&quot;Failed to allocate memory on GPU&quot;);</span>
+<span class="lineNum">      98 </span>            : 
+<span class="lineNum">      99 </span><span class="lineCov">          4 :     OKGREEN(&quot;Memory freed!&quot;);</span>
+<span class="lineNum">     100 </span><span class="lineCov">          4 : }</span>
 </pre>
       </td>
     </tr>
