@@ -25,11 +25,6 @@ GPU::PowerKernelParameters::PowerKernelParameters(
     this->print();
 }
 
-void GPU::check_parameters() {
-    if (R_POINTS % 2 != 0)
-        throw std::runtime_error("R_POINTS needs to be a even number");
-}
-
 void GPU::PowerKernelParameters::print(){
     OKBLUE("===========================================");
     RED("          **POWER KERNEL**");
@@ -47,7 +42,9 @@ void GPU::PowerKernelParameters::print(){
 }
 
 GPU::PowerKernelParameters GPU::fetch_kernel_parameters(){
-    // GPU::PowerKernelParameters kp =
+    if (R_POINTS % 2 != 0)
+        throw std::runtime_error("R_POINTS needs to be a even number");
+
     return GPU::PowerKernelParameters(
         R_POINTS,
         NP_POINTS,

@@ -25,7 +25,7 @@ class PowerKernel:
 
     def __init__(self, power_kernel_parameters: Dict):
 
-        self.verify_gpu_allocation(power_kernel_parameters)
+        self.check_kernel_parameters(power_kernel_parameters)
         self.log(
             f"""Loaded following parameters:
 {json.dumps(power_kernel_parameters, indent=4, default=lambda o: str(o))}"""
@@ -38,7 +38,7 @@ class PowerKernel:
         )
 
     @staticmethod
-    def verify_gpu_allocation(power_kernel_parameters: Dict):
+    def check_kernel_parameters(power_kernel_parameters: Dict):
         """Checks that allowed threads, blocks, memory"""
 
         # Unpack parameters ###################################################
@@ -58,7 +58,7 @@ class PowerKernel:
         storage_array_in_bytes = NP_POINTS * np.dtype(PROCESSING_ARRAY_TYPE).itemsize
 
         # Pass it to the global verifier ######################################
-        gpu_utils.verify_gpu_allocation(
+        gpu_utils.check_gpu_allocation(
             **{
                 "grid_dim_x": BLOCKS,
                 "block_dim_x": THREADS_PER_BLOCK,

@@ -99,39 +99,45 @@ ldd ./bin/ia_1488.so
 
 
 # Implementation Table #
+> - 🏆 indicates the language of choice. Something in C++ will be wrapped for calling from python;
+> - `funcA` indicates a function to use
 
 ## SP-Digitiser Setup ##
+> Complete
 
 | `sp_digitizer.py` (Python) | `ia_ADQAPI.cpp` (C++)             |
 |:---------------------------|-----------------------------------|
-| - extensive setup          | - essential setup                 |
-| - preprocessing            | - wraps some functions for python |
+| extensive setup            | essential setup                 |
+| preprocessing              | wraps some functions for python |
 | 🏆                         | Required only for tests           |
 
 ## GPU Utils ##
+> Complete
 
-| `gpu_utils.py` (Python)   | `gpu_utils.hpp` (C++)         |
-|:--------------------------|-------------------------------|
-| - `fetch_gpu_parameters`  | `fetch_gpu_parameters`        |
-| - `verify_gpu_allocation` |                               |
-| - `allocate_threads`      | `allocate_threads`            |
-| 🏆                        | Use macro to allocate threads |
+| `gpu_utils.py` (Python) | `gpu_utils.hpp` (C++)  |
+|:------------------------|------------------------|
+| `fetch_gpu_parameters`  | `fetch_gpu_parameters` |
+| `verify_gpu_allocation` |                        |
+| `allocate_threads`      |                        |
+| 🏆                      | Only for development   |
 
 ## Power ##
+> Complete
 
-| `power_kernel.py` (Python)                         | `power_kernel.hpp` (C++)           |
-|:---------------------------------------------------|------------------------------------|
-| - customizeable `kernel`                           | - parallel `kernel`                |
-| - `verify_gpu_allocation`                          | - exposes parameters of the kernel |
-| use `verify_gpu_allocation` to check allocated GPU | 🏆                                 |
+| `power_kernel.py` (Python)                                     | `power_kernel.hpp` (C++)                               |
+|:---------------------------------------------------------------|--------------------------------------------------------|
+| customizeable `kernel`                                         | `kernel` that can be used in parallel processes        |
+| `check_kernel_parameters`                                      | feed `fetch_kernel_parameters` into the python checker |
+| use `check_kernel_parameters` to check the kernel built in C++ | 🏆                                                     |
 
 ## Power pipeline ##
+> In progress
 
-| `sp_digitiser_power.py` (Python) | (C++)                  |
-|:---------------------------------|------------------------|
-| - allocation of arrays           | - allocation of arrays |
-| - call C++ lib                   |                        |
-| 🏆                               | 🏆                     |
+| `sp_digitiser_power.py` (Python) | (C++)                            |
+|:---------------------------------|----------------------------------|
+| allocation of arrays             | allocation of arrays             |
+| call C++ lib functions in order  | 3 threads (read, process, save)  |
+| 🏆                               | 🏆                               |
 
 ## Correlation ##
 

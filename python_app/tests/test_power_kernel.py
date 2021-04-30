@@ -123,7 +123,7 @@ class TestPowerKernel(unittest.TestCase):
         expected = np.array([207, 243, 283, 327, 375])
         self.assertTrue(np.all(expected - DEVICE_out_array.copy_to_host() == 0))
 
-    def test__specific_array(self):
+    def test__incorrect_r_points(self):
 
         a_array = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         b_array = np.array([11, 12, 13, 14, 15, 16, 17, 18, 19, 20])

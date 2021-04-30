@@ -45,7 +45,7 @@ def fetch_gpu_parameters(verbose=False):
     raise RuntimeError("Missing GPU")
 
 
-def verify_gpu_allocation(**kwargs):
+def check_gpu_allocation(**kwargs):
     """Compares supplied parameters to cuda ones to ensure that they fit"""
 
     gpu_parameters = fetch_gpu_parameters()

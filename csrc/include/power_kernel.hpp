@@ -106,7 +106,6 @@ namespace GPU {
         void print();
     };
     PowerKernelParameters fetch_kernel_parameters();
-    void check_parameters();
 
     // Preparation and completion of memory allocation on GPU
     void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, float **dev_sq_data);

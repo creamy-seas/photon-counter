@@ -23,9 +23,6 @@ class PowerKernelGpuUtilsTest : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE_END();
 
 public:
-    void setUp(){
-        GPU::check_parameters();
-    }
     void test_fetch_kernel_parameters(){
         GPU::PowerKernelParameters kp = GPU::fetch_kernel_parameters();
         // Parameters for test set in Makefile
