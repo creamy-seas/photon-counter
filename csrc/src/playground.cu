@@ -34,7 +34,7 @@ float GPU::example_gpu_func(short a, short b) {
 
 
         cudaFree(dev_c);
-        OKGREEN("GPU KERNEL Complete!");
+        OKGREEN("GPU KERNEL Complete!%s");
 
         std::cout << c << std::endl;
 

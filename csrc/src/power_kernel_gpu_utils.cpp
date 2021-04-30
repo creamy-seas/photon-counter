@@ -30,13 +30,13 @@ void GPU::PowerKernelParameters::print(){
     RED("          **POWER KERNEL**");
 
     OKBLUE("Data Parameters");
-    printf("R_POINTS: %i\n", this->r_points );
-    printf("NP_POINTS: %i\n", this->np_points );
+    WHITE("R_POINTS: %i\n", this->r_points );
+    WHITE("NP_POINTS: %i\n", this->np_points );
 
     OKBLUE("Processing Parameters");
-    printf("CACHED ARRAY TYPE: %s\n", this->processing_array_type.c_str() );
-    printf("BLOCKS: %i\n", this->blocks );
-    printf("THREADS_PER_BLOCK: %i\n", this->threads_per_block );
+    WHITE("CACHED ARRAY TYPE: %s\n", this->processing_array_type.c_str() );
+    WHITE("BLOCKS: %i\n", this->blocks );
+    WHITE("THREADS_PER_BLOCK: %i\n", this->threads_per_block );
 
     OKBLUE("===========================================");
 }

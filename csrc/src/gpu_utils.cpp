@@ -16,17 +16,17 @@ cudaDeviceProp fetch_gpu_parameters(){
 
         OKBLUE("===========================================");
         OKBLUE("Device parameters");
-        printf("Name: %s\n", prop.name );
-        printf("Compute capability: %d.%d\n", prop.major, prop.minor );
-        printf("Clock rate: %d\n", prop.clockRate );
-        printf("Device copy overlap: " );
+        WHITE("Name: %s\n", prop.name );
+        WHITE("Compute capability: %d.%d\n", prop.major, prop.minor );
+        WHITE("Clock rate: %d\n", prop.clockRate );
+        WHITE("Device copy overlap: " );
         if (prop.deviceOverlap){
                 OKGREEN("Enabled");
         }
         else{
                 WARNING("Disabled");
         }
-        printf( "Kernel execition timeout : " );
+        WHITE( "Kernel execition timeout : " );
         if (prop.kernelExecTimeoutEnabled){
                 OKGREEN("Enabled");
         }
@@ -35,34 +35,34 @@ cudaDeviceProp fetch_gpu_parameters(){
         }
 
         OKBLUE("Memory Information for device");
-        printf(
+        WHITE(
                 "Total global mem (in bytes): %ld (int16: %ld) (float32: %ld)\n",
                 prop.totalGlobalMem,
                 prop.totalGlobalMem / 16,
                 prop.totalGlobalMem / 32
                 );
 
-        printf( "Total constant Mem: %ld\n", prop.totalConstMem );
-        printf( "Max mem pitch: %ld\n", prop.memPitch );
-        printf( "Texture Alignment: %ld\n", prop.textureAlignment );
+        WHITE( "Total constant Mem: %ld\n", prop.totalConstMem );
+        WHITE( "Max mem pitch: %ld\n", prop.memPitch );
+        WHITE( "Texture Alignment: %ld\n", prop.textureAlignment );
 
         OKBLUE("MP Information for device");
-        printf( "Multiprocessor count: %d\n",
+        WHITE( "Multiprocessor count: %d\n",
                 prop.multiProcessorCount );
-        printf(
+        WHITE(
                 "Shared mem per block: %ld (int16: %ld) (float32: %ld)\n",
                 prop.sharedMemPerBlock,
                 prop.sharedMemPerBlock / 16,
                 prop.sharedMemPerBlock / 32
                 );
-        printf( "Registers per block: %d\n", prop.regsPerBlock );
-        printf( "Threads in warp: %d\n", prop.warpSize );
-        printf( "Max threads per block: %d\n",
+        WHITE( "Registers per block: %d\n", prop.regsPerBlock );
+        WHITE( "Threads in warp: %d\n", prop.warpSize );
+        WHITE( "Max threads per block: %d\n",
                 prop.maxThreadsPerBlock );
-        printf( "Max block dimensions: (%d, %d, %d)\n",
+        WHITE( "Max block dimensions: (%d, %d, %d)\n",
                 prop.maxThreadsDim[0], prop.maxThreadsDim[1],
                 prop.maxThreadsDim[2] );
-        printf( "Max grid dimensions: (%d, %d, %d)\n",
+        WHITE( "Max grid dimensions: (%d, %d, %d)\n",
                 prop.maxGridSize[0], prop.maxGridSize[1],
                 prop.maxGridSize[2] );
         OKBLUE("===========================================");

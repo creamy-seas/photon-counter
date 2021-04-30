@@ -110,12 +110,12 @@ template <typename T> void load_arrays_from_file(
                         ss.str(std::string());
                         ss.clear();
                 }
-                if (y > y_dim){
-                        FAIL("Array too small in y-direction!");
+                if (y > y_dim) {
+                    FAIL("Array too small in y-direction!");
                 }
-                if (y < y_dim){
-                                FAIL("Array too large in y-direction!");
-                                }
+                if (y < y_dim) {
+                    FAIL("Array too large in y-direction!");
+                }
         }
         else{
                 FAIL("No such file!");
