@@ -31,13 +31,13 @@
             <td class="headerValue">🐋 Test Coverage</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntry">39</td>
-            <td class="headerCovTableEntry">39</td>
+            <td class="headerCovTableEntry">38</td>
+            <td class="headerCovTableEntry">38</td>
             <td class="headerCovTableEntryHi">100.0 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2021-04-27 15:16:36</td>
+            <td class="headerValue">2021-04-30 23:36:33</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">5</td>
@@ -89,7 +89,7 @@
 <span class="lineNum">      27 </span>            :           The faster method is
 <span class="lineNum">      28 </span>            :           std::copy(array_in, array_in + array_size, arrays_out);
 <span class="lineNum">      29 </span>            :         */
-<span class="lineNum">      30 </span><span class="lineCov">          1 :         WARNING(&quot;Very slow!&quot;);</span>
+<span class="lineNum">      30 </span>            :         WARNING(&quot;Very slow!&quot;);
 <span class="lineNum">      31 </span>            : 
 <span class="lineNum">      32 </span><span class="lineCov">          2 :         for (int array_no(0); array_no &lt; number_of_arrays; array_no++) {</span>
 <span class="lineNum">      33 </span><span class="lineCov">          4 :                 for (int i(0); i &lt; array_size; i++)</span>
@@ -172,12 +172,12 @@
 <span class="lineNum">     110 </span><span class="lineCov">         23 :                         ss.str(std::string());</span>
 <span class="lineNum">     111 </span><span class="lineCov">         23 :                         ss.clear();</span>
 <span class="lineNum">     112 </span>            :                 }
-<span class="lineNum">     113 </span><span class="lineCov">          4 :                 if (y &gt; y_dim){</span>
-<span class="lineNum">     114 </span><span class="lineCov">          1 :                         FAIL(&quot;Array too small in y-direction!&quot;);</span>
+<span class="lineNum">     113 </span><span class="lineCov">          4 :                 if (y &gt; y_dim) {</span>
+<span class="lineNum">     114 </span><span class="lineCov">          1 :                     FAIL(&quot;Array too small in y-direction!&quot;);</span>
 <span class="lineNum">     115 </span>            :                 }
-<span class="lineNum">     116 </span><span class="lineCov">          3 :                 if (y &lt; y_dim){</span>
-<span class="lineNum">     117 </span><span class="lineCov">          1 :                                 FAIL(&quot;Array too large in y-direction!&quot;);</span>
-<span class="lineNum">     118 </span>            :                                 }
+<span class="lineNum">     116 </span><span class="lineCov">          3 :                 if (y &lt; y_dim) {</span>
+<span class="lineNum">     117 </span><span class="lineCov">          1 :                     FAIL(&quot;Array too large in y-direction!&quot;);</span>
+<span class="lineNum">     118 </span>            :                 }
 <span class="lineNum">     119 </span>            :         }
 <span class="lineNum">     120 </span>            :         else{
 <span class="lineNum">     121 </span><span class="lineCov">          1 :                 FAIL(&quot;No such file!&quot;);</span>
