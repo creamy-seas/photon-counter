@@ -105,11 +105,10 @@ ldd ./bin/ia_1488.so
 ## SP-Digitiser Setup ##
 > Complete
 
-| `sp_digitizer.py` (Python) | `ia_ADQAPI.cpp` (C++)             |
-|:---------------------------|-----------------------------------|
-| extensive setup            | essential setup                 |
-| preprocessing              | wraps some functions for python |
-| 🏆                         | Required only for tests           |
+| `sp_digitizer.py` (Python) | `ia_ADQAPI.cpp` (C++)                 |
+|:---------------------------|---------------------------------------|
+| 🏆 extensive setup         | essential setup only for tests        |
+|                            | 🏆 `fetch_channel_data` to fetch data |
 
 ## GPU Utils ##
 > Complete
@@ -133,11 +132,14 @@ ldd ./bin/ia_1488.so
 ## Power pipeline ##
 > In progress
 
-| `sp_digitiser_power.py` (Python) | (C++)                            |
-|:---------------------------------|----------------------------------|
-| allocation of arrays             | allocation of arrays             |
-| call C++ lib functions in order  | 3 threads (read, process, save)  |
-| 🏆                               | 🏆                               |
+| `sp_digitiser_power.py` (Python) | (C++)                                              |
+|:---------------------------------|----------------------------------------------------|
+| allocation of arrays             | allocation of arrays                               |
+| call in order:                   | 3 threads (read, process, save) in single function |
+| - C++: `fetch_channel_data`      |                                                    |
+| - C++: `power_kernel_vXXXX`      |                                                    |
+| - Python: Post processing        |                                                    |
+|                                  | 🏆 just need to make sure that data dumping safe   |
 
 ## Correlation ##
 
