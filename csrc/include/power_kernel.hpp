@@ -1,6 +1,11 @@
-///////////////////////////////////////////////////////////////////////////////
-//             Functions for gpu processing of power measurements            //
-///////////////////////////////////////////////////////////////////////////////
+// Kernels that evalaute power from readings from digitiser
+// In general we exepct the digitiser to return SP_POINTS (samples per record) repeated R_POINTS (number of records).
+// Therefore the chA and chB sizes are SP_POINTS * R_POINTS
+//
+// Note - GPU and CPU kernels will differ:
+// - GPU kernel array sizes need to be known at compile time
+// - CPU kernel will not deal with repititions - this needs to be done externally
+// - When passing in
 #include <string>
 
 #define xstr(s) _str(s)
@@ -14,17 +19,17 @@
 #define R_POINTS 1000
 #endif
 
-#ifndef NP_POINTS
-#define NP_POINTS 1000
+#ifndef SP_POINTS
+#define SP_POINTS 1000
 #endif
 
 #ifndef THREADS_PER_BLOCK
 #define THREADS_PER_BLOCK 1024
 #endif
 
-#define BLOCKS NP_POINTS
+#define BLOCKS SP_POINTS
 
-#define TOTAL_POINTS NP_POINTS*R_POINTS
+#define TOTAL_POINTS SP_POINTS*R_POINTS
 
 #ifndef POWER_KERNEL_HPP
 #define POWER_KERNEL_HPP
@@ -40,8 +45,9 @@ namespace CPU {
     void power_kernel_v1_no_background(
         short* chA_data,
         short* chB_data,
-        unsigned int* sq_data,
-        int no_points,
+        float* sq_data,
+        int sp_points,
+        int r_points,
         int number_of_threads
         );
 
@@ -55,10 +61,11 @@ namespace CPU {
     void power_kernel_v2_const_background(
         short *chA_data,
         short *chB_data,
-        unsigned int *sq_data,
+        float *sq_data,
         short chA_back,
         short chB_back,
-        int no_points,
+        int sp_points,
+        int r_points,
         int number_of_threads
         );
 
@@ -72,10 +79,11 @@ namespace CPU {
     void power_kernel_v3_background(
         short *chA_data,
         short *chB_data,
-        unsigned int *sq_data,
+        float *sq_data,
         short *chA_back,
         short *chB_back,
-        int no_points,
+        int sp_points,
+        int r_points,
         int number_of_threads
         );
 }
@@ -85,7 +93,7 @@ namespace GPU {
      * The following will need to be defined:
      * PROCESSING_ARRAY_TYPE
      * R_POINTS
-     * NP_POINTS
+     * SP_POINTS
      * THREADS_PER_BLOCK
      */
 

@@ -25,7 +25,7 @@ __device__ void reduction_sum(
 
      will be mapped to a 2D array
 
-     a1 a2 a3 -> main_axis (np_coordinate)
+     a1 a2 a3 -> main_axis (sp_coordinate)
      b1 b2 b3 ...
      c1 c2 c3 ...
      d1 d2 d3 ...
@@ -56,8 +56,8 @@ __device__ void reduction_sum(
 }
 
 // Background signal copied once to GPU
-__constant__ short dev_chA_background[NP_POINTS];
-__constant__ short dev_chB_background[NP_POINTS];
+__constant__ short dev_chA_background[SP_POINTS];
+__constant__ short dev_chB_background[SP_POINTS];
 
 /*
   Call function to copy background for each channel a single time into
@@ -68,10 +68,10 @@ void GPU::copy_background_arrays_to_gpu(short *chA_background, short *chB_backgr
 
     int success = 0;
     success += cudaMemcpyToSymbol(dev_chA_background, chA_background,
-                                  NP_POINTS*sizeof(short));
+                                  SP_POINTS*sizeof(short));
     success += cudaMemcpyToSymbol(dev_chB_background, chB_background,
-                                  NP_POINTS*sizeof(short));
-    if (success != 0) FAIL("Failed to copy background data TO the GPU - check that the arrays have NP_POINTS in them!");
+                                  SP_POINTS*sizeof(short));
+    if (success != 0) FAIL("Failed to copy background data TO the GPU - check that the arrays have SP_POINTS in them!");
 }
 
 
@@ -81,7 +81,7 @@ __global__ void power_kernel_v1_no_background_runner(
 
     /*
       chA
-      * 1  2   3   4    -> main axis (NP_POINTS=4)
+      * 1  2   3   4    -> main axis (SP_POINTS=4)
       * 5  6   7   8
       * 9  10  11  12
       * |
@@ -94,14 +94,14 @@ __global__ void power_kernel_v1_no_background_runner(
       */
     __shared__ PROCESSING_ARRAY_TYPE cache_array[R_POINTS];
 
-    int np_coordinate = blockIdx.x;
+    int sp_coordinate = blockIdx.x;
     int r_coordinate, coordinate;
 
-    while (np_coordinate < NP_POINTS) {
+    while (sp_coordinate < SP_POINTS) {
         r_coordinate = threadIdx.x;
 
         while (r_coordinate < R_POINTS) {
-            coordinate = r_coordinate * NP_POINTS + np_coordinate;
+            coordinate = r_coordinate * SP_POINTS + sp_coordinate;
 
             cache_array[r_coordinate] = (
                 chA_data[coordinate] * chA_data[coordinate]
@@ -118,10 +118,10 @@ __global__ void power_kernel_v1_no_background_runner(
 
         // Summation
         reduction_sum(cache_array);
-        sq_data[np_coordinate] = (float)cache_array[0] / R_POINTS;
+        sq_data[sp_coordinate] = (float)cache_array[0] / R_POINTS;
 
         // Shift by number of allocated blocks along main-axis
-        np_coordinate += gridDim.x;
+        sp_coordinate += gridDim.x;
     }
 }
 
@@ -130,15 +130,15 @@ __global__ void power_kernel_v2_const_background_runner(
 
     __shared__ PROCESSING_ARRAY_TYPE cache_array[R_POINTS];
 
-    int np_coordinate = blockIdx.x;
+    int sp_coordinate = blockIdx.x;
     int r_coordinate, coordinate;
     int _chA, _chB;
 
-    while (np_coordinate < NP_POINTS) {
+    while (sp_coordinate < SP_POINTS) {
         r_coordinate = threadIdx.x;
 
         while (r_coordinate < R_POINTS) {
-            coordinate = r_coordinate * NP_POINTS + np_coordinate;
+            coordinate = r_coordinate * SP_POINTS + sp_coordinate;
 
             _chA = chA_data[coordinate] - chA_back;
             _chB = chB_data[coordinate] - chB_back;
@@ -155,10 +155,10 @@ __global__ void power_kernel_v2_const_background_runner(
 
         // Summation
         reduction_sum(cache_array);
-        sq_data[np_coordinate] = (float)cache_array[0] / R_POINTS;
+        sq_data[sp_coordinate] = (float)cache_array[0] / R_POINTS;
 
         // Shift by number of allocated blocks along main-axis
-        np_coordinate += gridDim.x;
+        sp_coordinate += gridDim.x;
     }
 }
 
@@ -170,18 +170,18 @@ __global__ void power_kernel_v3_background_runner(
 
     __shared__ PROCESSING_ARRAY_TYPE cache_array[R_POINTS];
 
-    int np_coordinate = blockIdx.x;
+    int sp_coordinate = blockIdx.x;
     int r_coordinate, coordinate;
     int _chA, _chB;
 
-    while (np_coordinate < NP_POINTS) {
+    while (sp_coordinate < SP_POINTS) {
         r_coordinate = threadIdx.x;
 
         while (r_coordinate < R_POINTS) {
-            coordinate = r_coordinate * NP_POINTS + np_coordinate;
+            coordinate = r_coordinate * SP_POINTS + sp_coordinate;
 
-            _chA = chA_data[coordinate] - dev_chA_background[np_coordinate];
-            _chB = chB_data[coordinate] - dev_chB_background[np_coordinate];
+            _chA = chA_data[coordinate] - dev_chA_background[sp_coordinate];
+            _chB = chB_data[coordinate] - dev_chB_background[sp_coordinate];
 
             cache_array[r_coordinate] = _chA * _chA + _chB * _chB;
             // Once thread has completed, shift the
@@ -195,10 +195,10 @@ __global__ void power_kernel_v3_background_runner(
 
         // Summation
         reduction_sum(cache_array);
-        sq_data[np_coordinate] = (float)cache_array[0] / R_POINTS;
+        sq_data[sp_coordinate] = (float)cache_array[0] / R_POINTS;
 
         // Shift by number of allocated blocks along main-axis
-        np_coordinate += gridDim.x;
+        sp_coordinate += gridDim.x;
     }
 }
 
@@ -237,7 +237,7 @@ void GPU::power_kernel_v1_no_background(
     success += cudaMemcpy(
         sq_data,
         *dev_sq_data,
-        NP_POINTS * sizeof(float),
+        SP_POINTS * sizeof(float),
         cudaMemcpyDeviceToHost);
     if (success != 0) FAIL("Failed to copy data FROM the GPU!");
 
@@ -281,7 +281,7 @@ void GPU::power_kernel_v2_const_background(
     success += cudaMemcpy(
         sq_data,
         *dev_sq_data,
-        NP_POINTS * sizeof(float),
+        SP_POINTS * sizeof(float),
         cudaMemcpyDeviceToHost);
     if (success != 0) FAIL("Failed to copy data FROM the GPU!");
 
@@ -323,7 +323,7 @@ void GPU::power_kernel_v3_background(
     success += cudaMemcpy(
         sq_data,
         *dev_sq_data,
-        NP_POINTS * sizeof(float),
+        SP_POINTS * sizeof(float),
         cudaMemcpyDeviceToHost);
     if (success != 0) FAIL("Failed to copy data FROM the GPU!");
 

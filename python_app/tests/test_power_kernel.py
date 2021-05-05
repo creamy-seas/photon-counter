@@ -20,13 +20,13 @@ class TestPowerKernel(unittest.TestCase):
 
     def test__small_size(self):
 
-        NP_POINTS = 1
+        SP_POINTS = 1
         R_POINTS = 4
 
         # init ################################################################
         parameter_dict = {
-            "NP_POINTS": NP_POINTS,
-            "BLOCKS": NP_POINTS,
+            "SP_POINTS": SP_POINTS,
+            "BLOCKS": SP_POINTS,
             "R_POINTS": R_POINTS,
             "THREADS_PER_BLOCK": 1024,
             "PROCESSING_ARRAY_TYPE": np.int32,
@@ -36,11 +36,11 @@ class TestPowerKernel(unittest.TestCase):
         sut = PowerKernel(parameter_dict)
 
         # data ################################################################
-        total_points = parameter_dict["NP_POINTS"] * parameter_dict["R_POINTS"]
+        total_points = parameter_dict["SP_POINTS"] * parameter_dict["R_POINTS"]
         a_array = np.array([1] * total_points)
         b_array = np.array([2] * total_points)
         DEVICE_out_array = cuda.device_array(
-            shape=(parameter_dict["NP_POINTS"]),
+            shape=(parameter_dict["SP_POINTS"]),
             dtype=parameter_dict["OUTPUT_ARRAY_TYPE"],
         )
 
@@ -50,18 +50,18 @@ class TestPowerKernel(unittest.TestCase):
         )
 
         # test ################################################################
-        expected = np.array([5.0] * parameter_dict["NP_POINTS"])
+        expected = np.array([5.0] * parameter_dict["SP_POINTS"])
         self.assertTrue(np.all(expected - DEVICE_out_array.copy_to_host() == 0))
 
     def test__large_size(self):
 
-        NP_POINTS = 1000
+        SP_POINTS = 1000
         R_POINTS = 2 ** 13
 
         # init ################################################################
         parameter_dict = {
-            "NP_POINTS": NP_POINTS,
-            "BLOCKS": NP_POINTS,
+            "SP_POINTS": SP_POINTS,
+            "BLOCKS": SP_POINTS,
             "R_POINTS": R_POINTS,
             "THREADS_PER_BLOCK": 1024,
             "PROCESSING_ARRAY_TYPE": np.int32,
@@ -71,11 +71,11 @@ class TestPowerKernel(unittest.TestCase):
         sut = PowerKernel(parameter_dict)
 
         # data ################################################################
-        total_points = parameter_dict["NP_POINTS"] * parameter_dict["R_POINTS"]
+        total_points = parameter_dict["SP_POINTS"] * parameter_dict["R_POINTS"]
         a_array = np.array([1] * total_points)
         b_array = np.array([2] * total_points)
         DEVICE_out_array = cuda.device_array(
-            shape=(parameter_dict["NP_POINTS"]),
+            shape=(parameter_dict["SP_POINTS"]),
             dtype=parameter_dict["OUTPUT_ARRAY_TYPE"],
         )
 
@@ -85,7 +85,7 @@ class TestPowerKernel(unittest.TestCase):
         )
 
         # test ################################################################
-        expected = np.array([5.0] * parameter_dict["NP_POINTS"])
+        expected = np.array([5.0] * parameter_dict["SP_POINTS"])
         self.assertTrue(np.all(expected - DEVICE_out_array.copy_to_host() == 0))
 
     def test__specific_array(self):
@@ -93,13 +93,13 @@ class TestPowerKernel(unittest.TestCase):
         a_array = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         b_array = np.array([11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
 
-        NP_POINTS = 5
+        SP_POINTS = 5
         R_POINTS = 2
 
         # init ################################################################
         parameter_dict = {
-            "NP_POINTS": NP_POINTS,
-            "BLOCKS": NP_POINTS,
+            "SP_POINTS": SP_POINTS,
+            "BLOCKS": SP_POINTS,
             "R_POINTS": R_POINTS,
             "THREADS_PER_BLOCK": 1024,
             "PROCESSING_ARRAY_TYPE": np.int32,
@@ -110,7 +110,7 @@ class TestPowerKernel(unittest.TestCase):
 
         # data ################################################################
         DEVICE_out_array = cuda.device_array(
-            shape=(parameter_dict["NP_POINTS"]),
+            shape=(parameter_dict["SP_POINTS"]),
             dtype=parameter_dict["OUTPUT_ARRAY_TYPE"],
         )
 
@@ -128,13 +128,13 @@ class TestPowerKernel(unittest.TestCase):
         a_array = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         b_array = np.array([11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
 
-        NP_POINTS = 2
+        SP_POINTS = 2
         R_POINTS = 5
 
         # init ################################################################
         parameter_dict = {
-            "NP_POINTS": NP_POINTS,
-            "BLOCKS": NP_POINTS,
+            "SP_POINTS": SP_POINTS,
+            "BLOCKS": SP_POINTS,
             "R_POINTS": R_POINTS,
             "THREADS_PER_BLOCK": 1024,
             "PROCESSING_ARRAY_TYPE": np.int32,
@@ -149,12 +149,12 @@ class TestPowerKernel(unittest.TestCase):
         a_array = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         b_array = np.array([11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
 
-        NP_POINTS = 5
+        SP_POINTS = 5
         R_POINTS = 2
 
         # init ################################################################
         parameter_dict = {
-            "NP_POINTS": NP_POINTS,
+            "SP_POINTS": SP_POINTS,
             "BLOCKS": 2,
             "R_POINTS": R_POINTS,
             "THREADS_PER_BLOCK": 2,
@@ -166,7 +166,7 @@ class TestPowerKernel(unittest.TestCase):
 
         # data ################################################################
         DEVICE_out_array = cuda.device_array(
-            shape=(parameter_dict["NP_POINTS"]),
+            shape=(parameter_dict["SP_POINTS"]),
             dtype=parameter_dict["OUTPUT_ARRAY_TYPE"],
         )
 

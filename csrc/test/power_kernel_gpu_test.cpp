@@ -7,7 +7,7 @@
 #ifdef TESTENV
 #define NO_POINTS 9
 // R_POINTS=3 defined in Makefile
-// NP_POINTS=4 defined in Makefile
+// SP_POINTS=4 defined in Makefile
 #endif
 
 class PowerGpuTest : public CppUnit::TestFixture {
@@ -148,10 +148,10 @@ public:
         }
 
         delete[] chA_data;
-                delete[] chB_data;
-                delete[] sq_data;
-                delete[] expected_sq_data;
-        }
+        delete[] chB_data;
+        delete[] sq_data;
+        delete[] expected_sq_data;
+    }
 
     void test_power_kernel_v3_background(){
         /*

@@ -73,17 +73,17 @@
 <span class="lineNum">      11 </span>            : #define R_POINTS 1000
 <span class="lineNum">      12 </span>            : #endif
 <span class="lineNum">      13 </span>            : 
-<span class="lineNum">      14 </span>            : #ifndef NP_POINTS
-<span class="lineNum">      15 </span>            : #define NP_POINTS 1000
+<span class="lineNum">      14 </span>            : #ifndef SP_POINTS
+<span class="lineNum">      15 </span>            : #define SP_POINTS 1000
 <span class="lineNum">      16 </span>            : #endif
 <span class="lineNum">      17 </span>            : 
 <span class="lineNum">      18 </span>            : #ifndef THREADS_PER_BLOCK
 <span class="lineNum">      19 </span>            : #define THREADS_PER_BLOCK 1024
 <span class="lineNum">      20 </span>            : #endif
 <span class="lineNum">      21 </span>            : 
-<span class="lineNum">      22 </span>            : #define BLOCKS NP_POINTS
+<span class="lineNum">      22 </span>            : #define BLOCKS SP_POINTS
 <span class="lineNum">      23 </span>            : 
-<span class="lineNum">      24 </span>            : #define TOTAL_POINTS NP_POINTS*R_POINTS
+<span class="lineNum">      24 </span>            : #define TOTAL_POINTS SP_POINTS*R_POINTS
 <span class="lineNum">      25 </span>            : 
 <span class="lineNum">      26 </span>            : #ifndef POWER_KERNEL_HPP
 <span class="lineNum">      27 </span>            : #define POWER_KERNEL_HPP
@@ -145,7 +145,7 @@
 <span class="lineNum">      83 </span>            :          * The following will need to be defined:
 <span class="lineNum">      84 </span>            :          * PROCESSING_ARRAY_TYPE
 <span class="lineNum">      85 </span>            :          * R_POINTS
-<span class="lineNum">      86 </span>            :          * NP_POINTS
+<span class="lineNum">      86 </span>            :          * SP_POINTS
 <span class="lineNum">      87 </span>            :          * THREADS_PER_BLOCK
 <span class="lineNum">      88 </span>            :          */
 <a name="89"><span class="lineNum">      89 </span>            : </a>

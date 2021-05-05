@@ -49,7 +49,7 @@ PWD := $(shell pwd)
 # Tests and benchmarks #######################################################################
 TEST_FLAGS := -DTESTENV
 TEST_FLAGS += -D R_POINTS=4
-TEST_FLAGS += -D NP_POINTS=3
+TEST_FLAGS += -D SP_POINTS=3
 TEST_FLAGS += -D PROCESSING_ARRAY_TYPE=int
 TEST_FLAGS += -D THREADS_PER_BLOCK=1024
 
@@ -71,11 +71,11 @@ TEST_OBJECTS += $(patsubst $(FOLDER_SOURCE)/%.cu,$(TEST_BUILD_FOLDER)/%.o,$(CUDA
 # Benchmarking speed of CPU vs GPU ############################################
 BENCH_FLAGS := -DTESTENV
 BENCH_FLAGS += -D R_POINTS=1000
-BENCH_FLAGS += -D NP_POINTS=100
+BENCH_FLAGS += -D SP_POINTS=100
 BENCH_FLAGS += -D PROCESSING_ARRAY_TYPE=int
 BENCH_FLAGS += -D THREADS_PER_BLOCK=1024
 BENCH_FLAGS += -D SAMPLES=10
-BENCH_FLAGS += -D ITERATIONS=10000
+BENCH_FLAGS += -D ITERATIONS=1000
 
 BENCH_LDLIBS += -lcelero # Bechmarking library
 #This is used during runtime to locate Celero. cuda-memcheck can be used to audit the GPU for errors

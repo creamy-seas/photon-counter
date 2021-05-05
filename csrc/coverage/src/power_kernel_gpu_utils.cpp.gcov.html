@@ -93,7 +93,7 @@
 <span class="lineNum">      31 </span>            : 
 <span class="lineNum">      32 </span>            :     OKBLUE(&quot;Data Parameters&quot;);
 <span class="lineNum">      33 </span>            :     WHITE(&quot;R_POINTS: %i\n&quot;, this-&gt;r_points );
-<span class="lineNum">      34 </span>            :     WHITE(&quot;NP_POINTS: %i\n&quot;, this-&gt;np_points );
+<span class="lineNum">      34 </span>            :     WHITE(&quot;SP_POINTS: %i\n&quot;, this-&gt;np_points );
 <span class="lineNum">      35 </span>            : 
 <span class="lineNum">      36 </span>            :     OKBLUE(&quot;Processing Parameters&quot;);
 <span class="lineNum">      37 </span>            :     WHITE(&quot;CACHED ARRAY TYPE: %s\n&quot;, this-&gt;processing_array_type.c_str() );
@@ -109,7 +109,7 @@
 <span class="lineNum">      47 </span>            : 
 <span class="lineNum">      48 </span>            :     return GPU::PowerKernelParameters(
 <span class="lineNum">      49 </span>            :         R_POINTS,
-<span class="lineNum">      50 </span>            :         NP_POINTS,
+<span class="lineNum">      50 </span>            :         SP_POINTS,
 <span class="lineNum">      51 </span>            :         xstr(PROCESSING_ARRAY_TYPE),
 <span class="lineNum">      52 </span>            :         BLOCKS,
 <span class="lineNum">      53 </span>            :         THREADS_PER_BLOCK
@@ -131,7 +131,7 @@
 <span class="lineNum">      69 </span>            :     success += cudaMalloc((void**)dev_chB_data,
 <span class="lineNum">      70 </span><span class="lineCov">          4 :                           TOTAL_POINTS * sizeof(short));</span>
 <span class="lineNum">      71 </span>            :     success += cudaMalloc((void**)dev_sq_data,
-<span class="lineNum">      72 </span><span class="lineCov">          4 :                           NP_POINTS * sizeof(float));</span>
+<span class="lineNum">      72 </span><span class="lineCov">          4 :                           SP_POINTS * sizeof(float));</span>
 <span class="lineNum">      73 </span>            : 
 <span class="lineNum">      74 </span><span class="lineCov">          4 :     if (success != 0)</span>
 <span class="lineNum">      75 </span><span class="lineNoCov">          0 :         FAIL(&quot;Failed to allocate memory on GPU&quot;);</span>

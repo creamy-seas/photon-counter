@@ -31,7 +31,7 @@ void GPU::PowerKernelParameters::print(){
 
     OKBLUE("Data Parameters");
     WHITE("R_POINTS: %i\n", this->r_points );
-    WHITE("NP_POINTS: %i\n", this->np_points );
+    WHITE("SP_POINTS: %i\n", this->np_points );
 
     OKBLUE("Processing Parameters");
     WHITE("CACHED ARRAY TYPE: %s\n", this->processing_array_type.c_str() );
@@ -47,7 +47,7 @@ GPU::PowerKernelParameters GPU::fetch_kernel_parameters(){
 
     return GPU::PowerKernelParameters(
         R_POINTS,
-        NP_POINTS,
+        SP_POINTS,
         xstr(PROCESSING_ARRAY_TYPE),
         BLOCKS,
         THREADS_PER_BLOCK
@@ -69,7 +69,7 @@ void GPU::allocate_memory_on_gpu(
     success += cudaMalloc((void**)dev_chB_data,
                           TOTAL_POINTS * sizeof(short));
     success += cudaMalloc((void**)dev_sq_data,
-                          NP_POINTS * sizeof(float));
+                          SP_POINTS * sizeof(float));
 
     if (success != 0)
         FAIL("Failed to allocate memory on GPU");

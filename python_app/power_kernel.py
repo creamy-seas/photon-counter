@@ -32,7 +32,7 @@ class PowerKernel:
         )
 
         self.kernel = self.kernel_wrapper(
-            power_kernel_parameters["NP_POINTS"],
+            power_kernel_parameters["SP_POINTS"],
             power_kernel_parameters["R_POINTS"],
             power_kernel_parameters["PROCESSING_ARRAY_TYPE"],
         )
@@ -44,7 +44,7 @@ class PowerKernel:
         # Unpack parameters ###################################################
         BLOCKS = power_kernel_parameters["BLOCKS"]
         THREADS_PER_BLOCK = power_kernel_parameters["THREADS_PER_BLOCK"]
-        NP_POINTS = power_kernel_parameters["NP_POINTS"]
+        SP_POINTS = power_kernel_parameters["SP_POINTS"]
         R_POINTS = power_kernel_parameters["R_POINTS"]
         PROCESSING_ARRAY_TYPE = power_kernel_parameters["PROCESSING_ARRAY_TYPE"]
         INPUT_ARRAY_TYPE = power_kernel_parameters["INPUT_ARRAY_TYPE"]
@@ -52,10 +52,10 @@ class PowerKernel:
 
         # Evaluate size of arrays to store ####################################
         in_arrays_in_bytes = 2 * (
-            NP_POINTS * R_POINTS * np.dtype(INPUT_ARRAY_TYPE).itemsize
+            SP_POINTS * R_POINTS * np.dtype(INPUT_ARRAY_TYPE).itemsize
         )
-        out_array_in_bytes = NP_POINTS * np.dtype(OUTPUT_ARRAY_TYPE).itemsize
-        storage_array_in_bytes = NP_POINTS * np.dtype(PROCESSING_ARRAY_TYPE).itemsize
+        out_array_in_bytes = SP_POINTS * np.dtype(OUTPUT_ARRAY_TYPE).itemsize
+        storage_array_in_bytes = SP_POINTS * np.dtype(PROCESSING_ARRAY_TYPE).itemsize
 
         # Pass it to the global verifier ######################################
         gpu_utils.check_gpu_allocation(
@@ -77,7 +77,7 @@ class PowerKernel:
         ), f"(R_POINTS={R_POINTS}) is an edge case - try setting it to at least 2"
 
     def kernel_wrapper(
-        self, NP_POINTS: int, R_POINTS: int, PROCESSING_ARRAY_TYPE: type
+        self, SP_POINTS: int, R_POINTS: int, PROCESSING_ARRAY_TYPE: type
     ):
         i_default = R_POINTS // 2
 
@@ -111,7 +111,7 @@ class PowerKernel:
 
             will be mapped to a 2D array
 
-            a1 a2 a3 -> main_axis (np_coordinate)
+            a1 a2 a3 -> main_axis (sp_coordinate)
             b1 b2 b3 ...
             c1 c2 c3 ...
             d1 d2 d3 ...
@@ -127,13 +127,13 @@ class PowerKernel:
                 shape=(R_POINTS), dtype=PROCESSING_ARRAY_TYPE
             )
 
-            np_coordinate = cuda.blockIdx.x
-            while np_coordinate < NP_POINTS:
+            sp_coordinate = cuda.blockIdx.x
+            while sp_coordinate < SP_POINTS:
 
                 r_coordinate = cuda.threadIdx.x
                 while r_coordinate < R_POINTS:
-                    # coordinate = r_coordinate + np_coordinate * R_POINTS
-                    coordinate = r_coordinate * NP_POINTS + np_coordinate
+                    # coordinate = r_coordinate + sp_coordinate * R_POINTS
+                    coordinate = r_coordinate * SP_POINTS + sp_coordinate
 
                     cache_array[r_coordinate] = (
                         a_array[coordinate] * a_array[coordinate]
@@ -150,9 +150,9 @@ class PowerKernel:
 
                 # Summation
                 reduction_sum(cache_array)
-                array_out[np_coordinate] = float(cache_array[0]) / R_POINTS
+                array_out[sp_coordinate] = float(cache_array[0]) / R_POINTS
 
                 # Shift by number of allocated blocks along main-axis
-                np_coordinate += cuda.gridDim.x
+                sp_coordinate += cuda.gridDim.x
 
         return kernel
