@@ -8,3 +8,4 @@ GTAGS
 /example_adq/
 /example_cufft/
 /c_lib/coverage/coverage.info
+*.csv
