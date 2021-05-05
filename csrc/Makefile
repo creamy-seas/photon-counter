@@ -74,9 +74,12 @@ BENCH_FLAGS += -D R_POINTS=1000
 BENCH_FLAGS += -D NP_POINTS=100
 BENCH_FLAGS += -D PROCESSING_ARRAY_TYPE=int
 BENCH_FLAGS += -D THREADS_PER_BLOCK=1024
+BENCH_FLAGS += -D SAMPLES=10
+BENCH_FLAGS += -D ITERATIONS=10000
 
 BENCH_LDLIBS += -lcelero # Bechmarking library
-BENCH_RUN=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 #cuda-memcheck. This is used during runtime to locate Celero
+#This is used during runtime to locate Celero. cuda-memcheck can be used to audit the GPU for errors
+BENCH_RUN=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 #cuda-memcheck
 
 BENCH_FOLDER:=./bench
 BENCH_BUILD_FOLDER:=./build/bench_build

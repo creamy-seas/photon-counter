@@ -31,53 +31,53 @@
 
 namespace CPU {
 
-        /*
-          short* chA_data, chB_data:              raw data from the digitiser
-          unsigned int* sq_data:                  evaluated power
-          int no_points = samples_per_record * number of records
-          number_of_threads:                      number of threads to launch
-        */
-        void power_kernel(
-                short* chA_data,
-                short* chB_data,
-                unsigned int* sq_data,
-                int no_points,
-                int number_of_threads
-                );
+    /*
+      short* chA_data, chB_data:              raw data from the digitiser
+      unsigned int* sq_data:                  evaluated power
+      int no_points = samples_per_record * number of records
+      number_of_threads:                      number of threads to launch
+    */
+    void power_kernel_v1_no_background(
+        short* chA_data,
+        short* chB_data,
+        unsigned int* sq_data,
+        int no_points,
+        int number_of_threads
+        );
 
-        /*
-          short* chA_data, chB_data:              raw data from the digitiser
-          unsigned int* sq_data:                  evaluated power
-          short chA_back, chB_back:               background average on both channels
-          int no_points = samples_per_record * number of records
-          int number_of_threads:                  number of threads to launch
-        */
-        void power_kernel(
-                short *chA_data,
-                short *chB_data,
-                unsigned int *sq_data,
-                short chA_back,
-                short chB_back,
-                int no_points,
-                int number_of_threads
-                );
+    /*
+      short* chA_data, chB_data:              raw data from the digitiser
+      unsigned int* sq_data:                  evaluated power
+      short chA_back, chB_back:               background average on both channels
+      int no_points = samples_per_record * number of records
+      int number_of_threads:                  number of threads to launch
+    */
+    void power_kernel_v2_const_background(
+        short *chA_data,
+        short *chB_data,
+        unsigned int *sq_data,
+        short chA_back,
+        short chB_back,
+        int no_points,
+        int number_of_threads
+        );
 
-        /*
-          short* chA_data, chB_data:              raw data from the digitiser
-          unsigned int* sq_data:                  evaluated power
-          short* chA_back, chB_back:              background set of measurements for both channels
-          int no_points = samples_per_record * number of records
-          int number_of_threads:                  number of threads to launch
-        */
-        void power_kernel(
-                short *chA_data,
-                short *chB_data,
-                unsigned int *sq_data,
-                short *chA_back,
-                short *chB_back,
-                int no_points,
-                int number_of_threads
-                );
+    /*
+      short* chA_data, chB_data:              raw data from the digitiser
+      unsigned int* sq_data:                  evaluated power
+      short* chA_back, chB_back:              background set of measurements for both channels, OF THE SAME SIZE as the channel data!
+      int no_points = samples_per_record * number of records
+      int number_of_threads:                  number of threads to launch
+    */
+    void power_kernel_v3_background(
+        short *chA_data,
+        short *chB_data,
+        unsigned int *sq_data,
+        short *chA_back,
+        short *chB_back,
+        int no_points,
+        int number_of_threads
+        );
 }
 
 namespace GPU {
@@ -141,7 +141,7 @@ namespace GPU {
     /*
       short* chA_data, chB_data:              raw data from the digitiser
       unsigned int* sq_data:                  evaluated power
-      short chA_back, chB_back:               background average on both channels
+      short chA_back, chB_back:               background average on both channels OF A SINGLE RUN!
       int no_points = samples_per_record * number of records
       int number_of_threads:                  number of threads to launch
     */

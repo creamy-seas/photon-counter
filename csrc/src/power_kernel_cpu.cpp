@@ -19,7 +19,7 @@ void power_kernel_v1_no_background_runner(
     }
 }
 
-void CPU::power_kernel(
+void CPU::power_kernel_v1_no_background(
     short* chA_data,
     short* chB_data,
     unsigned int* sq_data,
@@ -61,7 +61,7 @@ void power_kernel_v2_const_background_runner(
     }
 }
 
-void CPU::power_kernel(
+void CPU::power_kernel_v2_const_background(
     short* chA_data,
     short* chB_data,
     unsigned int* sq_data,
@@ -107,7 +107,7 @@ void power_kernel_v3_background_runner(
     }
 }
 
-void CPU::power_kernel(
+void CPU::power_kernel_v3_background(
     short *chA_data, short *chB_data, unsigned int *sq_data,
     short *chA_back, short *chB_back,
     int no_points, int number_of_threads){

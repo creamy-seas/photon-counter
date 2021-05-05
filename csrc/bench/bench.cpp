@@ -1,52 +1,138 @@
 #include <celero/Celero.h>
-
-#include <random>
+#include <cstdlib> // srand
+#include <ctime> // time
+#include <cmath>
 #include "power_kernel.hpp"
 
 // Macro for main
 CELERO_MAIN
 
-std::random_device RandomDevice;
-std::uniform_int_distribution<int> UniformDistribution(0, 1024);
+#ifndef SAMPLES
+#define SAMPLES 10
+#endif
 
-///
-/// In reality, all of the "Complex" cases take the same amount of time to run.
-/// The difference in the results is a product of measurement error.
-///
-/// Interestingly, taking the sin of a constant number here resulted in a
-/// great deal of optimization in clang and gcc.
-///
-BASELINE(Power, CPU, 10, 100)
+#ifndef ITERATIONS
+#define ITERATIONS 10000
+#endif
+
+class PowerKernelFixture : public celero::TestFixture
 {
-    // celero::DoNotOptimizeAway(static_cast<float>(sin(UniformDistribution(RandomDevice))));
-    celero::DoNotOptimizeAway(GPU::fetch_kernel_parameters());
+public:
+
+    short digitiser_code() {
+        return ((float)std::rand() / RAND_MAX - 0.5) * digitiser_code_range;
+    }
+
+    void setUp(__attribute__ ((unused)) const celero::TestFixture::ExperimentValue& x) override {
+        // Prepare arrays before each sample is run
+        chA_data = new short[TOTAL_POINTS];
+        chB_data = new short[TOTAL_POINTS];
+        sq_data_gpu = new float[R_POINTS];
+        sq_data_cpu = new unsigned int[TOTAL_POINTS];
+
+        // Seed generator and populate arrays
+        std::srand(std::time(0));
+
+        for (int i(0); i < TOTAL_POINTS; i++) {
+            chA_data[i] = digitiser_code();
+            chB_data[i] = digitiser_code();
+        }
+
+        chA_const_background = digitiser_code();
+        chB_const_background = digitiser_code();
+    };
+
+    void tearDown() override {
+        delete[] chA_data;
+        delete[] chB_data;
+        delete[] sq_data_gpu;
+        delete[] sq_data_cpu;
+    };
+
+    const int digitiser_code_range = std::pow(2, 14);
+
+    // Same input arrays, but the GPU will make it compact
+    short* chA_data;
+    short* chB_data;
+    unsigned int* sq_data_cpu;
+    float* sq_data_gpu;
+
+    short chA_const_background;
+    short chB_const_background;
+
+    // Allocation on GPU
+    short *dev_chA_data;
+    short *dev_chB_data;
+    float *dev_sq_data;
+};
+
+BASELINE_F(PowerNoBack, CPU_1_thread, PowerKernelFixture, SAMPLES, ITERATIONS)
+{
+    CPU::power_kernel_v1_no_background(
+        chA_data, chB_data, sq_data_cpu,
+        TOTAL_POINTS, 1
+        );
 }
 
-///
-/// Run a test consisting of 1 sample of 710000 operations per measurement.
-/// There are not enough samples here to likely get a meaningful result.
-///
-// BENCHMARK(Power, Complex1, 1, 710000)
-// {
-//         celero::DoNotOptimizeAway(static_cast<float>(sin(fmod(UniformDistribution(RandomDevice), 3.14159265))));
-// }
+BENCHMARK_F(PowerNoBack, CPU_2_thread, PowerKernelFixture, SAMPLES, ITERATIONS)
+{
+    CPU::power_kernel_v1_no_background(
+        chA_data, chB_data, sq_data_cpu,
+        TOTAL_POINTS, 2
+        );
+}
 
-// ///
-// /// Run a test consisting of 30 samples of 710000 operations per measurement.
-// /// There are not enough samples here to get a reasonable measurement
-// /// It should get a Baseline number lower than the previous test.
-// ///
-// BENCHMARK(Power, Complex2, 30, 710000)
-// {
-//         celero::DoNotOptimizeAway(static_cast<float>(sin(fmod(UniformDistribution(RandomDevice), 3.14159265))));
-// }
+BENCHMARK_F(PowerNoBack, CPU_4_thread, PowerKernelFixture, SAMPLES, ITERATIONS)
+{
+    CPU::power_kernel_v1_no_background(
+        chA_data, chB_data, sq_data_cpu,
+        TOTAL_POINTS, 4
+        );
+}
 
-// ///
-// /// Run a test consisting of 60 samples of 710000 operations per measurement.
-// /// There are not enough samples here to get a reasonable measurement
-// /// It should get a Baseline number lower than the previous test.
-// ///
-// BENCHMARK(Power, Complex3, 60, 710000)
-// {
-//         celero::DoNotOptimizeAway(static_cast<float>(sin(fmod(UniformDistribution(RandomDevice), 3.14159265))));
-// }
+BENCHMARK_F(PowerNoBack, CPU_8_thread, PowerKernelFixture, SAMPLES, ITERATIONS)
+{
+    CPU::power_kernel_v1_no_background(
+        chA_data, chB_data, sq_data_cpu,
+        TOTAL_POINTS, 8
+        );
+}
+
+BENCHMARK_F(PowerNoBack, GPU, PowerKernelFixture, SAMPLES, ITERATIONS)
+{
+    GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_data);
+    GPU::power_kernel_v1_no_background(
+        chA_data,
+        chB_data,
+        sq_data_gpu,
+        &dev_chA_data,
+        &dev_chB_data,
+        &dev_sq_data
+        );
+    GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_data);
+}
+
+BASELINE_F(PowerConstBack, CPU_1_thread, PowerKernelFixture, SAMPLES, ITERATIONS)
+{
+    CPU::power_kernel_v2_const_background(
+        chA_data, chB_data, sq_data_cpu,
+        chA_const_background, chB_const_background,
+        TOTAL_POINTS, 1
+        );
+}
+
+BENCHMARK_F(PowerConstBack, GPU, PowerKernelFixture, SAMPLES, ITERATIONS)
+{
+    GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_data);
+    GPU::power_kernel_v2_const_background(
+        chA_data,
+        chB_data,
+        sq_data_gpu,
+        chA_const_background,
+        chB_const_background,
+        &dev_chA_data,
+        &dev_chB_data,
+        &dev_sq_data
+        );
+    GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_data);
+}

@@ -35,7 +35,18 @@ make
 
 # Test coverage
 
+```shell
+cd csrc && make test
+```
+
 https://quantum-optics-ride.gitlab.io/photon-counting/
+
+# Benchmarking #
+`celero` will run N samples, where each sample will run M operations.
+
+```shell
+cd csrc && make bench
+```
 
 # Links #
 - https://stackoverflow.com/questions/242894/cuda-driver-api-vs-cuda-runtime
