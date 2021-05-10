@@ -77,7 +77,7 @@ void GPU::copy_background_arrays_to_gpu(short *chA_background, short *chB_backgr
 
 
 __global__ void power_kernel_v1_no_background_runner(
-    short *chA_data, short *chB_data, float *sq_data){
+    short *chA_data, short *chB_data, double *sq_out){
 
     /*
       chA
@@ -118,7 +118,7 @@ __global__ void power_kernel_v1_no_background_runner(
 
         // Summation
         reduction_sum(cache_array);
-        sq_data[sp_coordinate] = (float)cache_array[0] / R_POINTS;
+        sq_out[sp_coordinate] = (double)cache_array[0] / R_POINTS;
 
         // Shift by number of allocated blocks along main-axis
         sp_coordinate += gridDim.x;
@@ -126,47 +126,47 @@ __global__ void power_kernel_v1_no_background_runner(
 }
 
 __global__ void power_kernel_v2_const_background_runner(
-    short *chA_data, short *chB_data, float *sq_data, short chA_back, short chB_back){
+        short *chA_data, short *chB_data, double *sq_out, short chA_back, short chB_back){
 
-    __shared__ PROCESSING_ARRAY_TYPE cache_array[R_POINTS];
+        __shared__ PROCESSING_ARRAY_TYPE cache_array[R_POINTS];
 
-    int sp_coordinate = blockIdx.x;
-    int r_coordinate, coordinate;
-    int _chA, _chB;
+        int sp_coordinate = blockIdx.x;
+        int r_coordinate, coordinate;
+        int _chA, _chB;
 
-    while (sp_coordinate < SP_POINTS) {
-        r_coordinate = threadIdx.x;
+        while (sp_coordinate < SP_POINTS) {
+                r_coordinate = threadIdx.x;
 
-        while (r_coordinate < R_POINTS) {
-            coordinate = r_coordinate * SP_POINTS + sp_coordinate;
+                while (r_coordinate < R_POINTS) {
+                        coordinate = r_coordinate * SP_POINTS + sp_coordinate;
 
-            _chA = chA_data[coordinate] - chA_back;
-            _chB = chB_data[coordinate] - chB_back;
+                        _chA = chA_data[coordinate] - chA_back;
+                        _chB = chB_data[coordinate] - chB_back;
 
-            cache_array[r_coordinate] = _chA * _chA + _chB * _chB;
-            // Once thread has completed, shift the
-            // row index by the number of allocated
-            // threads and continue summation
-            r_coordinate += blockDim.x;
+                        cache_array[r_coordinate] = _chA * _chA + _chB * _chB;
+                        // Once thread has completed, shift the
+                        // row index by the number of allocated
+                        // threads and continue summation
+                        r_coordinate += blockDim.x;
+                }
+
+                // Ensure that all threads have completed execution
+                __syncthreads();
+
+                // Summation
+                reduction_sum(cache_array);
+                sq_out[sp_coordinate] = (double)cache_array[0] / R_POINTS;
+
+                // Shift by number of allocated blocks along main-axis
+                sp_coordinate += gridDim.x;
         }
-
-        // Ensure that all threads have completed execution
-        __syncthreads();
-
-        // Summation
-        reduction_sum(cache_array);
-        sq_data[sp_coordinate] = (float)cache_array[0] / R_POINTS;
-
-        // Shift by number of allocated blocks along main-axis
-        sp_coordinate += gridDim.x;
-    }
 }
 
 /*
   Background arrays are written into constant memory once and reused.
 */
 __global__ void power_kernel_v3_background_runner(
-    short *chA_data, short *chB_data, float *sq_data){
+    short *chA_data, short *chB_data, double *sq_out){
 
     __shared__ PROCESSING_ARRAY_TYPE cache_array[R_POINTS];
 
@@ -195,7 +195,7 @@ __global__ void power_kernel_v3_background_runner(
 
         // Summation
         reduction_sum(cache_array);
-        sq_data[sp_coordinate] = (float)cache_array[0] / R_POINTS;
+        sq_out[sp_coordinate] = (double)cache_array[0] / R_POINTS;
 
         // Shift by number of allocated blocks along main-axis
         sp_coordinate += gridDim.x;
@@ -205,10 +205,10 @@ __global__ void power_kernel_v3_background_runner(
 void GPU::power_kernel_v1_no_background(
     short *chA_data,
     short *chB_data,
-    float *sq_data,
+    double *sq_out,
     short **dev_chA_data,
     short **dev_chB_data,
-    float **dev_sq_data
+    double **dev_sq_out
     ){
     /*
      * chA and chB arrays:
@@ -231,13 +231,13 @@ void GPU::power_kernel_v1_no_background(
 
     // Run kernel
     power_kernel_v1_no_background_runner<<<BLOCKS, THREADS_PER_BLOCK>>>(
-        *dev_chA_data, *dev_chB_data, *dev_sq_data);
+            *dev_chA_data, *dev_chB_data, *dev_sq_out);
 
     // Copy from device
     success += cudaMemcpy(
-        sq_data,
-        *dev_sq_data,
-        SP_POINTS * sizeof(float),
+        sq_out,
+        *dev_sq_out,
+        SP_POINTS * sizeof(double),
         cudaMemcpyDeviceToHost);
     if (success != 0) FAIL("Failed to copy data FROM the GPU!");
 
@@ -247,12 +247,12 @@ void GPU::power_kernel_v1_no_background(
 void GPU::power_kernel_v2_const_background(
     short *chA_data,
     short *chB_data,
-    float *sq_data,
+    double *sq_out,
     short chA_back,
     short chB_back,
     short **dev_chA_data,
     short **dev_chB_data,
-    float **dev_sq_data
+    double **dev_sq_out
     ){
     /*
      * chA and chB arrays:
@@ -275,13 +275,13 @@ void GPU::power_kernel_v2_const_background(
 
     // Run kernel
     power_kernel_v2_const_background_runner<<<BLOCKS, THREADS_PER_BLOCK>>>(
-        *dev_chA_data, *dev_chB_data, *dev_sq_data, chA_back, chB_back);
+            *dev_chA_data, *dev_chB_data, *dev_sq_out, chA_back, chB_back);
 
     // Copy from device
     success += cudaMemcpy(
-        sq_data,
-        *dev_sq_data,
-        SP_POINTS * sizeof(float),
+        sq_out,
+        *dev_sq_out,
+        SP_POINTS * sizeof(double),
         cudaMemcpyDeviceToHost);
     if (success != 0) FAIL("Failed to copy data FROM the GPU!");
 
@@ -291,10 +291,10 @@ void GPU::power_kernel_v2_const_background(
 void GPU::power_kernel_v3_background(
     short *chA_data,
     short *chB_data,
-    float *sq_data,
+    double *sq_out,
     short **dev_chA_data,
     short **dev_chB_data,
-    float **dev_sq_data
+    double **dev_sq_out
     ){
     /*
      * chA and chB arrays:
@@ -317,13 +317,13 @@ void GPU::power_kernel_v3_background(
 
     // Run kernel
     power_kernel_v3_background_runner<<<BLOCKS, THREADS_PER_BLOCK>>>(
-        *dev_chA_data, *dev_chB_data, *dev_sq_data);
+        *dev_chA_data, *dev_chB_data, *dev_sq_out);
 
     // Copy from device
     success += cudaMemcpy(
-        sq_data,
-        *dev_sq_data,
-        SP_POINTS * sizeof(float),
+        sq_out,
+        *dev_sq_out,
+        SP_POINTS * sizeof(double),
         cudaMemcpyDeviceToHost);
     if (success != 0) FAIL("Failed to copy data FROM the GPU!");
 

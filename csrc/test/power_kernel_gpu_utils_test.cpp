@@ -34,25 +34,25 @@ public:
     void test_allocate_memory_allocation(){
         short* dev_chA_data = 0;
         short* dev_chB_data = 0;
-        float* dev_sq_data = 0;
+        double* dev_sq_out = 0;
 
         void* dev_chA_data_addr = &dev_chA_data;
         void* dev_chB_data_addr = &dev_chB_data;
-        void* dev_sq_data_addr = &dev_sq_data;
+        void* dev_sq_out_addr = &dev_sq_out;
 
-        GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_data);
+        GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_out);
 
         // Check memory has been allocated
         CPPUNIT_ASSERT(dev_chA_data != 0);
         CPPUNIT_ASSERT(dev_chB_data != 0);
-        CPPUNIT_ASSERT(dev_sq_data != 0);
+        CPPUNIT_ASSERT(dev_sq_out != 0);
 
-        GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_data);
+        GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_out);
 
         // Check address has stayed the same
         CPPUNIT_ASSERT_EQUAL(dev_chA_data_addr, (void *)&dev_chA_data);
         CPPUNIT_ASSERT_EQUAL(dev_chB_data_addr, (void *)&dev_chB_data);
-        CPPUNIT_ASSERT_EQUAL(dev_sq_data_addr, (void *)&dev_sq_data);
+        CPPUNIT_ASSERT_EQUAL(dev_sq_out_addr, (void *)&dev_sq_out);
         }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION( PowerKernelGpuUtilsTest );

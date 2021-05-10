@@ -24,13 +24,13 @@ class PowerGpuTest : public CppUnit::TestFixture {
 private:
     short *chA_data;
     short *chB_data;
-    float *sq_data;
-    float *expected_sq_data;
+    double *sq_out;
+    double *expected_sq_out;
 
     // Allocation on GPU
     short *dev_chA_data;
     short *dev_chB_data;
-    float *dev_sq_data;
+    double *dev_sq_out;
 public:
     void tearDown(){
     }
@@ -59,31 +59,31 @@ public:
         // Allocation on CPU
         chA_data = new short[12]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
         chB_data = new short[12]{0, 1, 0, 1, 0, 1, 0, 1, 0, 2, 2, 2};
-        sq_data = new float[3]{-1, -2, -3};
-        expected_sq_data = new float[3]{(float)(1 + 17 + 49 + 104) / 4,
-                (float)(5 + 25 + 65 + 125) / 4,
-                (float)(9 + 37 + 81 + 148) / 4};
+        sq_out = new double[3]{-1, -2, -3};
+        expected_sq_out = new double[3]{(double)(1 + 17 + 49 + 104) / 4,
+                (double)(5 + 25 + 65 + 125) / 4,
+                (double)(9 + 37 + 81 + 148) / 4};
 
-        GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_data);
+        GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_out);
         GPU::power_kernel_v1_no_background(
             chA_data,
             chB_data,
-            sq_data,
+            sq_out,
             &dev_chA_data,
             &dev_chB_data,
-            &dev_sq_data
+            &dev_sq_out
             );
-        GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_data);
+        GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_out);
 
         // Compare
         for (int i(0); i < 3; i++) {
-            CPPUNIT_ASSERT_EQUAL(expected_sq_data[i], sq_data[i]);
+            CPPUNIT_ASSERT_EQUAL(expected_sq_out[i], sq_out[i]);
         }
 
         // Or compare using file
-        // float** arr_to_dump = new float*[2];
-        // arr_to_dump[1] = expected_sq_data;
-        // arr_to_dump[0] = sq_data;
+        // double** arr_to_dump = new double*[2];
+        // arr_to_dump[1] = expected_sq_out;
+        // arr_to_dump[0] = sq_out;
         // dump_arrays_to_file(
         //         arr_to_dump,
         //         2, 4,
@@ -92,8 +92,8 @@ public:
 
         delete[] chA_data;
         delete[] chB_data;
-        delete[] sq_data;
-        delete[] expected_sq_data;
+        delete[] sq_out;
+        delete[] expected_sq_out;
     }
 
     void test_power_kernel_v2_const_background(){
@@ -121,36 +121,36 @@ public:
         // Allocation on CPU
         chA_data = new short[12]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
         chB_data = new short[12]{0, 1, 0, 1, 0, 1, 0, 1, 0, 2, 2, 2};
-        sq_data = new float[3]{-1, -2, -3};
-        expected_sq_data = new float[3]{(float)(0 + 10 + 36 + 85) / 4,
-                (float)(2 + 16 + 50 + 104) / 4,
-                (float)(4 + 26 + 64 + 125) / 4};
+        sq_out = new double[3]{-1, -2, -3};
+        expected_sq_out = new double[3]{(double)(0 + 10 + 36 + 85) / 4,
+                (double)(2 + 16 + 50 + 104) / 4,
+                (double)(4 + 26 + 64 + 125) / 4};
         short chA_const_background = 1;
         short chB_const_background = 0;
 
 
-        GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_data);
+        GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_out);
         GPU::power_kernel_v2_const_background(
             chA_data,
             chB_data,
-            sq_data,
+            sq_out,
             chA_const_background,
             chB_const_background,
             &dev_chA_data,
             &dev_chB_data,
-            &dev_sq_data
+            &dev_sq_out
             );
-        GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_data);
+        GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_out);
 
         // Compare
         for (int i(0); i < 3; i++) {
-            CPPUNIT_ASSERT_EQUAL(expected_sq_data[i], sq_data[i]);
+            CPPUNIT_ASSERT_EQUAL(expected_sq_out[i], sq_out[i]);
         }
 
         delete[] chA_data;
         delete[] chB_data;
-        delete[] sq_data;
-        delete[] expected_sq_data;
+        delete[] sq_out;
+        delete[] expected_sq_out;
     }
 
     void test_power_kernel_v3_background(){
@@ -168,33 +168,33 @@ public:
         short *chA_background = new short[3]{1, 2, 3};
         short *chB_background = new short[3]{0, 0, 0};
 
-        sq_data = new float[3]{-1, -2, -3};
-        expected_sq_data = new float[3]{(float)(0 + 9 + 36 + 100) / 4,
-                (float)(1 + 16 + 49 + 121) / 4,
-                (float)(4 + 25 + 81 + 144) / 4};
+        sq_out = new double[3]{-1, -2, -3};
+        expected_sq_out = new double[3]{(double)(0 + 9 + 36 + 100) / 4,
+                (double)(1 + 16 + 49 + 121) / 4,
+                (double)(4 + 25 + 81 + 144) / 4};
 
 
-        GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_data);
+        GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_out);
         GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
         GPU::power_kernel_v3_background(
             chA_data,
             chB_data,
-            sq_data,
+            sq_out,
             &dev_chA_data,
             &dev_chB_data,
-            &dev_sq_data
+            &dev_sq_out
             );
-        GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_data);
+        GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_out);
 
         // Compare
         for (int i(0); i < 3; i++) {
-            CPPUNIT_ASSERT_EQUAL(expected_sq_data[i], sq_data[i]);
+            CPPUNIT_ASSERT_EQUAL(expected_sq_out[i], sq_out[i]);
         }
 
         delete[] chA_data;
         delete[] chB_data;
-        delete[] sq_data;
-        delete[] expected_sq_data;
+        delete[] sq_out;
+        delete[] expected_sq_out;
         delete[] chA_background;
         delete[] chB_background;
     }

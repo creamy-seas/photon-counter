@@ -1,3 +1,6 @@
+# April 30 #
+- Original benchmark
+
 | Group | Experiment      | Prob. Space | Samples | Iterations | Baseline | us/Iteration | Iterations/sec | RAM (bytes) |
 |:-----:|:---------------:|:-----------:|:-------:|:----------:|:--------:|:------------:|:--------------:|:-----------:|
 | POWER | CPU_1T_NO_BACK  | Null        | 10      | 1000       | 1.00000  | 993.03200    | 1007.02        | 60456960    |
@@ -9,3 +12,13 @@
 | POWER | GPU_CONST_BACK  | Null        | 10      | 1000       | 0.26043  | 258.61800    | 3866.71        | 13816946688 |
 | POWER | CPU_1T_BACK     | Null        | 10      | 1000       | 1.81312  | 1800.49100   | 555.40         | 14617780224 |
 | POWER | GPU_BACK        | Null        | 10      | 1000       | 0.25992  | 258.11300    | 3874.27        | 18287763456 |
+
+# Float vs double #
+- No difference
+
+| Group          | Experiment      | Prob. Space | Samples | Iterations | Baseline | us/Iteration | Iterations/sec | RAM (bytes) |
+|:--------------:|:---------------:|:-----------:|:-------:|:----------:|:--------:|:------------:|:--------------:|:-----------:|
+| TYPE_BENCHMARK | FLOAT_MULITPLY  | Null        | 1000    | 50000      | 1.00000  | 2.64130      | 378601.45      | 51908608    |
+| TYPE_BENCHMARK | FLOAT_ADD       | Null        | 1000    | 50000      | 0.91550  | 2.41812      | 413544.41      | 51908608    |
+| TYPE_BENCHMARK | DOUBLE_ADD      | Null        | 1000    | 50000      | 0.91822  | 2.42530      | 412320.13      | 51908608    |
+| TYPE_BENCHMARK | DOUBLE_MULTIPLY | Null        | 1000    | 50000      | 1.00096  | 2.64384      | 378237.71      | 51908608    |

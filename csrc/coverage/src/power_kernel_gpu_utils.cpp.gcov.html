@@ -120,7 +120,7 @@
 <span class="lineNum">      58 </span><span class="lineCov">          4 : void GPU::allocate_memory_on_gpu(</span>
 <span class="lineNum">      59 </span>            :     short **dev_chA_data,
 <span class="lineNum">      60 </span>            :     short **dev_chB_data,
-<span class="lineNum">      61 </span>            :     float **dev_sq_data
+<span class="lineNum">      61 </span>            :     float **dev_sq_out
 <span class="lineNum">      62 </span>            :     ){
 <span class="lineNum">      63 </span>            : 
 <span class="lineNum">      64 </span>            :     OKBLUE(&quot;Allocating memory for power kernel on GPU&quot;);
@@ -130,7 +130,7 @@
 <span class="lineNum">      68 </span><span class="lineCov">          4 :                           TOTAL_POINTS * sizeof(short));</span>
 <span class="lineNum">      69 </span>            :     success += cudaMalloc((void**)dev_chB_data,
 <span class="lineNum">      70 </span><span class="lineCov">          4 :                           TOTAL_POINTS * sizeof(short));</span>
-<span class="lineNum">      71 </span>            :     success += cudaMalloc((void**)dev_sq_data,
+<span class="lineNum">      71 </span>            :     success += cudaMalloc((void**)dev_sq_out,
 <span class="lineNum">      72 </span><span class="lineCov">          4 :                           SP_POINTS * sizeof(float));</span>
 <span class="lineNum">      73 </span>            : 
 <span class="lineNum">      74 </span><span class="lineCov">          4 :     if (success != 0)</span>
@@ -143,7 +143,7 @@
 <span class="lineNum">      81 </span><span class="lineCov">          4 : void GPU::free_memory_on_gpu(</span>
 <span class="lineNum">      82 </span>            :     short **dev_chA_data,
 <span class="lineNum">      83 </span>            :     short **dev_chB_data,
-<span class="lineNum">      84 </span>            :     float **dev_sq_data
+<span class="lineNum">      84 </span>            :     float **dev_sq_out
 <span class="lineNum">      85 </span>            :     ){
 <span class="lineNum">      86 </span>            : 
 <span class="lineNum">      87 </span>            :     OKBLUE(&quot;Deallocating memory from GPU&quot;);
@@ -151,7 +151,7 @@
 <span class="lineNum">      89 </span><span class="lineCov">          4 :     int success = 0;</span>
 <span class="lineNum">      90 </span><span class="lineCov">          4 :     success += cudaFree(*dev_chA_data);</span>
 <span class="lineNum">      91 </span><span class="lineCov">          4 :     success += cudaFree(*dev_chB_data);</span>
-<span class="lineNum">      92 </span><span class="lineCov">          4 :     success += cudaFree(*dev_sq_data);</span>
+<span class="lineNum">      92 </span><span class="lineCov">          4 :     success += cudaFree(*dev_sq_out);</span>
 <span class="lineNum">      93 </span><span class="lineCov">          4 :     if (success != 0)</span>
 <span class="lineNum">      94 </span><span class="lineNoCov">          0 :         FAIL(&quot;Failed to allocate memory on GPU&quot;);</span>
 <span class="lineNum">      95 </span>            : 
