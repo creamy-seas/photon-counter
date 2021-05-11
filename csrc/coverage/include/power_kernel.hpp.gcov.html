@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2021-04-30 23:36:33</td>
+            <td class="headerValue">2021-05-11 12:49:53</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">1</td>
@@ -60,164 +60,197 @@
       <td>
 <pre class="sourceHeading">          Line data    Source code</pre>
 <pre class="source">
-<a name="1"><span class="lineNum">       1 </span>            : ///////////////////////////////////////////////////////////////////////////////</a>
-<span class="lineNum">       2 </span>            : //             Functions for gpu processing of power measurements            //
-<span class="lineNum">       3 </span>            : ///////////////////////////////////////////////////////////////////////////////
-<span class="lineNum">       4 </span>            : #include &lt;string&gt;
-<span class="lineNum">       5 </span>            : 
-<span class="lineNum">       6 </span>            : #define xstr(s) _str(s)
-<span class="lineNum">       7 </span>            : #define _str(s) #s
-<span class="lineNum">       8 </span>            : 
-<span class="lineNum">       9 </span>            : #ifndef PROCESSING_ARRAY_TYPE
-<span class="lineNum">      10 </span>            : #define PROCESSING_ARRAY_TYPE int
-<span class="lineNum">      11 </span>            : #endif
+<a name="1"><span class="lineNum">       1 </span>            : #ifndef POWER_KERNEL_HPP</a>
+<span class="lineNum">       2 </span>            : #define POWER_KERNEL_HPP
+<span class="lineNum">       3 </span>            : // Kernels that evalaute power from readings from digitiser
+<span class="lineNum">       4 </span>            : // In general we exepct the digitiser to return SP_POINTS (samples per record) repeated R_POINTS (number of records).
+<span class="lineNum">       5 </span>            : // Therefore the chA and chB sizes are SP_POINTS * R_POINTS
+<span class="lineNum">       6 </span>            : //
+<span class="lineNum">       7 </span>            : // Note - GPU and CPU kernels will differ, as for the GPU kernel array sizes need to be known at compile time
+<span class="lineNum">       8 </span>            : #include &lt;string&gt;
+<span class="lineNum">       9 </span>            : 
+<span class="lineNum">      10 </span>            : #define xstr(s) _str(s)
+<span class="lineNum">      11 </span>            : #define _str(s) #s
 <span class="lineNum">      12 </span>            : 
-<span class="lineNum">      13 </span>            : #ifndef R_POINTS
-<span class="lineNum">      14 </span>            : #define R_POINTS 1000
+<span class="lineNum">      13 </span>            : #ifndef PROCESSING_ARRAY_TYPE
+<span class="lineNum">      14 </span>            : #define PROCESSING_ARRAY_TYPE int
 <span class="lineNum">      15 </span>            : #endif
 <span class="lineNum">      16 </span>            : 
-<span class="lineNum">      17 </span>            : #ifndef SP_POINTS
-<span class="lineNum">      18 </span>            : #define SP_POINTS 1000
+<span class="lineNum">      17 </span>            : #ifndef R_POINTS
+<span class="lineNum">      18 </span>            : #define R_POINTS 1000
 <span class="lineNum">      19 </span>            : #endif
 <span class="lineNum">      20 </span>            : 
-<span class="lineNum">      21 </span>            : #ifndef THREADS_PER_BLOCK
-<span class="lineNum">      22 </span>            : #define THREADS_PER_BLOCK 1024
+<span class="lineNum">      21 </span>            : #ifndef SP_POINTS
+<span class="lineNum">      22 </span>            : #define SP_POINTS 1000
 <span class="lineNum">      23 </span>            : #endif
 <span class="lineNum">      24 </span>            : 
-<span class="lineNum">      25 </span>            : #define BLOCKS SP_POINTS
-<span class="lineNum">      26 </span>            : 
-<span class="lineNum">      27 </span>            : #define TOTAL_POINTS SP_POINTS*R_POINTS
+<span class="lineNum">      25 </span>            : #ifndef THREADS_PER_BLOCK
+<span class="lineNum">      26 </span>            : #define THREADS_PER_BLOCK 1024
+<span class="lineNum">      27 </span>            : #endif
 <span class="lineNum">      28 </span>            : 
-<span class="lineNum">      29 </span>            : #ifndef POWER_KERNEL_HPP
-<span class="lineNum">      30 </span>            : #define POWER_KERNEL_HPP
-<span class="lineNum">      31 </span>            : 
-<span class="lineNum">      32 </span>            : namespace CPU {
-<span class="lineNum">      33 </span>            : 
-<span class="lineNum">      34 </span>            :         /*
-<span class="lineNum">      35 </span>            :           short* chA_data, chB_data:              raw data from the digitiser
-<span class="lineNum">      36 </span>            :           unsigned int* sq_out:                  evaluated power
-<span class="lineNum">      37 </span>            :           int no_points = samples_per_record * number of records
-<span class="lineNum">      38 </span>            :           number_of_threads:                      number of threads to launch
-<span class="lineNum">      39 </span>            :         */
-<span class="lineNum">      40 </span>            :         void power_kernel(
-<span class="lineNum">      41 </span>            :                 short* chA_data,
-<span class="lineNum">      42 </span>            :                 short* chB_data,
-<span class="lineNum">      43 </span>            :                 unsigned int* sq_out,
-<span class="lineNum">      44 </span>            :                 int no_points,
-<span class="lineNum">      45 </span>            :                 int number_of_threads
-<span class="lineNum">      46 </span>            :                 );
-<span class="lineNum">      47 </span>            : 
-<span class="lineNum">      48 </span>            :         /*
-<span class="lineNum">      49 </span>            :           short* chA_data, chB_data:              raw data from the digitiser
-<span class="lineNum">      50 </span>            :           unsigned int* sq_out:                  evaluated power
-<span class="lineNum">      51 </span>            :           short chA_back, chB_back:               background average on both channels
-<span class="lineNum">      52 </span>            :           int no_points = samples_per_record * number of records
-<span class="lineNum">      53 </span>            :           int number_of_threads:                  number of threads to launch
-<span class="lineNum">      54 </span>            :         */
-<span class="lineNum">      55 </span>            :         void power_kernel(
-<span class="lineNum">      56 </span>            :                 short *chA_data,
-<span class="lineNum">      57 </span>            :                 short *chB_data,
-<span class="lineNum">      58 </span>            :                 unsigned int *sq_out,
-<span class="lineNum">      59 </span>            :                 short chA_back,
-<span class="lineNum">      60 </span>            :                 short chB_back,
-<span class="lineNum">      61 </span>            :                 int no_points,
-<span class="lineNum">      62 </span>            :                 int number_of_threads
-<span class="lineNum">      63 </span>            :                 );
-<span class="lineNum">      64 </span>            : 
-<span class="lineNum">      65 </span>            :         /*
-<span class="lineNum">      66 </span>            :           short* chA_data, chB_data:              raw data from the digitiser
-<span class="lineNum">      67 </span>            :           unsigned int* sq_out:                  evaluated power
-<span class="lineNum">      68 </span>            :           short* chA_back, chB_back:              background set of measurements for both channels
-<span class="lineNum">      69 </span>            :           int no_points = samples_per_record * number of records
-<span class="lineNum">      70 </span>            :           int number_of_threads:                  number of threads to launch
-<span class="lineNum">      71 </span>            :         */
-<span class="lineNum">      72 </span>            :         void power_kernel(
-<span class="lineNum">      73 </span>            :                 short *chA_data,
-<span class="lineNum">      74 </span>            :                 short *chB_data,
-<span class="lineNum">      75 </span>            :                 unsigned int *sq_out,
-<span class="lineNum">      76 </span>            :                 short *chA_back,
-<span class="lineNum">      77 </span>            :                 short *chB_back,
-<span class="lineNum">      78 </span>            :                 int no_points,
-<span class="lineNum">      79 </span>            :                 int number_of_threads
-<span class="lineNum">      80 </span>            :                 );
-<span class="lineNum">      81 </span>            : }
-<span class="lineNum">      82 </span>            : 
-<span class="lineNum">      83 </span>            : namespace GPU {
-<span class="lineNum">      84 </span>            :     /*
-<span class="lineNum">      85 </span>            :      * The following will need to be defined:
-<span class="lineNum">      86 </span>            :      * PROCESSING_ARRAY_TYPE
-<span class="lineNum">      87 </span>            :      * R_POINTS
-<span class="lineNum">      88 </span>            :      * SP_POINTS
-<span class="lineNum">      89 </span>            :      * THREADS_PER_BLOCK
-<span class="lineNum">      90 </span>            :      */
-<a name="91"><span class="lineNum">      91 </span>            : </a>
-<span class="lineNum">      92 </span>            :     // Communication of kernel parameters to python
-<span class="lineNum">      93 </span><span class="lineCov">          1 :     struct PowerKernelParameters {</span>
-<span class="lineNum">      94 </span>            :         int r_points;
-<span class="lineNum">      95 </span>            :         int np_points;
-<span class="lineNum">      96 </span>            :         int blocks;
-<span class="lineNum">      97 </span>            :         int threads_per_block;
-<span class="lineNum">      98 </span>            :         std::string processing_array_type;
-<span class="lineNum">      99 </span>            : 
-<span class="lineNum">     100 </span>            :         PowerKernelParameters(
-<span class="lineNum">     101 </span>            :             int r_points,
-<span class="lineNum">     102 </span>            :             int np_points,
-<span class="lineNum">     103 </span>            :             std::string processing_array_type,
-<span class="lineNum">     104 </span>            :             int blocks,
-<span class="lineNum">     105 </span>            :             int threads_per_block);
-<span class="lineNum">     106 </span>            :         void print();
-<span class="lineNum">     107 </span>            :     };
-<span class="lineNum">     108 </span>            :     PowerKernelParameters fetch_kernel_parameters();
-<span class="lineNum">     109 </span>            : 
-<span class="lineNum">     110 </span>            :     // Preparation and completion of memory allocation on GPU
-<span class="lineNum">     111 </span>            :     void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, float **dev_sq_out);
-<span class="lineNum">     112 </span>            :     void free_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, float **dev_sq_out);
-<span class="lineNum">     113 </span>            :     void copy_background_arrays_to_gpu(short *chA_background, short *chB_background);
+<span class="lineNum">      29 </span>            : #define BLOCKS SP_POINTS
+<span class="lineNum">      30 </span>            : 
+<span class="lineNum">      31 </span>            : #define TOTAL_POINTS SP_POINTS*R_POINTS
+<span class="lineNum">      32 </span>            : 
+<span class="lineNum">      33 </span>            : #define CHA_MASK 1
+<span class="lineNum">      34 </span>            : #define CHB_MASK 2
+<span class="lineNum">      35 </span>            : #define SQ_MASK 4
+<span class="lineNum">      36 </span>            : 
+<span class="lineNum">      37 </span>            : /*
+<span class="lineNum">      38 </span>            :  * Macro to compactly expand the processing cases into blocks that are run depending on what the input_mask
+<span class="lineNum">      39 </span>            :  * value is. E.g. if input_mask=5 (101 in binary), then chA_func and sq_func are run.
+<span class="lineNum">      40 </span>            :  *
+<span class="lineNum">      41 </span>            :  * input_mask: the parameter that will be checked when determining which block to execute.
+<span class="lineNum">      42 </span>            :  * x_func: lambda function, with no input or output arguments (use pointers to pass data in or out)
+<span class="lineNum">      43 </span>            :  *      read more about lambda functions here: https://www.cprogramming.com/c++11/c++11-lambda-closures.html
+<span class="lineNum">      44 </span>            :  *      e.g. auto lambda_func_example = [&amp;capture_value] () { capture_value[0][0] = 1; };
+<span class="lineNum">      45 </span>            :  */
+<span class="lineNum">      46 </span>            : #define MASK_RESOLVER(input_mask, chA_func, chB_func, sq_func)          \
+<span class="lineNum">      47 </span>            :     if (input_mask == (CHA_MASK ^ CHB_MASK ^ SQ_MASK)) {                \
+<span class="lineNum">      48 </span>            :         chA_func();                                                     \
+<span class="lineNum">      49 </span>            :         chB_func();                                                     \
+<span class="lineNum">      50 </span>            :         sq_func();                                                      \
+<span class="lineNum">      51 </span>            :     }                                                                   \
+<span class="lineNum">      52 </span>            :     else if (input_mask == (CHA_MASK ^ CHB_MASK)){                 \
+<span class="lineNum">      53 </span>            :         chA_func();                                                     \
+<span class="lineNum">      54 </span>            :         chB_func();                                                     \
+<span class="lineNum">      55 </span>            :     }                                                                   \
+<span class="lineNum">      56 </span>            :     else if (input_mask == (CHA_MASK ^ SQ_MASK)){                  \
+<span class="lineNum">      57 </span>            :         chA_func();                                                     \
+<span class="lineNum">      58 </span>            :         sq_func();                                                      \
+<span class="lineNum">      59 </span>            :     }                                                                   \
+<span class="lineNum">      60 </span>            :     else if (input_mask == (CHB_MASK ^ SQ_MASK)){                  \
+<span class="lineNum">      61 </span>            :         chB_func();                                                     \
+<span class="lineNum">      62 </span>            :         sq_func();                                                      \
+<span class="lineNum">      63 </span>            :     }                                                                   \
+<span class="lineNum">      64 </span>            :     else if (input_mask == (CHA_MASK))                             \
+<span class="lineNum">      65 </span>            :         chA_func();                                                     \
+<span class="lineNum">      66 </span>            :     else if (input_mask == (CHB_MASK))                             \
+<span class="lineNum">      67 </span>            :         chB_func();                                                     \
+<span class="lineNum">      68 </span>            :     else if (input_mask == (SQ_MASK))                                   \
+<span class="lineNum">      69 </span>            :         sq_func();
+<span class="lineNum">      70 </span>            : 
+<span class="lineNum">      71 </span>            : /*
+<span class="lineNum">      72 </span>            :  * LEVEL_0 indicates that there are no loops involved
+<span class="lineNum">      73 </span>            :  */
+<span class="lineNum">      74 </span>            : // #define POWER_KERNEL_MASK_RESOLVER_LEVEL_0(input_mask, chA_call, chB_call, sq_call)
+<span class="lineNum">      75 </span>            : 
+<span class="lineNum">      76 </span>            : namespace CPU {
+<span class="lineNum">      77 </span>            : 
+<span class="lineNum">      78 </span>            :     /*
+<span class="lineNum">      79 </span>            :       short* chA_data, chB_data:              raw data from the digitiser
+<span class="lineNum">      80 </span>            :       double** data_out:                holds arrays of the averaged chA², chB², SQ=chA² + chB² data
+<span class="lineNum">      81 </span>            :       unsigned int processing mask:                    SQ,chA²,chB² e.g. 100==4 will only process SQ
+<span class="lineNum">      82 </span>            :       int no_points = samples_per_record * number of records
+<span class="lineNum">      83 </span>            :       number_of_threads:                      number of threads to launch
+<span class="lineNum">      84 </span>            :     */
+<span class="lineNum">      85 </span>            :     void power_kernel_v1_no_background(
+<span class="lineNum">      86 </span>            :         short* chA_data,
+<span class="lineNum">      87 </span>            :         short* chB_data,
+<span class="lineNum">      88 </span>            :         double** data_out,
+<span class="lineNum">      89 </span>            :         unsigned int processing_mask,
+<span class="lineNum">      90 </span>            :         int sp_points,
+<span class="lineNum">      91 </span>            :         int r_points,
+<span class="lineNum">      92 </span>            :         int number_of_threads
+<span class="lineNum">      93 </span>            :         );
+<span class="lineNum">      94 </span>            : 
+<span class="lineNum">      95 </span>            :     /*
+<span class="lineNum">      96 </span>            :       short* chA_data, chB_data:              raw data from the digitiser
+<span class="lineNum">      97 </span>            :       double** data_out:                holds arrays of the averaged chA², chB², SQ=chA² + chB² data
+<span class="lineNum">      98 </span>            :       unsigned int processing mask:                    SQ,chA²,chB² e.g. 100==4 will only process SQ
+<span class="lineNum">      99 </span>            :       short chA_back, chB_back:               background average on both channels
+<span class="lineNum">     100 </span>            :       int no_points = samples_per_record * number of records
+<span class="lineNum">     101 </span>            :       int number_of_threads:                  number of threads to launch
+<span class="lineNum">     102 </span>            :     */
+<span class="lineNum">     103 </span>            :     void power_kernel_v2_const_background(
+<span class="lineNum">     104 </span>            :         short *chA_data,
+<span class="lineNum">     105 </span>            :         short *chB_data,
+<span class="lineNum">     106 </span>            :         double** data_out,
+<span class="lineNum">     107 </span>            :         unsigned int processing_mask,
+<span class="lineNum">     108 </span>            :         short chA_back,
+<span class="lineNum">     109 </span>            :         short chB_back,
+<span class="lineNum">     110 </span>            :         int sp_points,
+<span class="lineNum">     111 </span>            :         int r_points,
+<span class="lineNum">     112 </span>            :         int number_of_threads
+<span class="lineNum">     113 </span>            :         );
 <span class="lineNum">     114 </span>            : 
-<span class="lineNum">     115 </span>            :     void power_kernel_v1_no_background(
-<span class="lineNum">     116 </span>            :         short *chA_data,
-<span class="lineNum">     117 </span>            :         short *chB_data,
-<span class="lineNum">     118 </span>            :         float *sq_out,
-<span class="lineNum">     119 </span>            :         // for GPU memory pass in the address (&amp;POINTER) of the memory locators
-<span class="lineNum">     120 </span>            :         short **dev_chA_data,
-<span class="lineNum">     121 </span>            :         short **dev_chB_data,
-<span class="lineNum">     122 </span>            :         float **dev_sq_out);
-<span class="lineNum">     123 </span>            :     /*
-<span class="lineNum">     124 </span>            :       short* chA_data, chB_data:              raw data from the digitiser
-<span class="lineNum">     125 </span>            :       unsigned int* sq_out:                  evaluated power
-<span class="lineNum">     126 </span>            :       short chA_back, chB_back:               background average on both channels
-<span class="lineNum">     127 </span>            :       int no_points = samples_per_record * number of records
-<span class="lineNum">     128 </span>            :       int number_of_threads:                  number of threads to launch
-<span class="lineNum">     129 </span>            :     */
-<span class="lineNum">     130 </span>            :     void power_kernel_v2_const_background(
-<span class="lineNum">     131 </span>            :         short *chA_data,
-<span class="lineNum">     132 </span>            :         short *chB_data,
-<span class="lineNum">     133 </span>            :         float *sq_out,
-<span class="lineNum">     134 </span>            :         short chA_back,
-<span class="lineNum">     135 </span>            :         short chB_back,
-<span class="lineNum">     136 </span>            :         short **dev_chA_data,
-<span class="lineNum">     137 </span>            :         short **dev_chB_data,
-<span class="lineNum">     138 </span>            :         float **dev_sq_out
-<span class="lineNum">     139 </span>            :         );
-<span class="lineNum">     140 </span>            : 
-<span class="lineNum">     141 </span>            :     /*
-<span class="lineNum">     142 </span>            :       short* chA_data, chB_data:              raw data from the digitiser
-<span class="lineNum">     143 </span>            :       unsigned int* sq_out:                  evaluated power
-<span class="lineNum">     144 </span>            :       short chA_back, chB_back:               background average on both channels
-<span class="lineNum">     145 </span>            :       int no_points = samples_per_record * number of records
-<span class="lineNum">     146 </span>            :       int number_of_threads:                  number of threads to launch
-<span class="lineNum">     147 </span>            :     */
-<span class="lineNum">     148 </span>            :     void power_kernel_v3_background(
-<span class="lineNum">     149 </span>            :         short *chA_data,
-<span class="lineNum">     150 </span>            :         short *chB_data,
-<span class="lineNum">     151 </span>            :         float *sq_out,
-<span class="lineNum">     152 </span>            :         short **dev_chA_data,
-<span class="lineNum">     153 </span>            :         short **dev_chB_data,
-<span class="lineNum">     154 </span>            :         float **dev_sq_out
-<span class="lineNum">     155 </span>            :         );
-<span class="lineNum">     156 </span>            : }
-<span class="lineNum">     157 </span>            : 
-<span class="lineNum">     158 </span>            : #endif
+<span class="lineNum">     115 </span>            :     /*
+<span class="lineNum">     116 </span>            :       short* chA_data, chB_data:              raw data from the digitiser
+<span class="lineNum">     117 </span>            :       double** data_out:                holds arrays of the averaged chA², chB², SQ=chA² + chB² data
+<span class="lineNum">     118 </span>            :       unsigned int processing mask:           chA²,chB²,SQ e.g. 100==4 will only process SQ
+<span class="lineNum">     119 </span>            :       short* chA_back, chB_back:              background set of measurements for both channels, OF THE SAME SIZE as the channel data!
+<span class="lineNum">     120 </span>            :       int no_points = samples_per_record * number of records
+<span class="lineNum">     121 </span>            :       int number_of_threads:                  number of threads to launch
+<span class="lineNum">     122 </span>            :     */
+<span class="lineNum">     123 </span>            :     void power_kernel_v3_background(
+<span class="lineNum">     124 </span>            :         short *chA_data,
+<span class="lineNum">     125 </span>            :         short *chB_data,
+<span class="lineNum">     126 </span>            :         double** data_out,
+<span class="lineNum">     127 </span>            :         unsigned int processing_mask,
+<span class="lineNum">     128 </span>            :         short *chA_back,
+<span class="lineNum">     129 </span>            :         short *chB_back,
+<span class="lineNum">     130 </span>            :         int sp_points,
+<span class="lineNum">     131 </span>            :         int r_points,
+<span class="lineNum">     132 </span>            :         int number_of_threads
+<span class="lineNum">     133 </span>            :         );
+<span class="lineNum">     134 </span>            : }
+<span class="lineNum">     135 </span>            : 
+<span class="lineNum">     136 </span>            : namespace GPU {
+<span class="lineNum">     137 </span>            :     /*
+<span class="lineNum">     138 </span>            :      * The following will need to be defined:
+<span class="lineNum">     139 </span>            :      * PROCESSING_ARRAY_TYPE
+<span class="lineNum">     140 </span>            :      * R_POINTS
+<span class="lineNum">     141 </span>            :      * SP_POINTS
+<span class="lineNum">     142 </span>            :      * THREADS_PER_BLOCK
+<span class="lineNum">     143 </span>            :      */
+<a name="144"><span class="lineNum">     144 </span>            : </a>
+<span class="lineNum">     145 </span>            :     // Communication of kernel parameters to python
+<span class="lineNum">     146 </span><span class="lineCov">          1 :     struct PowerKernelParameters {</span>
+<span class="lineNum">     147 </span>            :         int r_points;
+<span class="lineNum">     148 </span>            :         int np_points;
+<span class="lineNum">     149 </span>            :         int blocks;
+<span class="lineNum">     150 </span>            :         int threads_per_block;
+<span class="lineNum">     151 </span>            :         std::string processing_array_type;
+<span class="lineNum">     152 </span>            : 
+<span class="lineNum">     153 </span>            :         PowerKernelParameters(
+<span class="lineNum">     154 </span>            :             int r_points,
+<span class="lineNum">     155 </span>            :             int np_points,
+<span class="lineNum">     156 </span>            :             std::string processing_array_type,
+<span class="lineNum">     157 </span>            :             int blocks,
+<span class="lineNum">     158 </span>            :             int threads_per_block);
+<span class="lineNum">     159 </span>            :         void print();
+<span class="lineNum">     160 </span>            :     };
+<span class="lineNum">     161 </span>            :     PowerKernelParameters fetch_kernel_parameters();
+<span class="lineNum">     162 </span>            : 
+<span class="lineNum">     163 </span>            :     /* Allocate memory on GPU. The pointers (whose addresses we pass in) hold the GPU addresses allocated*/
+<span class="lineNum">     164 </span>            :     void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, double **dev_chA_out, double **dev_chB_out,
+<span class="lineNum">     165 </span>            :                                 double **dev_chAsq_out, double **dev_chBsq_out, double **dev_sq_out);
+<span class="lineNum">     166 </span>            : 
+<span class="lineNum">     167 </span>            :     /*  Free memory on the GO */
+<span class="lineNum">     168 </span>            :     void free_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, double **dev_chA_out, double **dev_chB_out,
+<span class="lineNum">     169 </span>            :                             double **dev_chAsq_out, double **dev_chBsq_out,double **dev_sq_out);
+<span class="lineNum">     170 </span>            : 
+<span class="lineNum">     171 </span>            :     /* Copy background data once into constant memory */
+<span class="lineNum">     172 </span>            :     void copy_background_arrays_to_gpu(short *chA_background, short *chB_background);
+<span class="lineNum">     173 </span>            : 
+<span class="lineNum">     174 </span>            :     /*
+<span class="lineNum">     175 </span>            :       short* chA_data, chB_data:              raw data from the digitiser
+<span class="lineNum">     176 </span>            :       double* data_out:                  evaluated power
+<span class="lineNum">     177 </span>            :       short chA_back, chB_back:               background average on both channels OF A SINGLE RUN!
+<span class="lineNum">     178 </span>            :       int no_points = samples_per_record * number of records
+<span class="lineNum">     179 </span>            :       int number_of_threads:                  number of threads to launch
+<span class="lineNum">     180 </span>            :     */
+<span class="lineNum">     181 </span>            :     void power_kernel(
+<span class="lineNum">     182 </span>            :         short *chA_data,
+<span class="lineNum">     183 </span>            :         short *chB_data,
+<span class="lineNum">     184 </span>            :         double **data_out,
+<span class="lineNum">     185 </span>            :         short **dev_chA_data, short **dev_chB_data,
+<span class="lineNum">     186 </span>            :         double **dev_chA_out, double **dev_chB_out,
+<span class="lineNum">     187 </span>            :         double **dev_chAsq_out, double **dev_chBsq_out, double **dev_sq_out
+<span class="lineNum">     188 </span>            :         );
+<span class="lineNum">     189 </span>            : }
+<span class="lineNum">     190 </span>            : 
+<span class="lineNum">     191 </span>            : #endif
 </pre>
       </td>
     </tr>

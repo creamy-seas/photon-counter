@@ -10,7 +10,7 @@
 /* #include "fftw3.h" */
 /* #include <ctime> */
 
-void reduction_average(unsigned int** flat_cumulative_data, double** average_data,
+void reduction_average(unsigned int** flat_cumulative_data, double** data_out,
                        unsigned int processing_mask,
                        int sp_points, int r_points) {
     /*
@@ -38,13 +38,17 @@ void reduction_average(unsigned int** flat_cumulative_data, double** average_dat
     // At least it is clear what is going on
     for (int sp(0); sp < sp_points; sp++) {
         for (int r(1); r < r_points; r++) {
-            if (processing_mask & CHA_MASK) flat_cumulative_data[0][sp] += flat_cumulative_data[0][sp + r * sp_points];
-            if (processing_mask & CHB_MASK) flat_cumulative_data[1][sp] += flat_cumulative_data[1][sp + r * sp_points];
-            if (processing_mask & SQ_MASK) flat_cumulative_data[2][sp] += flat_cumulative_data[2][sp + r * sp_points];
+            if (processing_mask & CHA_MASK) flat_cumulative_data[CHA][sp] += flat_cumulative_data[CHA][sp + r * sp_points];
+            if (processing_mask & CHB_MASK) flat_cumulative_data[CHB][sp] += flat_cumulative_data[CHB][sp + r * sp_points];
+            if (processing_mask & CHASQ_MASK) flat_cumulative_data[CHASQ][sp] += flat_cumulative_data[CHASQ][sp + r * sp_points];
+            if (processing_mask & CHBSQ_MASK) flat_cumulative_data[CHBSQ][sp] += flat_cumulative_data[CHBSQ][sp + r * sp_points];
+            if (processing_mask & SQ_MASK) flat_cumulative_data[SQ][sp] += flat_cumulative_data[SQ][sp + r * sp_points];
         }
-        if (processing_mask & CHA_MASK) average_data[0][sp] = (double)flat_cumulative_data[0][sp] / r_points;
-        if (processing_mask & CHB_MASK) average_data[1][sp] = (double)flat_cumulative_data[1][sp] / r_points;
-        if (processing_mask & SQ_MASK) average_data[2][sp] = (double)flat_cumulative_data[2][sp] / r_points;
+        if (processing_mask & CHA_MASK) data_out[CHA][sp] = (double)flat_cumulative_data[CHA][sp] / r_points;
+        if (processing_mask & CHB_MASK) data_out[CHB][sp] = (double)flat_cumulative_data[CHB][sp] / r_points;
+        if (processing_mask & CHASQ_MASK) data_out[CHASQ][sp] = (double)flat_cumulative_data[CHASQ][sp] / r_points;
+        if (processing_mask & CHBSQ_MASK) data_out[CHBSQ][sp] = (double)flat_cumulative_data[CHBSQ][sp] / r_points;
+        if (processing_mask & SQ_MASK) data_out[SQ][sp] = (double)flat_cumulative_data[SQ][sp] / r_points;
     }
 }
 
@@ -53,9 +57,11 @@ void power_kernel_v1_no_background_runner(
     int start_idx, int stop_idx) {
 
     for (int i(start_idx); i < stop_idx; i++) {
-        flat_cumulative_data[0][i] = chA_data[i] * chA_data[i];
-        flat_cumulative_data[1][i] = chB_data[i] * chB_data[i];
-        flat_cumulative_data[2][i] = flat_cumulative_data[0][i] + flat_cumulative_data[1][i];
+        flat_cumulative_data[CHA][i] = chA_data[i];
+        flat_cumulative_data[CHB][i] = chB_data[i];
+        flat_cumulative_data[CHASQ][i] = chA_data[i] * chA_data[i];
+        flat_cumulative_data[CHBSQ][i] = chB_data[i] * chB_data[i];
+        flat_cumulative_data[SQ][i] = flat_cumulative_data[CHASQ][i] + flat_cumulative_data[CHBSQ][i];
     }
 
 }
@@ -63,7 +69,7 @@ void power_kernel_v1_no_background_runner(
 void CPU::power_kernel_v1_no_background(
     short* chA_data,
     short* chB_data,
-    double** average_data,
+    double** data_out,
     unsigned int processing_mask,
     int sp_points,
     int r_points,
@@ -73,8 +79,8 @@ void CPU::power_kernel_v1_no_background(
     int no_points  = sp_points * r_points;
 
     // 1. Prepare processing arrays
-    unsigned int** flat_cumulative_data = new unsigned int*[3];
-    for (int i(0); i < 3; i++)
+    unsigned int** flat_cumulative_data = new unsigned int*[POWER_PROCESSING_CHANNELS];
+    for (int i(0); i < POWER_PROCESSING_CHANNELS; i++)
         flat_cumulative_data[i] = new unsigned int[no_points]();
 
     // 2. Preapare threads
@@ -100,13 +106,13 @@ void CPU::power_kernel_v1_no_background(
         t[i].join();
 
      // 5. Average the cumualtive arrays
-     reduction_average(flat_cumulative_data, average_data,
+     reduction_average(flat_cumulative_data, data_out,
                        processing_mask,
                        sp_points, r_points);
 
-    // 6. Free processing arrays
-    for (int i(0); i < 3; i++)
-        delete[] flat_cumulative_data[i];
+     // 6. Free processing arrays
+     for (int i(0); i < POWER_PROCESSING_CHANNELS; i++)
+         delete[] flat_cumulative_data[i];
     delete[] t;
     delete[] flat_cumulative_data;
 }
@@ -117,18 +123,18 @@ void power_kernel_v2_const_background_runner(
     int start_idx, int stop_idx) {
 
     for (int i(start_idx); i < stop_idx; i++) {
-        chA_data[i] -= chA_back;
-        chB_data[i] -= chB_back;
-        flat_cumulative_data[0][i] = chA_data[i] * chA_data[i];
-        flat_cumulative_data[1][i] = chB_data[i] * chB_data[i];
-        flat_cumulative_data[2][i] = flat_cumulative_data[0][i] + flat_cumulative_data[1][i];
+        flat_cumulative_data[CHA][i] = chA_data[i] - chA_back;
+        flat_cumulative_data[CHB][i] = chB_data[i] - chB_back;
+        flat_cumulative_data[CHASQ][i] = flat_cumulative_data[CHA][i] * flat_cumulative_data[CHA][i];
+        flat_cumulative_data[CHBSQ][i] = flat_cumulative_data[CHB][i] * flat_cumulative_data[CHB][i];
+        flat_cumulative_data[SQ][i] = flat_cumulative_data[CHASQ][i] + flat_cumulative_data[CHBSQ][i];
     }
 }
 
 void CPU::power_kernel_v2_const_background(
     short* chA_data,
     short* chB_data,
-    double** average_data,
+    double** data_out,
     unsigned int processing_mask,
     short chA_back, short chB_back,
     int sp_points,
@@ -139,8 +145,8 @@ void CPU::power_kernel_v2_const_background(
     int no_points  = sp_points * r_points;
 
     // 1. Prepare processing arrays
-    unsigned int** flat_cumulative_data = new unsigned int*[3];
-    for (int i(0); i < 3; i++)
+    unsigned int** flat_cumulative_data = new unsigned int*[POWER_PROCESSING_CHANNELS];
+    for (int i(0); i < POWER_PROCESSING_CHANNELS; i++)
         flat_cumulative_data[i] = new unsigned int[no_points]();
 
     // 2. Preapare threads
@@ -168,12 +174,12 @@ void CPU::power_kernel_v2_const_background(
         t[i].join();
 
      // 5. Average the cumualtive arrays
-    reduction_average(flat_cumulative_data, average_data,
+    reduction_average(flat_cumulative_data, data_out,
                       processing_mask,
                       sp_points, r_points);
 
     // 6. Free processing arrays
-    for (int i(0); i < 3; i++)
+    for (int i(0); i < POWER_PROCESSING_CHANNELS; i++)
         delete[] flat_cumulative_data[i];
     delete[] t;
     delete[] flat_cumulative_data;
@@ -187,16 +193,16 @@ void power_kernel_v3_background_runner(
 
     for (int i(start_idx); i < stop_idx; i++) {
         // As the background data only countains sp_points, a cycle wrap is required
-        chA_data[i] -= chA_back[cycle_array[i]];
-        chB_data[i] -= chB_back[cycle_array[i]];
-        flat_cumulative_data[0][i] = chA_data[i] * chA_data[i];
-        flat_cumulative_data[1][i] = chB_data[i] * chB_data[i];
-        flat_cumulative_data[2][i] = flat_cumulative_data[0][i] + flat_cumulative_data[1][i];
+        flat_cumulative_data[CHA][i] = chA_data[i] - chA_back[cycle_array[i]];
+        flat_cumulative_data[CHB][i] = chB_data[i] - chB_back[cycle_array[i]];
+        flat_cumulative_data[CHASQ][i] = flat_cumulative_data[CHA][i] * flat_cumulative_data[CHA][i];
+        flat_cumulative_data[CHBSQ][i] = flat_cumulative_data[CHB][i] * flat_cumulative_data[CHB][i];
+        flat_cumulative_data[SQ][i] = flat_cumulative_data[CHASQ][i] + flat_cumulative_data[CHBSQ][i];
     }
 }
 
 void CPU::power_kernel_v3_background(
-    short *chA_data, short *chB_data, double **average_data,
+    short *chA_data, short *chB_data, double **data_out,
     unsigned int processing_mask,
     short *chA_back, short *chB_back,
     int sp_points,
@@ -206,8 +212,8 @@ void CPU::power_kernel_v3_background(
     int no_points  = sp_points * r_points;
 
     // 1. Prepare processing arrays
-    unsigned int** flat_cumulative_data = new unsigned int*[3];
-    for (int i(0); i < 3; i++)
+    unsigned int** flat_cumulative_data = new unsigned int*[POWER_PROCESSING_CHANNELS];
+    for (int i(0); i < POWER_PROCESSING_CHANNELS; i++)
         flat_cumulative_data[i] = new unsigned int[no_points]();
     // As the background data only countains sp_points, an auxillary cycle array
     // will hold the valid indicies for accessing the bacgkound data
@@ -243,12 +249,12 @@ void CPU::power_kernel_v3_background(
         t[i].join();
 
      // 5. Average the cumualtive arrays
-    reduction_average(flat_cumulative_data, average_data,
+    reduction_average(flat_cumulative_data, data_out,
                       processing_mask,
                       sp_points, r_points);
 
     // 6. Free processing arrays
-    for (int i(0); i < 3; i++)
+    for (int i(0); i < POWER_PROCESSING_CHANNELS; i++)
         delete[] flat_cumulative_data[i];
     delete[] cycle_array;
     delete[] t;

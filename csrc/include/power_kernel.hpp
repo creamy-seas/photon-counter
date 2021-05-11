@@ -1,8 +1,15 @@
 #ifndef POWER_KERNEL_HPP
 #define POWER_KERNEL_HPP
-// Kernels that evalaute power from readings from digitiser
+// Kernels that evalaute averages usings readings from digitiser
 // In general we exepct the digitiser to return SP_POINTS (samples per record) repeated R_POINTS (number of records).
 // Therefore the chA and chB sizes are SP_POINTS * R_POINTS
+//
+// The kernels will evaluate the average at each SP_POINT (averaged over R_POINTS) for:
+// - chA
+// - chB
+// - chASq
+// - chBsq
+// - sq
 //
 // Note - GPU and CPU kernels will differ, as for the GPU kernel array sizes need to be known at compile time
 #include <string>
@@ -30,9 +37,21 @@
 
 #define TOTAL_POINTS SP_POINTS*R_POINTS
 
-#define CHA_MASK 1
-#define CHB_MASK 2
-#define SQ_MASK 4
+// Verbose Indexes for accessing array elements
+#define CHA 0
+#define CHB 1
+#define CHASQ 2
+#define CHBSQ 3
+#define SQ 4
+
+#define POWER_PROCESSING_CHANNELS 5
+
+// Mask is used to select which data to process
+#define CHA_MASK 1 << CHA
+#define CHB_MASK 1 << CHB
+#define CHASQ_MASK 1 << CHASQ
+#define CHBSQ_MASK 1 << CHBSQ
+#define SQ_MASK 1 << SQ
 
 /*
  * Macro to compactly expand the processing cases into blocks that are run depending on what the input_mask
@@ -77,7 +96,7 @@ namespace CPU {
 
     /*
       short* chA_data, chB_data:              raw data from the digitiser
-      double** processed_data:                holds arrays of the averaged chA², chB², SQ=chA² + chB² data
+      double** data_out:                holds arrays of the averaged chA², chB², SQ=chA² + chB² data
       unsigned int processing mask:                    SQ,chA²,chB² e.g. 100==4 will only process SQ
       int no_points = samples_per_record * number of records
       number_of_threads:                      number of threads to launch
@@ -85,7 +104,7 @@ namespace CPU {
     void power_kernel_v1_no_background(
         short* chA_data,
         short* chB_data,
-        double** processed_data,
+        double** data_out,
         unsigned int processing_mask,
         int sp_points,
         int r_points,
@@ -94,7 +113,7 @@ namespace CPU {
 
     /*
       short* chA_data, chB_data:              raw data from the digitiser
-      double** processed_data:                holds arrays of the averaged chA², chB², SQ=chA² + chB² data
+      double** data_out:                holds arrays of the averaged chA², chB², SQ=chA² + chB² data
       unsigned int processing mask:                    SQ,chA²,chB² e.g. 100==4 will only process SQ
       short chA_back, chB_back:               background average on both channels
       int no_points = samples_per_record * number of records
@@ -103,7 +122,7 @@ namespace CPU {
     void power_kernel_v2_const_background(
         short *chA_data,
         short *chB_data,
-        double** processed_data,
+        double** data_out,
         unsigned int processing_mask,
         short chA_back,
         short chB_back,
@@ -114,7 +133,7 @@ namespace CPU {
 
     /*
       short* chA_data, chB_data:              raw data from the digitiser
-      double** processed_data:                holds arrays of the averaged chA², chB², SQ=chA² + chB² data
+      double** data_out:                holds arrays of the averaged chA², chB², SQ=chA² + chB² data
       unsigned int processing mask:           chA²,chB²,SQ e.g. 100==4 will only process SQ
       short* chA_back, chB_back:              background set of measurements for both channels, OF THE SAME SIZE as the channel data!
       int no_points = samples_per_record * number of records
@@ -123,7 +142,7 @@ namespace CPU {
     void power_kernel_v3_background(
         short *chA_data,
         short *chB_data,
-        double** processed_data,
+        double** data_out,
         unsigned int processing_mask,
         short *chA_back,
         short *chB_back,
@@ -160,53 +179,31 @@ namespace GPU {
     };
     PowerKernelParameters fetch_kernel_parameters();
 
-    // Preparation and completion of memory allocation on GPU
-    void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, double **dev_chA_out, double **dev_chB_out, double **dev_sq_out);
-    void free_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, double **dev_chA_out, double **dev_chB_out, double **dev_sq_out);
+    /* Allocate memory on GPU. The pointers (whose addresses we pass in) hold the GPU addresses allocated*/
+    void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, double **dev_chA_out, double **dev_chB_out,
+                                double **dev_chAsq_out, double **dev_chBsq_out, double **dev_sq_out);
+
+    /*  Free memory on the GPU */
+    void free_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, double **dev_chA_out, double **dev_chB_out,
+                            double **dev_chAsq_out, double **dev_chBsq_out,double **dev_sq_out);
+
+    /* Copy background data once into constant memory */
     void copy_background_arrays_to_gpu(short *chA_background, short *chB_background);
 
-    void power_kernel_v1_no_background(
-        short *chA_data,
-        short *chB_data,
-        double **processed_data,
-        // for GPU memory pass in the address (&POINTER) of the memory locators
-        short **dev_chA_data,
-        short **dev_chB_data,
-        double **dev_chA_out,
-        double **dev_chB_out,
-        double **dev_sq_out);
     /*
       short* chA_data, chB_data:              raw data from the digitiser
-      double* processed_data:                  evaluated power
-      short chA_back, chB_back:               background average on both channels
-      int no_points = samples_per_record * number of records
-      int number_of_threads:                  number of threads to launch
-    */
-    void power_kernel_v2_const_background(
-        short *chA_data,
-        short *chB_data,
-        double *processed_data,
-        short chA_back,
-        short chB_back,
-        short **dev_chA_data,
-        short **dev_chB_data,
-        double **dev_sq_out
-        );
-
-    /*
-      short* chA_data, chB_data:              raw data from the digitiser
-      double* processed_data:                  evaluated power
+      double* data_out:                  evaluated power
       short chA_back, chB_back:               background average on both channels OF A SINGLE RUN!
       int no_points = samples_per_record * number of records
       int number_of_threads:                  number of threads to launch
     */
-    void power_kernel_v3_background(
+    void power_kernel(
         short *chA_data,
         short *chB_data,
-        double *processed_data,
-        short **dev_chA_data,
-        short **dev_chB_data,
-        double **dev_sq_out
+        double **data_out,
+        short **dev_chA_data, short **dev_chB_data,
+        double **dev_chA_out, double **dev_chB_out,
+        double **dev_chAsq_out, double **dev_chBsq_out, double **dev_sq_out
         );
 }
 

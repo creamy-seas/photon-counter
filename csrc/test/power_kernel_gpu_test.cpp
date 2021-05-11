@@ -10,21 +10,24 @@
 // SP_POINTS=4 defined in Makefile
 #endif
 
-class PowerGpuTest : public CppUnit::TestFixture {
+class PowerGpuTest : public CppUnit::TestFixture{
 
     // Macro for generating suite
     CPPUNIT_TEST_SUITE( PowerGpuTest );
 
     // Population with tests
-    CPPUNIT_TEST( test_power_kernel_v1_no_background );
-    // CPPUNIT_TEST( test_power_kernel_v2_const_background );
-    // CPPUNIT_TEST( test_power_kernel_v3_background );
+    CPPUNIT_TEST( test_power_kernel_no_background );
+    CPPUNIT_TEST( test_power_kernel_const_background );
+    CPPUNIT_TEST( test_power_kernel_background );
 
     CPPUNIT_TEST_SUITE_END();
 private:
     short *chA_data;
     short *chB_data;
-    double *sq_out;
+    double **data_out;
+    // We will only test 2 of the output arrays
+    double *expected_A_out;
+    double *expected_B_out;
     double *expected_sq_out;
 
     // Allocation on GPU
@@ -32,11 +35,18 @@ private:
     short *dev_chB_data;
     double *dev_chA_out;
     double *dev_chB_out;
+    double *dev_chAsq_out;
+    double *dev_chBsq_out;
     double *dev_sq_out;
 public:
-    void tearDown(){
+    void setUp(){
+        data_out = new double*[POWER_PROCESSING_CHANNELS];
     }
-    void test_power_kernel_v1_no_background(){
+    void tearDown(){
+        delete[] data_out;
+    }
+
+    void test_power_kernel_no_background(){
         /*chA
          * 1  2  3 -> main axis (3)
          * 4  5  6
@@ -61,144 +71,190 @@ public:
         // Allocation on CPU
         chA_data = new short[12]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
         chB_data = new short[12]{0, 1, 0, 1, 0, 1, 0, 1, 0, 2, 2, 2};
-        sq_out = new double[3]{-1, -2, -3};
+        short *chA_background = new short[3]{0, 0, 0};
+        short *chB_background = new short[3]{0, 0, 0};
+
+        // Initialise default ouput data
+        for (int i(0); i < POWER_PROCESSING_CHANNELS; i++) {
+            data_out[i] = new double[3]();
+        }
         expected_sq_out = new double[3]{(double)(1 + 17 + 49 + 104) / 4,
                 (double)(5 + 25 + 65 + 125) / 4,
                 (double)(9 + 37 + 81 + 148) / 4};
 
-        GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_out);
-        GPU::power_kernel_v1_no_background(
+        GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data,
+                                    &dev_chA_out, &dev_chB_out,
+                                    &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out);
+        GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
+        GPU::power_kernel(
             chA_data,
             chB_data,
-            sq_out,
+            data_out,
             &dev_chA_data,
             &dev_chB_data,
+            &dev_chA_out,
+            &dev_chB_out,
+            &dev_chAsq_out,
+            &dev_chBsq_out,
             &dev_sq_out
             );
-        GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_out);
+        GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data,
+                                &dev_chA_out, &dev_chB_out,
+                                &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out);
 
         // Compare
         for (int i(0); i < 3; i++) {
-            CPPUNIT_ASSERT_EQUAL(expected_sq_out[i], sq_out[i]);
+            CPPUNIT_ASSERT_EQUAL(expected_sq_out[i], data_out[SQ][i]);
         }
-
-        // Or compare using file
-        // double** arr_to_dump = new double*[2];
-        // arr_to_dump[1] = expected_sq_out;
-        // arr_to_dump[0] = sq_out;
-        // dump_arrays_to_file(
-        //         arr_to_dump,
-        //         2, 4,
-        //         "./test/test_bin/dump-gpu-example.txt",
-        //         "#Real\t#Expected");
 
         delete[] chA_data;
         delete[] chB_data;
-        delete[] sq_out;
+        delete[] chA_background;
+        delete[] chB_background;
+        for (int i(0); i < POWER_PROCESSING_CHANNELS; i++) {
+            delete[] data_out[i];
+        }
+        delete[] expected_A_out;
+        delete[] expected_B_out;
         delete[] expected_sq_out;
     }
 
-    // void test_power_kernel_v2_const_background(){
-    //     /* chA
-    //      * 1  2  3 -> main axis (3)
-    //      * 4  5  6
-    //      * 7  8  9
-    //      * 10 11 12
-    //      * |
-    //      * repetition axis (4)
+    void test_power_kernel_const_background(){
+        /* chA
+         * 1  2  3 -> main axis (3)
+         * 4  5  6
+         * 7  8  9
+         * 10 11 12
+         * |
+         * repetition axis (4)
 
-    //      * chB
-    //      * 0  1  0
-    //      * 1  0  1
-    //      * 0  1  0
-    //      * 2  2  2
+         * chB
+         * 0  1  0
+         * 1  0  1
+         * 0  1  0
+         * 2  2  2
 
-    //      * sq
-    //      * 0  2  4
-    //      * 10 16 26
-    //      * 36 50 64
-    //      * 85 104 125
-    //      */
+         * sq
+         * 0  2  4
+         * 10 16 26
+         * 36 50 64
+         * 85 104 125
+         */
 
-    //     // Allocation on CPU
-    //     chA_data = new short[12]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-    //     chB_data = new short[12]{0, 1, 0, 1, 0, 1, 0, 1, 0, 2, 2, 2};
-    //     sq_out = new double[3]{-1, -2, -3};
-    //     expected_sq_out = new double[3]{(double)(0 + 10 + 36 + 85) / 4,
-    //             (double)(2 + 16 + 50 + 104) / 4,
-    //             (double)(4 + 26 + 64 + 125) / 4};
-    //     short chA_const_background = 1;
-    //     short chB_const_background = 0;
+        // Allocation on CPU
+        chA_data = new short[12]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+        chB_data = new short[12]{0, 1, 0, 1, 0, 1, 0, 1, 0, 2, 2, 2};
+        short *chA_background = new short[3]{1, 1, 1};
+        short *chB_background = new short[3]{0, 0, 0};
 
+        // Initialise default ouput data
+        for (int i(0); i < POWER_PROCESSING_CHANNELS; i++) {
+            data_out[i] = new double[3]();
+        }
+        expected_sq_out = new double[3]{(double)(0 + 10 + 36 + 85) / 4,
+                (double)(2 + 16 + 50 + 104) / 4,
+                (double)(4 + 26 + 64 + 125) / 4};
 
-    //     GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_out);
-    //     GPU::power_kernel_v2_const_background(
-    //         chA_data,
-    //         chB_data,
-    //         sq_out,
-    //         chA_const_background,
-    //         chB_const_background,
-    //         &dev_chA_data,
-    //         &dev_chB_data,
-    //         &dev_sq_out
-    //         );
-    //     GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_out);
+        GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data,
+                                    &dev_chA_out, &dev_chB_out,
+                                    &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out);
+        GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
+        GPU::power_kernel(
+            chA_data,
+            chB_data,
+            data_out,
+            &dev_chA_data,
+            &dev_chB_data,
+            &dev_chA_out,
+            &dev_chB_out,
+            &dev_chAsq_out,
+            &dev_chBsq_out,
+            &dev_sq_out
+            );
+        GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data,
+                                &dev_chA_out, &dev_chB_out,
+                                &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out);
 
-    //     // Compare
-    //     for (int i(0); i < 3; i++) {
-    //         CPPUNIT_ASSERT_EQUAL(expected_sq_out[i], sq_out[i]);
-    //     }
+        // Compare
+        for (int i(0); i < 3; i++) {
+            CPPUNIT_ASSERT_EQUAL(expected_sq_out[i], data_out[SQ][i]);
+        }
 
-    //     delete[] chA_data;
-    //     delete[] chB_data;
-    //     delete[] sq_out;
-    //     delete[] expected_sq_out;
-    // }
+        delete[] chA_data;
+        delete[] chB_data;
+        delete[] chA_background;
+        delete[] chB_background;
+        for (int i(0); i < POWER_PROCESSING_CHANNELS; i++) {
+            delete[] data_out[i];
+        }
+        delete[] expected_A_out;
+        delete[] expected_B_out;
+        delete[] expected_sq_out;
+    }
 
-    // void test_power_kernel_v3_background(){
-    //     /*
-    //      * sq
-    //      * 0  1  4
-    //      * 9  16 25
-    //      * 36 49 81
-    //      * 100 121 144
-    //      */
+    void test_power_kernel_background(){
+        /*
+         * sq
+         * 0  1  4
+         * 9  16 25
+         * 36 49 81
+         * 100 121 144
+         */
 
-    //     // Allocation on CPU
-    //     chA_data = new short[12]{1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3};
-    //     chB_data = new short[12]{0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12};
-    //     short *chA_background = new short[3]{1, 2, 3};
-    //     short *chB_background = new short[3]{0, 0, 0};
+        // Allocation on CPU
+        chA_data = new short[12]{1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3};
+        chB_data = new short[12]{0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12};
+        short *chA_background = new short[3]{1, 2, 3};
+        short *chB_background = new short[3]{0, 0, 0};
 
-    //     sq_out = new double[3]{-1, -2, -3};
-    //     expected_sq_out = new double[3]{(double)(0 + 9 + 36 + 100) / 4,
-    //             (double)(1 + 16 + 49 + 121) / 4,
-    //             (double)(4 + 25 + 81 + 144) / 4};
+        // Initialise default ouput data
+        for (int i(0); i < POWER_PROCESSING_CHANNELS; i++) {
+            data_out[i] = new double[3]();
+        }
+        expected_A_out = new double[3]{0, 0, 0};
+        expected_B_out = new double[3]{(double)(0 + 3 + 6+ 10)/4,
+                (double)(1 + 4 + 7 + 11)/4,
+                (double)(2 + 5 + 9 + 12)/4};
+        expected_sq_out = new double[3]{(double)(0 + 9 + 36 + 100) / 4,
+                (double)(1 + 16 + 49 + 121) / 4,
+                (double)(4 + 25 + 81 + 144) / 4};
 
+        GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data,
+                                    &dev_chA_out, &dev_chB_out,
+                                    &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out);
+        GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
+        GPU::power_kernel(
+            chA_data,
+            chB_data,
+            data_out,
+            &dev_chA_data,
+            &dev_chB_data,
+            &dev_chA_out,
+            &dev_chB_out,
+            &dev_chAsq_out,
+            &dev_chBsq_out,
+            &dev_sq_out
+            );
+        GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data,
+                                &dev_chA_out, &dev_chB_out,
+                                &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out);
 
-    //     GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_out);
-    //     GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
-    //     GPU::power_kernel_v3_background(
-    //         chA_data,
-    //         chB_data,
-    //         sq_out,
-    //         &dev_chA_data,
-    //         &dev_chB_data,
-    //         &dev_sq_out
-    //         );
-    //     GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_out);
+        // Compare
+        for (int i(0); i < 3; i++) {
+            CPPUNIT_ASSERT_EQUAL(expected_A_out[i], data_out[CHA][i]);
+            CPPUNIT_ASSERT_EQUAL(expected_B_out[i], data_out[CHB][i]);
+            CPPUNIT_ASSERT_EQUAL(expected_sq_out[i], data_out[SQ][i]);
+        }
 
-    //     // Compare
-    //     for (int i(0); i < 3; i++) {
-    //         CPPUNIT_ASSERT_EQUAL(expected_sq_out[i], sq_out[i]);
-    //     }
-
-    //     delete[] chA_data;
-    //     delete[] chB_data;
-    //     delete[] sq_out;
-    //     delete[] expected_sq_out;
-    //     delete[] chA_background;
-    //     delete[] chB_background;
-    // }
+        delete[] chA_data;
+        delete[] chB_data;
+        delete[] chA_background;
+        delete[] chB_background;
+        for (int i(0); i < POWER_PROCESSING_CHANNELS; i++)
+            delete[] data_out[i];
+        delete[] expected_A_out;
+        delete[] expected_B_out;
+        delete[] expected_sq_out;
+    }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION( PowerGpuTest );

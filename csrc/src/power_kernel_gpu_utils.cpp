@@ -56,7 +56,9 @@ GPU::PowerKernelParameters GPU::fetch_kernel_parameters(){
 void GPU::allocate_memory_on_gpu(
     short **dev_chA_data,
     short **dev_chB_data,
-    double **dev_chA_out, double **dev_chB_out, double **dev_sq_out
+    double **dev_chA_out, double **dev_chB_out,
+    double **dev_chAsq_out, double **dev_chBsq_out,
+    double **dev_sq_out
     ){
 
     OKBLUE("Allocating memory for power kernel on GPU");
@@ -70,6 +72,10 @@ void GPU::allocate_memory_on_gpu(
                           SP_POINTS * sizeof(double));
     success += cudaMalloc((void**)dev_chB_out,
                           SP_POINTS * sizeof(double));
+    success += cudaMalloc((void**)dev_chAsq_out,
+                          SP_POINTS * sizeof(double));
+    success += cudaMalloc((void**)dev_chBsq_out,
+                          SP_POINTS * sizeof(double));
     success += cudaMalloc((void**)dev_sq_out,
                           SP_POINTS * sizeof(double));
 
@@ -82,7 +88,9 @@ void GPU::allocate_memory_on_gpu(
 void GPU::free_memory_on_gpu(
     short **dev_chA_data,
     short **dev_chB_data,
-    double **dev_chA_out, double **dev_chB_out, double **dev_sq_out
+    double **dev_chA_out, double **dev_chB_out,
+    double **dev_chAsq_out, double **dev_chBsq_out,
+    double **dev_sq_out
     ){
 
     OKBLUE("Deallocating memory from GPU");
@@ -92,6 +100,8 @@ void GPU::free_memory_on_gpu(
     success += cudaFree(*dev_chB_data);
     success += cudaFree(*dev_chA_out);
     success += cudaFree(*dev_chB_out);
+    success += cudaFree(*dev_chAsq_out);
+    success += cudaFree(*dev_chBsq_out);
     success += cudaFree(*dev_sq_out);
     if (success != 0)
         FAIL("Failed to allocate memory on GPU");
