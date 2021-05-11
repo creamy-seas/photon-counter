@@ -32,22 +32,32 @@ public:
     }
 
     void test_allocate_memory_allocation(){
+        // Default values that must change once address is assigned. This will hold the address of the arrays allocated on the GPU
+        // These will change!
         short* dev_chA_data = 0;
         short* dev_chB_data = 0;
+        double* dev_chA_out = 0;
+        double* dev_chB_out = 0;
         double* dev_sq_out = 0;
 
+        // These values will hold the addresses of the above pointers
+        // These will not change!
         void* dev_chA_data_addr = &dev_chA_data;
         void* dev_chB_data_addr = &dev_chB_data;
+        void* dev_chA_out_addr = &dev_chA_out;
+        void* dev_chB_out_addr = &dev_chB_out;
         void* dev_sq_out_addr = &dev_sq_out;
 
-        GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_out);
+        GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_chA_out, &dev_chB_out, &dev_sq_out);
 
         // Check memory has been allocated
         CPPUNIT_ASSERT(dev_chA_data != 0);
         CPPUNIT_ASSERT(dev_chB_data != 0);
+        CPPUNIT_ASSERT(dev_chA_out != 0);
+        CPPUNIT_ASSERT(dev_chB_out != 0);
         CPPUNIT_ASSERT(dev_sq_out != 0);
 
-        GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_sq_out);
+        GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_chA_out, &dev_chB_out, &dev_sq_out);
 
         // Check address has stayed the same
         CPPUNIT_ASSERT_EQUAL(dev_chA_data_addr, (void *)&dev_chA_data);

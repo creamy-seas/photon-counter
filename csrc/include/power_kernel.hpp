@@ -65,8 +65,13 @@
         chA_func();                                                     \
     else if (input_mask == (CHB_MASK))                             \
         chB_func();                                                     \
-    else if (input_mask == (SQ_MASK))                              \
+    else if (input_mask == (SQ_MASK))                                   \
         sq_func();
+
+/*
+ * LEVEL_0 indicates that there are no loops involved
+ */
+// #define POWER_KERNEL_MASK_RESOLVER_LEVEL_0(input_mask, chA_call, chB_call, sq_call)
 
 namespace CPU {
 
@@ -126,7 +131,7 @@ namespace CPU {
         int r_points,
         int number_of_threads
         );
-    }
+}
 
 namespace GPU {
     /*
@@ -156,17 +161,19 @@ namespace GPU {
     PowerKernelParameters fetch_kernel_parameters();
 
     // Preparation and completion of memory allocation on GPU
-    void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, double **dev_sq_out);
-    void free_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, double **dev_sq_out);
+    void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, double **dev_chA_out, double **dev_chB_out, double **dev_sq_out);
+    void free_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, double **dev_chA_out, double **dev_chB_out, double **dev_sq_out);
     void copy_background_arrays_to_gpu(short *chA_background, short *chB_background);
 
     void power_kernel_v1_no_background(
         short *chA_data,
         short *chB_data,
-        double *processed_data,
+        double **processed_data,
         // for GPU memory pass in the address (&POINTER) of the memory locators
         short **dev_chA_data,
         short **dev_chB_data,
+        double **dev_chA_out,
+        double **dev_chB_out,
         double **dev_sq_out);
     /*
       short* chA_data, chB_data:              raw data from the digitiser
