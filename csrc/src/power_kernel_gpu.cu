@@ -18,11 +18,11 @@
 #include "power_kernel.hpp"
 
 __device__ void reduction_sum(
-    PROCESSING_ARRAY_TYPE chA_cumulative_array[R_POINTS],
-    PROCESSING_ARRAY_TYPE chB_cumulative_array[R_POINTS],
-    PROCESSING_ARRAY_TYPE chAsq_cumulative_array[R_POINTS],
-    PROCESSING_ARRAY_TYPE chBsq_cumulative_array[R_POINTS],
-    PROCESSING_ARRAY_TYPE sq_cumulative_array[R_POINTS]){
+    unsigned long int chA_cumulative_array[R_POINTS],
+    unsigned long int chB_cumulative_array[R_POINTS],
+    unsigned long int chAsq_cumulative_array[R_POINTS],
+    unsigned long int chBsq_cumulative_array[R_POINTS]
+    ){
     /*
      * Reduce the array by summing up the total into the first cell.
      CUDA: Threads along the R_POINTS axis
@@ -58,7 +58,6 @@ __device__ void reduction_sum(
                 chB_cumulative_array[r_coordinate] += chB_cumulative_array[r_coordinate + idx];
                 chAsq_cumulative_array[r_coordinate] += chAsq_cumulative_array[r_coordinate + idx];
                 chBsq_cumulative_array[r_coordinate] += chBsq_cumulative_array[r_coordinate + idx];
-                sq_cumulative_array[r_coordinate] += sq_cumulative_array[r_coordinate + idx];
             }
             r_coordinate += blockDim.x;
         }
@@ -95,15 +94,16 @@ void GPU::copy_background_arrays_to_gpu(short *chA_background, short *chB_backgr
 __global__ void power_kernel_runner(
     short *chA_data, short *chB_data,
     double *chA_out, double *chB_out,
-    double *chAsq_out, double *chBsq_out,
-    double *sq_out
+    double *chAsq_out, double *chBsq_out
     ){
 
-    __shared__ PROCESSING_ARRAY_TYPE chA_cumulative_array[R_POINTS];
-    __shared__ PROCESSING_ARRAY_TYPE chB_cumulative_array[R_POINTS];
-    __shared__ PROCESSING_ARRAY_TYPE chAsq_cumulative_array[R_POINTS];
-    __shared__ PROCESSING_ARRAY_TYPE chBsq_cumulative_array[R_POINTS];
-    __shared__ PROCESSING_ARRAY_TYPE sq_cumulative_array[R_POINTS];
+    // An unsigned long int will be able to hold 2^32/(2^14) = 2^18 = 262144 data points from the 14bit digitiser
+    // Since the SP digitizer will have a maximum of 254200 record (using the GetMaxNofRecordsFromNofSamples(adq_cu_ptr, 1))
+    // This will be able to contain everything
+    __shared__ unsigned long int chA_cumulative_array[R_POINTS];
+    __shared__ unsigned long int chB_cumulative_array[R_POINTS];
+    __shared__ unsigned long int chAsq_cumulative_array[R_POINTS];
+    __shared__ unsigned long int chBsq_cumulative_array[R_POINTS];
 
     int sp_coordinate = blockIdx.x;
     int r_coordinate, coordinate;
@@ -120,8 +120,6 @@ __global__ void power_kernel_runner(
             chAsq_cumulative_array[r_coordinate] = chA_cumulative_array[r_coordinate] * chA_cumulative_array[r_coordinate];
             chBsq_cumulative_array[r_coordinate] = chB_cumulative_array[r_coordinate] * chB_cumulative_array[r_coordinate];
 
-            sq_cumulative_array[r_coordinate] = chAsq_cumulative_array[r_coordinate] + chBsq_cumulative_array[r_coordinate];
-
             // Once thread has completed, shift the
             // row index by the number of allocated
             // threads and continue summation
@@ -135,13 +133,11 @@ __global__ void power_kernel_runner(
         reduction_sum(chA_cumulative_array,
                       chB_cumulative_array,
                       chAsq_cumulative_array,
-                      chBsq_cumulative_array,
-                      sq_cumulative_array);
+                      chBsq_cumulative_array);
         chA_out[sp_coordinate] = (double)chA_cumulative_array[0] / R_POINTS;
         chB_out[sp_coordinate] = (double)chB_cumulative_array[0] / R_POINTS;
         chAsq_out[sp_coordinate] = (double)chAsq_cumulative_array[0] / R_POINTS;
         chBsq_out[sp_coordinate] = (double)chBsq_cumulative_array[0] / R_POINTS;
-        sq_out[sp_coordinate] = (double)sq_cumulative_array[0] / R_POINTS;
 
         // Shift by number of allocated blocks along main-axis
         sp_coordinate += gridDim.x;
@@ -157,8 +153,7 @@ void GPU::power_kernel(
     double **dev_chA_out,
     double **dev_chB_out,
     double **dev_chAsq_out,
-    double **dev_chBsq_out,
-    double **dev_sq_out
+    double **dev_chBsq_out
     ){
     /*
      * chA and chB arrays:
@@ -184,8 +179,7 @@ void GPU::power_kernel(
     power_kernel_runner<<<BLOCKS, THREADS_PER_BLOCK>>>(
         *dev_chA_data, *dev_chB_data,
         *dev_chA_out, *dev_chB_out,
-        *dev_chAsq_out, *dev_chBsq_out,
-        *dev_sq_out);
+        *dev_chAsq_out, *dev_chBsq_out);
 
     // Copy from device
     success += cudaMemcpy(data_out[CHA], *dev_chA_out,
@@ -200,10 +194,11 @@ void GPU::power_kernel(
     success += cudaMemcpy(data_out[CHBSQ], *dev_chBsq_out,
                           SP_POINTS * sizeof(double),
                           cudaMemcpyDeviceToHost);
-    success += cudaMemcpy(data_out[SQ], *dev_sq_out,
-                          SP_POINTS * sizeof(double),
-                          cudaMemcpyDeviceToHost);
     if (success != 0) FAIL("Failed to copy data FROM the GPU!");
+
+    // Manually evaluate sq = chAsq + chBsq
+    for (int i(0); i < SP_POINTS; i++)
+        data_out[SQ][i] = data_out[CHASQ][i] + data_out[CHBSQ][i];
 
     // Ensure that free_memory_on_gpu is called ==>
 }

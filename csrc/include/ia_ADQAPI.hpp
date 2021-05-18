@@ -11,7 +11,9 @@
 static unsigned char FETCH_CHANNEL_BOTH = 0x3;
 
 // Digitiser will output 2^14 code
-#define MAX_CODE 1 << 14
+// UL suffix in order to compare with unsigned long int in the code
+#define MAX_CODE (1UL << 14)
+#define MAX_NUMBER_OF_RECORDS 254200UL
 
 #define TRIGGER_SOFTWARE 1
 #define TRIGGER_EXTERNAL 2

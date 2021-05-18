@@ -39,7 +39,6 @@ public:
         double* dev_chB_out = 0;
         double* dev_chAsq_out = 0;
         double* dev_chBsq_out = 0;
-        double* dev_sq_out = 0;
 
         // These values will hold the addresses of the above pointers
         // These will not change!
@@ -49,10 +48,9 @@ public:
         void* dev_chB_out_addr = &dev_chB_out;
         void* dev_chAsq_out_addr = &dev_chAsq_out;
         void* dev_chBsq_out_addr = &dev_chBsq_out;
-        void* dev_sq_out_addr = &dev_sq_out;
 
         GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_chA_out, &dev_chB_out,
-                                    &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out);
+                                    &dev_chAsq_out, &dev_chBsq_out);
 
         // Check memory has been allocated
         CPPUNIT_ASSERT(dev_chA_data != 0);
@@ -61,10 +59,9 @@ public:
         CPPUNIT_ASSERT(dev_chB_out != 0);
         CPPUNIT_ASSERT(dev_chAsq_out != 0);
         CPPUNIT_ASSERT(dev_chBsq_out != 0);
-        CPPUNIT_ASSERT(dev_sq_out != 0);
 
         GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_chA_out, &dev_chB_out,
-                                &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out);
+                                &dev_chAsq_out, &dev_chBsq_out);
 
         // Check address has stayed the same
         CPPUNIT_ASSERT_EQUAL(dev_chA_data_addr, (void *)&dev_chA_data);
@@ -73,7 +70,6 @@ public:
         CPPUNIT_ASSERT_EQUAL(dev_chB_out_addr, (void *)&dev_chB_out);
         CPPUNIT_ASSERT_EQUAL(dev_chAsq_out_addr, (void *)&dev_chAsq_out);
         CPPUNIT_ASSERT_EQUAL(dev_chBsq_out_addr, (void *)&dev_chBsq_out);
-        CPPUNIT_ASSERT_EQUAL(dev_sq_out_addr, (void *)&dev_sq_out);
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION( PowerKernelGpuUtilsTest );

@@ -7,14 +7,19 @@
   (company-clang-arguments . ("-I/usr/include"
                               "-I/home/antonov/photon_counting/csrc/include"
                               "-I/usr/local/cuda-11.0/include"
+                              "-I/home/antonov/photon_counting/Celero/include"
                               "-std=c++11"))
   (flycheck-clang-include-path . ("/home/antonov/photon_counting/csrc/include"
                                   "/usr/local/cuda-11.0/include"
+                                  "/home/antonov/photon_counting/Celero/include"
                                   ))
-  (flycheck-clang-definitions . ("LINUX")) ;; -D flags
+  (flycheck-clang-definitions . ("LINUX" "TESTENV" "R_POINTS=254200" "SP_POINTS=100" "THREADS_PER_BLOCK=1024")) ;; -D flags
+  (c-basic-offset . 4)
   )
  (c++-mode
-  (flycheck-clang-language-standard . "c++11")))
+  (flycheck-clang-language-standard . "c++11"))
+ (cuda-mode
+  (c-basic-offset . 4)))
 ```
 
 2. Run `ggtags-create-tags` in an c/cpp project. or `gtags`

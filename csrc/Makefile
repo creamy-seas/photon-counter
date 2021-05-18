@@ -50,7 +50,6 @@ PWD := $(shell pwd)
 TEST_FLAGS := -DTESTENV
 TEST_FLAGS += -D R_POINTS=4
 TEST_FLAGS += -D SP_POINTS=3
-TEST_FLAGS += -D PROCESSING_ARRAY_TYPE="unsigned int"
 TEST_FLAGS += -D THREADS_PER_BLOCK=1024
 
 TEST_LDLIBS += $(shell pkg-config --libs cppunit) # Unittest library
@@ -72,7 +71,6 @@ TEST_OBJECTS += $(patsubst $(FOLDER_SOURCE)/%.cu,$(TEST_BUILD_FOLDER)/%.o,$(CUDA
 BENCH_FLAGS := -DTESTENV
 BENCH_FLAGS += -D R_POINTS=10000 # From
 BENCH_FLAGS += -D SP_POINTS=200 # 500ns acquisition time
-BENCH_FLAGS += -D PROCESSING_ARRAY_TYPE=int
 BENCH_FLAGS += -D THREADS_PER_BLOCK=1024
 
 BENCH_LDLIBS += -lcelero # Bechmarking library

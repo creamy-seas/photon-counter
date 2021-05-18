@@ -37,7 +37,7 @@ private:
     double *dev_chB_out;
     double *dev_chAsq_out;
     double *dev_chBsq_out;
-    double *dev_sq_out;
+
 public:
     void setUp(){
         data_out = new double*[NO_OF_POWER_KERNEL_OUTPUTS];
@@ -84,7 +84,7 @@ public:
 
         GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data,
                                     &dev_chA_out, &dev_chB_out,
-                                    &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out);
+                                    &dev_chAsq_out, &dev_chBsq_out);
         GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
         GPU::power_kernel(
             chA_data,
@@ -95,12 +95,11 @@ public:
             &dev_chA_out,
             &dev_chB_out,
             &dev_chAsq_out,
-            &dev_chBsq_out,
-            &dev_sq_out
+            &dev_chBsq_out
             );
         GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data,
                                 &dev_chA_out, &dev_chB_out,
-                                &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out);
+                                &dev_chAsq_out, &dev_chBsq_out);
 
         // Compare
         for (int i(0); i < 3; i++) {
@@ -157,7 +156,7 @@ public:
 
         GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data,
                                     &dev_chA_out, &dev_chB_out,
-                                    &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out);
+                                    &dev_chAsq_out, &dev_chBsq_out);
         GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
         GPU::power_kernel(
             chA_data,
@@ -168,12 +167,11 @@ public:
             &dev_chA_out,
             &dev_chB_out,
             &dev_chAsq_out,
-            &dev_chBsq_out,
-            &dev_sq_out
+            &dev_chBsq_out
             );
         GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data,
                                 &dev_chA_out, &dev_chB_out,
-                                &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out);
+                                &dev_chAsq_out, &dev_chBsq_out);
 
         // Compare
         for (int i(0); i < 3; i++) {
@@ -221,7 +219,7 @@ public:
 
         GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data,
                                     &dev_chA_out, &dev_chB_out,
-                                    &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out);
+                                    &dev_chAsq_out, &dev_chBsq_out);
         GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
         GPU::power_kernel(
             chA_data,
@@ -232,12 +230,11 @@ public:
             &dev_chA_out,
             &dev_chB_out,
             &dev_chAsq_out,
-            &dev_chBsq_out,
-            &dev_sq_out
+            &dev_chBsq_out
             );
         GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data,
                                 &dev_chA_out, &dev_chB_out,
-                                &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out);
+                                &dev_chAsq_out, &dev_chBsq_out);
 
         // Compare
         for (int i(0); i < 3; i++) {

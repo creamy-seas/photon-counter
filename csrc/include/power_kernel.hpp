@@ -1,38 +1,32 @@
 /*
-* Kernels that evalaute averages usings readings from digitiser
-* In general we exepct the digitiser to return SP_POINTS (samples per record) repeated R_POINTS (number of records).
-* Therefore the chA and chB sizes are SP_POINTS * R_POINTS
-*
-* The kernels will evaluate the average at each SP_POINT (averaged over R_POINTS) for:
-* - chA
-* - chB
-* - chAsq
-* - chBsq
-* - sq
-*
-* Note - GPU and CPU kernels will differ, as for the GPU kernel array sizes need to be known at compile time
-*
-*  Default values for the power kernel
-*/
-#include <string>
-
+ * Kernels that evalaute averages usings readings from digitiser
+ * In general we exepct the digitiser to return SP_POINTS (samples per record) repeated R_POINTS (number of records).
+ * Therefore the chA and chB sizes are SP_POINTS * R_POINTS
+ *
+ * The kernels will evaluate the average at each SP_POINT (averaged over R_POINTS) for:
+ * - chA
+ * - chB
+ * - chAsq
+ * - chBsq
+ * - sq
+ *
+ * Note - GPU and CPU kernels will differ, as for the GPU kernel array sizes need to be known at compile time
+ *
+ *  Default values for the power kernel
+ */
 #ifndef POWER_KERNEL_HPP
 #define POWER_KERNEL_HPP
 
-#ifndef PROCESSING_ARRAY_TYPE
-#define PROCESSING_ARRAY_TYPE usigned int
-#endif
-
 #ifndef R_POINTS
-#define R_POINTS 1000
+#error "Need to specify R_POINTS (repetitions on the digitiser == number of records) for power measurements"
 #endif
 
 #ifndef SP_POINTS
-#define SP_POINTS 1000
+#error "Need to specify SP_POINTS (sampler per record) for power measurements"
 #endif
 
 #ifndef THREADS_PER_BLOCK
-#define THREADS_PER_BLOCK 1024
+#error "Need to specify THREADS_PER_BLOCK for power measurements"
 #endif
 
 // Derived parameters
@@ -48,11 +42,11 @@
 #define SQ 4
 
 // Mask is used to select which output data to evaluate
-#define CHA_MASK 1 << CHA
-#define CHB_MASK 1 << CHB
-#define CHASQ_MASK 1 << CHASQ
-#define CHBSQ_MASK 1 << CHBSQ
-#define SQ_MASK 1 << SQ
+#define CHA_MASK (1 << CHA)
+#define CHB_MASK (1 << CHB)
+#define CHASQ_MASK (1 << CHASQ)
+#define CHBSQ_MASK (1 << CHBSQ)
+#define SQ_MASK (1 << SQ)
 
 namespace CPU {
 
@@ -117,7 +111,6 @@ namespace CPU {
 namespace GPU {
     /*
      * The following will need to be defined:
-     * PROCESSING_ARRAY_TYPE
      * R_POINTS
      * SP_POINTS
      * THREADS_PER_BLOCK
@@ -129,30 +122,23 @@ namespace GPU {
         int np_points;
         int blocks;
         int threads_per_block;
-        std::string processing_array_type;
 
         PowerKernelParameters(
             int r_points,
             int np_points,
-            std::string processing_array_type,
             int blocks,
             int threads_per_block);
         void print();
     };
-
-    /*
-     * Fetches parameters that kernel was compiled with.
-     * Validate the kernel parameters in python before calling it
-     */
     PowerKernelParameters fetch_kernel_parameters();
 
     /* Allocate memory on GPU. The pointers (whose addresses we pass in) hold the GPU addresses allocated*/
-    void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, double **dev_chA_out, double **dev_chB_out,
-                                double **dev_chAsq_out, double **dev_chBsq_out, double **dev_sq_out);
-
-    /*  Free memory on the GPU */
-    void free_memory_on_gpu(short **dev_chA_data, short **dev_chB_data, double **dev_chA_out, double **dev_chB_out,
-                            double **dev_chAsq_out, double **dev_chBsq_out,double **dev_sq_out);
+    void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data,
+                                double **dev_chA_out, double **dev_chB_out,
+                                double **dev_chAsq_out, double **dev_chBsq_out);
+    void free_memory_on_gpu(short **dev_chA_data, short **dev_chB_data,
+                            double **dev_chA_out, double **dev_chB_out,
+                            double **dev_chAsq_out, double **dev_chBsq_out);
 
     /* Copy background data once into constant memory */
     void copy_background_arrays_to_gpu(short *chA_background, short *chB_background);
@@ -170,7 +156,7 @@ namespace GPU {
         double **data_out,
         short **dev_chA_data, short **dev_chB_data,
         double **dev_chA_out, double **dev_chB_out,
-        double **dev_chAsq_out, double **dev_chBsq_out, double **dev_sq_out
+        double **dev_chAsq_out, double **dev_chBsq_out
         );
 }
 
