@@ -13,8 +13,8 @@
 #include <stdexcept>
 #include <stdio.h>
 #include <string>
+
 #include "colours.hpp"
-#include "gpu_utils.hpp"
 #include "power_kernel.hpp"
 
 __device__ void reduction_sum(

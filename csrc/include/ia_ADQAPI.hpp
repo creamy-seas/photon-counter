@@ -10,6 +10,9 @@
 // static unsigned char FETCH_CHANNEL_B = 0x2;
 static unsigned char FETCH_CHANNEL_BOTH = 0x3;
 
+// Digitiser will output 2^14 code
+#define MAX_CODE 1 << 14
+
 #define TRIGGER_SOFTWARE 1
 #define TRIGGER_EXTERNAL 2
 #define TRIGGER_LEVEL 3

@@ -50,7 +50,7 @@ PWD := $(shell pwd)
 TEST_FLAGS := -DTESTENV
 TEST_FLAGS += -D R_POINTS=4
 TEST_FLAGS += -D SP_POINTS=3
-TEST_FLAGS += -D PROCESSING_ARRAY_TYPE=int
+TEST_FLAGS += -D PROCESSING_ARRAY_TYPE="unsigned int"
 TEST_FLAGS += -D THREADS_PER_BLOCK=1024
 
 TEST_LDLIBS += $(shell pkg-config --libs cppunit) # Unittest library

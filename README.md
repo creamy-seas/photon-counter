@@ -163,3 +163,12 @@ ldd ./bin/ia_1488.so
 | (Python) | (C++) |
 |:---------|-------|
 |          |       |
+
+# Colours #
+
+| Colour | Meaning             |
+|--------|---------------------|
+| BLUE   | Information         |
+| GREEN  | Something compelted |
+| YELLOW | Irrelevant/debug    |
+| RED    | Error               |

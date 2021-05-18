@@ -28,7 +28,6 @@ public:
         // Parameters for test set in Makefile
         CPPUNIT_ASSERT_EQUAL(4, kp.r_points);
         CPPUNIT_ASSERT_EQUAL(3, kp.np_points);
-        CPPUNIT_ASSERT_EQUAL(std::string("int"), kp.processing_array_type);
     }
 
     void test_allocate_memory_allocation(){
