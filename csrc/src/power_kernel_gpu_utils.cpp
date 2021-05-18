@@ -1,12 +1,9 @@
 #include <cuda_runtime.h> // cudaMalloc cudaFree
 
-#include "colours.hpp"
-#include "power_kernel.hpp"
-#include "gpu_utils.hpp"
+#include "colours.hpp" // RED, OKBLUE etc
+#include "power_kernel.hpp" // for power kernel parameters
+#include "utils.hpp" // for xstr
 
-/*
-  Suite for referencing the parametesr that the GPU kernel was compiled with
-*/
 GPU::PowerKernelParameters::PowerKernelParameters(
     int r_points,
     int np_points,
@@ -52,7 +49,6 @@ GPU::PowerKernelParameters GPU::fetch_kernel_parameters(){
         );
 }
 
-// Pass in ADDRESS of pointers (&POINTER) -> this will allocate memory on GPU
 void GPU::allocate_memory_on_gpu(
     short **dev_chA_data,
     short **dev_chB_data,
@@ -60,6 +56,7 @@ void GPU::allocate_memory_on_gpu(
     double **dev_chAsq_out, double **dev_chBsq_out,
     double **dev_sq_out
     ){
+    // Pass in ADDRESS of pointers (&POINTER) -> this will allocate memory on GPU
 
     OKBLUE("Allocating memory for power kernel on GPU");
 
@@ -84,7 +81,6 @@ void GPU::allocate_memory_on_gpu(
     OKGREEN("Allocation done!");
 }
 
-// Call to deallocated memory on GPU after run is complete
 void GPU::free_memory_on_gpu(
     short **dev_chA_data,
     short **dev_chB_data,
@@ -92,6 +88,7 @@ void GPU::free_memory_on_gpu(
     double **dev_chAsq_out, double **dev_chBsq_out,
     double **dev_sq_out
     ){
+    // Call to deallocated memory on GPU after run is complete
 
     OKBLUE("Deallocating memory from GPU");
 

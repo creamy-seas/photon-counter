@@ -25,6 +25,7 @@ __device__ void reduction_sum(
     PROCESSING_ARRAY_TYPE sq_cumulative_array[R_POINTS]){
     /*
      * Reduce the array by summing up the total into the first cell.
+     CUDA: Threads along the R_POINTS axis
 
      __ Logic ___
      a1 a2 a3 a4 ... b1 b2 b3 b4 ... c1 c2 c3 c4 ...
@@ -87,7 +88,9 @@ void GPU::copy_background_arrays_to_gpu(short *chA_background, short *chB_backgr
 }
 
 /*
-  Background arrays are written into constant memory once and reused.
+  Reduce the chA_data and chB_data into processed arrays.
+  CUDA: Each block deals with a specific SP_POINT
+  CUDA: Each thread iterates over R_POINTS for each SP_POINT
 */
 __global__ void power_kernel_runner(
     short *chA_data, short *chB_data,

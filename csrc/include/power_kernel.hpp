@@ -1,24 +1,26 @@
-#ifndef POWER_KERNEL_HPP
-#define POWER_KERNEL_HPP
-// Kernels that evalaute averages usings readings from digitiser
-// In general we exepct the digitiser to return SP_POINTS (samples per record) repeated R_POINTS (number of records).
-// Therefore the chA and chB sizes are SP_POINTS * R_POINTS
-//
-// The kernels will evaluate the average at each SP_POINT (averaged over R_POINTS) for:
-// - chA
-// - chB
-// - chASq
-// - chBsq
-// - sq
-//
-// Note - GPU and CPU kernels will differ, as for the GPU kernel array sizes need to be known at compile time
+/*
+* Kernels that evalaute averages usings readings from digitiser
+* In general we exepct the digitiser to return SP_POINTS (samples per record) repeated R_POINTS (number of records).
+* Therefore the chA and chB sizes are SP_POINTS * R_POINTS
+*
+* The kernels will evaluate the average at each SP_POINT (averaged over R_POINTS) for:
+* - chA
+* - chB
+* - chAsq
+* - chBsq
+* - sq
+*
+* Note - GPU and CPU kernels will differ, as for the GPU kernel array sizes need to be known at compile time
+*
+*  Default values for the power kernel
+*/
 #include <string>
 
-#define xstr(s) _str(s)
-#define _str(s) #s
+#ifndef POWER_KERNEL_HPP
+#define POWER_KERNEL_HPP
 
 #ifndef PROCESSING_ARRAY_TYPE
-#define PROCESSING_ARRAY_TYPE int
+#define PROCESSING_ARRAY_TYPE usigned int
 #endif
 
 #ifndef R_POINTS
@@ -33,64 +35,24 @@
 #define THREADS_PER_BLOCK 1024
 #endif
 
+// Derived parameters
 #define BLOCKS SP_POINTS
-
 #define TOTAL_POINTS SP_POINTS*R_POINTS
 
-// Verbose Indexes for accessing array elements
+// Verbose Indexes used for accessing array elements in a human-readable way e.g. array[CHASQ]
+#define NO_OF_POWER_KERNEL_OUTPUTS 5
 #define CHA 0
 #define CHB 1
 #define CHASQ 2
 #define CHBSQ 3
 #define SQ 4
 
-#define POWER_PROCESSING_CHANNELS 5
-
-// Mask is used to select which data to process
+// Mask is used to select which output data to evaluate
 #define CHA_MASK 1 << CHA
 #define CHB_MASK 1 << CHB
 #define CHASQ_MASK 1 << CHASQ
 #define CHBSQ_MASK 1 << CHBSQ
 #define SQ_MASK 1 << SQ
-
-/*
- * Macro to compactly expand the processing cases into blocks that are run depending on what the input_mask
- * value is. E.g. if input_mask=5 (101 in binary), then chA_func and sq_func are run.
- *
- * input_mask: the parameter that will be checked when determining which block to execute.
- * x_func: lambda function, with no input or output arguments (use pointers to pass data in or out)
- *      read more about lambda functions here: https://www.cprogramming.com/c++11/c++11-lambda-closures.html
- *      e.g. auto lambda_func_example = [&capture_value] () { capture_value[0][0] = 1; };
- */
-#define MASK_RESOLVER(input_mask, chA_func, chB_func, sq_func)          \
-    if (input_mask == (CHA_MASK ^ CHB_MASK ^ SQ_MASK)) {                \
-        chA_func();                                                     \
-        chB_func();                                                     \
-        sq_func();                                                      \
-    }                                                                   \
-    else if (input_mask == (CHA_MASK ^ CHB_MASK)){                 \
-        chA_func();                                                     \
-        chB_func();                                                     \
-    }                                                                   \
-    else if (input_mask == (CHA_MASK ^ SQ_MASK)){                  \
-        chA_func();                                                     \
-        sq_func();                                                      \
-    }                                                                   \
-    else if (input_mask == (CHB_MASK ^ SQ_MASK)){                  \
-        chB_func();                                                     \
-        sq_func();                                                      \
-    }                                                                   \
-    else if (input_mask == (CHA_MASK))                             \
-        chA_func();                                                     \
-    else if (input_mask == (CHB_MASK))                             \
-        chB_func();                                                     \
-    else if (input_mask == (SQ_MASK))                                   \
-        sq_func();
-
-/*
- * LEVEL_0 indicates that there are no loops involved
- */
-// #define POWER_KERNEL_MASK_RESOLVER_LEVEL_0(input_mask, chA_call, chB_call, sq_call)
 
 namespace CPU {
 
@@ -177,6 +139,11 @@ namespace GPU {
             int threads_per_block);
         void print();
     };
+
+    /*
+     * Fetches parameters that kernel was compiled with.
+     * Validate the kernel parameters in python before calling it
+     */
     PowerKernelParameters fetch_kernel_parameters();
 
     /* Allocate memory on GPU. The pointers (whose addresses we pass in) hold the GPU addresses allocated*/

@@ -79,8 +79,8 @@ void CPU::power_kernel_v1_no_background(
     int no_points  = sp_points * r_points;
 
     // 1. Prepare processing arrays
-    unsigned int** flat_cumulative_data = new unsigned int*[POWER_PROCESSING_CHANNELS];
-    for (int i(0); i < POWER_PROCESSING_CHANNELS; i++)
+    unsigned int** flat_cumulative_data = new unsigned int*[NO_OF_POWER_KERNEL_OUTPUTS];
+    for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
         flat_cumulative_data[i] = new unsigned int[no_points]();
 
     // 2. Preapare threads
@@ -111,7 +111,7 @@ void CPU::power_kernel_v1_no_background(
                        sp_points, r_points);
 
      // 6. Free processing arrays
-     for (int i(0); i < POWER_PROCESSING_CHANNELS; i++)
+     for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
          delete[] flat_cumulative_data[i];
     delete[] t;
     delete[] flat_cumulative_data;
@@ -145,8 +145,8 @@ void CPU::power_kernel_v2_const_background(
     int no_points  = sp_points * r_points;
 
     // 1. Prepare processing arrays
-    unsigned int** flat_cumulative_data = new unsigned int*[POWER_PROCESSING_CHANNELS];
-    for (int i(0); i < POWER_PROCESSING_CHANNELS; i++)
+    unsigned int** flat_cumulative_data = new unsigned int*[NO_OF_POWER_KERNEL_OUTPUTS];
+    for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
         flat_cumulative_data[i] = new unsigned int[no_points]();
 
     // 2. Preapare threads
@@ -179,7 +179,7 @@ void CPU::power_kernel_v2_const_background(
                       sp_points, r_points);
 
     // 6. Free processing arrays
-    for (int i(0); i < POWER_PROCESSING_CHANNELS; i++)
+    for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
         delete[] flat_cumulative_data[i];
     delete[] t;
     delete[] flat_cumulative_data;
@@ -212,8 +212,8 @@ void CPU::power_kernel_v3_background(
     int no_points  = sp_points * r_points;
 
     // 1. Prepare processing arrays
-    unsigned int** flat_cumulative_data = new unsigned int*[POWER_PROCESSING_CHANNELS];
-    for (int i(0); i < POWER_PROCESSING_CHANNELS; i++)
+    unsigned int** flat_cumulative_data = new unsigned int*[NO_OF_POWER_KERNEL_OUTPUTS];
+    for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
         flat_cumulative_data[i] = new unsigned int[no_points]();
     // As the background data only countains sp_points, an auxillary cycle array
     // will hold the valid indicies for accessing the bacgkound data
@@ -254,7 +254,7 @@ void CPU::power_kernel_v3_background(
                       sp_points, r_points);
 
     // 6. Free processing arrays
-    for (int i(0); i < POWER_PROCESSING_CHANNELS; i++)
+    for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
         delete[] flat_cumulative_data[i];
     delete[] cycle_array;
     delete[] t;

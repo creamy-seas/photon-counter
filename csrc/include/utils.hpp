@@ -13,6 +13,10 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
+// Macros from printing hard-coded parameters
+#define xstr(s) _str(s)
+#define _str(s) #s
+
 std::string seconds_to_hours(int seconds);
 
 std::string float_to_string(float numberToUse, int precision);

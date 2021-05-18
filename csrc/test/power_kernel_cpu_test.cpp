@@ -33,7 +33,7 @@ private:
 public:
     void setUp(){
         // output arrays, chA, chB, chAsq, chBsq, SQ
-        data_out = new double*[POWER_PROCESSING_CHANNELS];
+        data_out = new double*[NO_OF_POWER_KERNEL_OUTPUTS];
     }
     void tearDown(){
         delete[] data_out;
@@ -45,7 +45,7 @@ public:
         chA_data = new short[12]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
         chB_data = new short[12]{0, 1, 0, 1, 0, 1, 0, 1, 0, 2, 2, 2};
 
-        for (int i(0); i < POWER_PROCESSING_CHANNELS; i++) {
+        for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++) {
             data_out[i] = new double[3]();
         }
         expected_sq_out = new double[3]{(double)(1 + 17 + 49 + 104) / 4,
@@ -65,7 +65,7 @@ public:
 
         delete[] chA_data;
         delete[] chB_data;
-        for (int i(0); i < POWER_PROCESSING_CHANNELS; i++)
+        for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
             delete[] data_out[i];
         delete[] expected_sq_out;
     }
@@ -78,7 +78,7 @@ public:
         short chA_const_background = 1;
         short chB_const_background = 0;
 
-        for (int i(0); i < POWER_PROCESSING_CHANNELS; i++) {
+        for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++) {
             data_out[i] = new double[3]();
         }
         expected_sq_out = new double[3]{(double)(0 + 10 + 36 + 85) / 4,
@@ -99,7 +99,7 @@ public:
 
         delete[] chA_data;
         delete[] chB_data;
-        for (int i(0); i < POWER_PROCESSING_CHANNELS; i++)
+        for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
             delete[] data_out[i];
         delete[] expected_sq_out;
     }
@@ -112,7 +112,7 @@ public:
         short *chA_background = new short[3]{1, 2, 3};
         short *chB_background = new short[3]{0, 0, 0};
 
-        for (int i(0); i < POWER_PROCESSING_CHANNELS; i++) {
+        for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++) {
             data_out[i] = new double[3]();
         }
         expected_A_out = new double[3]{0, 0, 0};
@@ -138,7 +138,7 @@ public:
         }
         delete[] chA_data;
         delete[] chB_data;
-        for (int i(0); i < POWER_PROCESSING_CHANNELS; i++)
+        for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
             delete[] data_out[i];
         delete[] expected_A_out;
         delete[] expected_B_out;

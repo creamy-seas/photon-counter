@@ -133,12 +133,12 @@ ldd ./bin/ia_1488.so
 
 ## Power ##
 > Complete
+- [ ] Safety checks to ensure that correct allocation is made
 
-| `power_kernel.py` (Python)                                     | `power_kernel.hpp` (C++)                               |
-|:---------------------------------------------------------------|--------------------------------------------------------|
-| customizeable `kernel`                                         | `kernel` that can be used in parallel processes        |
-| `check_kernel_parameters`                                      | feed `fetch_kernel_parameters` into the python checker |
-| use `check_kernel_parameters` to check the kernel built in C++ | 🏆                                                     |
+| `power_kernel.py` (Python)                                        | `power_kernel.hpp` (C++)                                                 |
+|:------------------------------------------------------------------|--------------------------------------------------------------------------|
+| "Out-of-the-box" `kernel` with little customisability             | 🏆 `kernel` that can be used in parallel processes                       |
+| 🏆 use `check_kernel_parameters` to check the kernel built in C++ | feed `fetch_kernel_parameters` into the python `check_kernel_parameters` |
 
 ## Power pipeline ##
 > In progress
