@@ -29,6 +29,10 @@
 #error "Need to specify THREADS_PER_BLOCK for power measurements"
 #endif
 
+#ifndef R_POINTS_CHUNK
+#error "Need to specify R_POINTS_CHUNK (how to chunk the repetitions to stay within memory limits of GPU) for power measurements"
+#endif
+
 // Derived parameters
 #define BLOCKS SP_POINTS
 #define TOTAL_POINTS SP_POINTS*R_POINTS
@@ -132,32 +136,67 @@ namespace GPU {
     };
     PowerKernelParameters fetch_kernel_parameters();
 
-    /* Allocate memory on GPU. The pointers (whose addresses we pass in) hold the GPU addresses allocated*/
-    void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data,
-                                double **dev_chA_out, double **dev_chB_out,
-                                double **dev_chAsq_out, double **dev_chBsq_out);
-    void free_memory_on_gpu(short **dev_chA_data, short **dev_chB_data,
-                            double **dev_chA_out, double **dev_chB_out,
-                            double **dev_chAsq_out, double **dev_chBsq_out);
-
     /* Copy background data once into constant memory */
     void copy_background_arrays_to_gpu(short *chA_background, short *chB_background);
 
-    /*
-      short* chA_data, chB_data:              raw data from the digitiser
-      double* data_out:                  evaluated power
-      short chA_back, chB_back:               background average on both channels OF A SINGLE RUN!
-      int no_points = samples_per_record * number of records
-      int number_of_threads:                  number of threads to launch
-    */
-    void power_kernel(
-        short *chA_data,
-        short *chB_data,
-        double **data_out,
-        short **dev_chA_data, short **dev_chB_data,
-        double **dev_chA_out, double **dev_chB_out,
-        double **dev_chAsq_out, double **dev_chBsq_out
-        );
+    namespace V1 {
+        /*
+         * Kernel copies digitiser data once to GPU.
+         * !! Will not work for large number of R_POINTS as the shared memory on GPU runs out !!
+         */
+        /*
+          short* chA_data, chB_data:              raw data from the digitiser
+          double** data_out:                      kernel output - use indicies defined at start
+          <T>** _out:                             pointers to memory allocated on GPU
+        */
+
+        /**
+         * Allocate memory on GPU. The pointers (whose addresses we pass in) hold the GPU addresses allocated.
+         */
+        void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data,
+                                    double **dev_chA_out, double **dev_chB_out,
+                                    double **dev_chAsq_out, double **dev_chBsq_out);
+        void free_memory_on_gpu(short **dev_chA_data, short **dev_chB_data,
+                                double **dev_chA_out, double **dev_chB_out,
+                                double **dev_chAsq_out, double **dev_chBsq_out);
+        void power_kernel(
+            short *chA_data,
+            short *chB_data,
+            double **data_out,
+            short **dev_chA_data, short **dev_chB_data,
+            double **dev_chA_out, double **dev_chB_out,
+            double **dev_chAsq_out, double **dev_chBsq_out
+            );
+    }
+
+    namespace V2 {
+        /*
+         * The input data for V1 is split into chunks, to avoid the limitation on shared memory
+         * Streams are used to allow parallel copying and processing of these chunks
+         */
+
+        /* Allocate memory on GPU. The pointers (whose addresses we pass in) hold the GPU addresses allocated*/
+        // void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data,
+        //                             double **dev_chA_out, double **dev_chB_out,
+        //                             double **dev_chAsq_out, double **dev_chBsq_out);
+        // void free_memory_on_gpu(short **dev_chA_data, short **dev_chB_data,
+        //                         double **dev_chA_out, double **dev_chB_out,
+        //                         double **dev_chAsq_out, double **dev_chBsq_out);
+
+        /*
+          short* chA_data, chB_data:              raw data from the digitiser
+          double** data_out:                      kernel output - use indicies defined at start
+          <T>** dev_:                             pointers to memory allocated on GPU
+        */
+        void power_kernel(
+            short *chA_data,
+            short *chB_data,
+            double **data_out,
+            short **dev_chA_data, short **dev_chB_data,
+            double **dev_chA_out, double **dev_chB_out,
+            double **dev_chAsq_out, double **dev_chBsq_out
+            );
+    }
 }
 
 #endif

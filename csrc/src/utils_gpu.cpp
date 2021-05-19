@@ -46,6 +46,12 @@ cudaDeviceProp fetch_gpu_parameters(){
     WHITE("Texture Alignment: %ld\n", prop.textureAlignment );
 
     OKBLUE("MP Information for device");
+    if (prop.deviceOverlap){
+        OKGREEN("Streams will speed computation up!");
+    }
+    else{
+        WARNING("Streams will not speed computation up.");
+    }
     WHITE("Multiprocessor count: %d\n",
           prop.multiProcessorCount );
     WHITE(

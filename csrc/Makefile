@@ -49,6 +49,7 @@ PWD := $(shell pwd)
 # Tests and benchmarks #######################################################################
 TEST_FLAGS := -DTESTENV
 TEST_FLAGS += -D R_POINTS=4
+TEST_FLAGS += -D R_POINTS_CHUNK=2
 TEST_FLAGS += -D SP_POINTS=3
 TEST_FLAGS += -D THREADS_PER_BLOCK=1024
 
@@ -69,8 +70,8 @@ TEST_OBJECTS += $(patsubst $(FOLDER_SOURCE)/%.cu,$(TEST_BUILD_FOLDER)/%.o,$(CUDA
 
 # Benchmarking speed of CPU vs GPU ############################################
 BENCH_FLAGS := -DTESTENV
-BENCH_FLAGS += -D R_POINTS=10000 # From
-BENCH_FLAGS += -D SP_POINTS=200 # 500ns acquisition time
+BENCH_FLAGS += -D R_POINTS=1000 # From
+BENCH_FLAGS += -D SP_POINTS=100 # 500ns acquisition time
 BENCH_FLAGS += -D THREADS_PER_BLOCK=1024
 
 BENCH_LDLIBS += -lcelero # Bechmarking library

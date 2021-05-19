@@ -49,8 +49,8 @@ public:
         void* dev_chAsq_out_addr = &dev_chAsq_out;
         void* dev_chBsq_out_addr = &dev_chBsq_out;
 
-        GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_chA_out, &dev_chB_out,
-                                    &dev_chAsq_out, &dev_chBsq_out);
+        GPU::V1::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_chA_out, &dev_chB_out,
+                                        &dev_chAsq_out, &dev_chBsq_out);
 
         // Check memory has been allocated
         CPPUNIT_ASSERT(dev_chA_data != 0);
@@ -60,8 +60,8 @@ public:
         CPPUNIT_ASSERT(dev_chAsq_out != 0);
         CPPUNIT_ASSERT(dev_chBsq_out != 0);
 
-        GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_chA_out, &dev_chB_out,
-                                &dev_chAsq_out, &dev_chBsq_out);
+        GPU::V1::free_memory_on_gpu(&dev_chA_data, &dev_chB_data, &dev_chA_out, &dev_chB_out,
+                                    &dev_chAsq_out, &dev_chBsq_out);
 
         // Check address has stayed the same
         CPPUNIT_ASSERT_EQUAL(dev_chA_data_addr, (void *)&dev_chA_data);
