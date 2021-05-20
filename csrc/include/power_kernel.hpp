@@ -156,20 +156,12 @@ namespace GPU {
         /**
          * Allocate memory on GPU. The pointers (whose addresses we pass in) hold the GPU addresses allocated.
          */
-        void allocate_memory(short **gpu_chA_data, short **gpu_chB_data,
-                             double **gpu_chA_out, double **gpu_chB_out,
-                             double **gpu_chAsq_out, double **gpu_chBsq_out);
-        void free_memory(short **gpu_chA_data, short **gpu_chB_data,
-                         double **gpu_chA_out, double **gpu_chB_out,
-                         double **gpu_chAsq_out, double **gpu_chBsq_out);
+        void allocate_memory(short ***gpu_in, double ***gpu_out);
+        void free_memory(short ***gpu_in, double ***gpu_out);
         void power_kernel(
-            short *chA_data,
-            short *chB_data,
+            short *chA_data, short *chB_data,
             double **data_out,
-            short **gpu_chA_data, short **gpu_chB_data,
-            double **gpu_chA_out, double **gpu_chB_out,
-            double **gpu_chAsq_out, double **gpu_chBsq_out
-            );
+            short ***gpu_in, double ***gpu_out);
     }
 
     namespace V2 {

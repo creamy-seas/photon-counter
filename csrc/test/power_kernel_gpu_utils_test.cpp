@@ -33,12 +33,14 @@ public:
     void test_allocate_memory_allocation_v1(){
         // This will hold the address of the arrays allocated on the GPU
         // These will change!
-        short* gpu_chA_data = 0;
-        short* gpu_chB_data = 0;
-        double* gpu_chA_out = 0;
-        double* gpu_chB_out = 0;
-        double* gpu_chAsq_out = 0;
-        double* gpu_chBsq_out = 0;
+        short* gpu_chA_data = 0; short* gpu_chB_data = 0;
+        short **gpu_in[2] = {&gpu_chA_data, &gpu_chB_data};
+
+        double* gpu_chA_out = 0; double* gpu_chB_out = 0; double* gpu_chAsq_out = 0; double* gpu_chBsq_out = 0;
+        double **gpu_out[4] = {&gpu_chA_out,
+                               &gpu_chB_out,
+                               &gpu_chAsq_out,
+                               &gpu_chBsq_out};
 
         // These values will hold the addresses of the above pointers
         // These will not change!
@@ -49,8 +51,7 @@ public:
         void* gpu_chAsq_out_addr = &gpu_chAsq_out;
         void* gpu_chBsq_out_addr = &gpu_chBsq_out;
 
-        GPU::V1::allocate_memory(&gpu_chA_data, &gpu_chB_data, &gpu_chA_out, &gpu_chB_out,
-                                        &gpu_chAsq_out, &gpu_chBsq_out);
+        GPU::V1::allocate_memory(gpu_in, gpu_out);
 
         // Check memory has been allocated
         CPPUNIT_ASSERT(gpu_chA_data != 0);
@@ -60,8 +61,7 @@ public:
         CPPUNIT_ASSERT(gpu_chAsq_out != 0);
         CPPUNIT_ASSERT(gpu_chBsq_out != 0);
 
-        GPU::V1::free_memory(&gpu_chA_data, &gpu_chB_data, &gpu_chA_out, &gpu_chB_out,
-                                    &gpu_chAsq_out, &gpu_chBsq_out);
+        GPU::V1::free_memory(gpu_in, gpu_out);
 
         // Check address has stayed the same
         CPPUNIT_ASSERT_EQUAL(gpu_chA_data_addr, (void *)&gpu_chA_data);
@@ -78,7 +78,7 @@ public:
         // These will change!
         short** gpu_in0[2] = {0, 0};
         short** gpu_in1[2] = {0, 0};
-        double **gpu_out0[4] = {0, 0, 0};
+        double **gpu_out0[4] = {0, 0, 0, 0};
         double **gpu_out1[4] = {0, 0, 0, 0};
         double **cpu_out0[4] = {0, 0, 0, 0};
         double **cpu_out1[4] = {0, 0, 0, 0};

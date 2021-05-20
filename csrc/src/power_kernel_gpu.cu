@@ -88,11 +88,7 @@ __device__ void reduction_sum(
 ///////////////////////////////////////////////////////////////////////////////
 //          Power Kernel: Single copy of data to GPU + shared memory         //
 ///////////////////////////////////////////////////////////////////////////////
-__global__ void power_kernel_runner(
-    short *chA_data, short *chB_data,
-    double *chA_out, double *chB_out,
-    double *chAsq_out, double *chBsq_out
-    ){
+__global__ void power_kernel_runner(short **gpu_in, double **gpu_out){
 
     // An unsigned long int will be able to hold 2^32/(2^14) = 2^18 = 262144 data points from the 14bit digitiser
     // Since the SP digitizer will have a maximum of 254200 record (using the GetMaxNofRecordsFromNofSamples(adq_cu_ptr, 1))
@@ -113,8 +109,8 @@ __global__ void power_kernel_runner(
         while (r_coordinate < R_POINTS) {
             coordinate = r_coordinate * SP_POINTS + sp_coordinate;
 
-            chA_cumulative_array[r_coordinate] = chA_data[coordinate] - gpu_chA_background[sp_coordinate];
-            chB_cumulative_array[r_coordinate] = chB_data[coordinate] - gpu_chB_background[sp_coordinate];
+            chA_cumulative_array[r_coordinate] = gpu_in[CHA][coordinate] - gpu_chA_background[sp_coordinate];
+            chB_cumulative_array[r_coordinate] = gpu_in[CHB][coordinate] - gpu_chB_background[sp_coordinate];
 
             chAsq_cumulative_array[r_coordinate] = chA_cumulative_array[r_coordinate] * chA_cumulative_array[r_coordinate];
             chBsq_cumulative_array[r_coordinate] = chB_cumulative_array[r_coordinate] * chB_cumulative_array[r_coordinate];
@@ -134,10 +130,10 @@ __global__ void power_kernel_runner(
                       chAsq_cumulative_array,
                       chBsq_cumulative_array,
                       R_POINTS);
-        chA_out[sp_coordinate] = (double)chA_cumulative_array[0] / R_POINTS;
-        chB_out[sp_coordinate] = (double)chB_cumulative_array[0] / R_POINTS;
-        chAsq_out[sp_coordinate] = (double)chAsq_cumulative_array[0] / R_POINTS;
-        chBsq_out[sp_coordinate] = (double)chBsq_cumulative_array[0] / R_POINTS;
+        gpu_out[CHA][sp_coordinate] = (double)chA_cumulative_array[0] / R_POINTS;
+        gpu_out[CHB][sp_coordinate] = (double)chB_cumulative_array[0] / R_POINTS;
+        gpu_out[CHASQ][sp_coordinate] = (double)chAsq_cumulative_array[0] / R_POINTS;
+        gpu_out[CHBSQ][sp_coordinate] = (double)chBsq_cumulative_array[0] / R_POINTS;
 
         // Shift by number of allocated blocks along main-axis
         sp_coordinate += gridDim.x;
@@ -148,13 +144,7 @@ void GPU::V1::power_kernel(
     short *chA_data,
     short *chB_data,
     double **data_out,
-    short **gpu_chA_data,
-    short **gpu_chB_data,
-    double **gpu_chA_out,
-    double **gpu_chB_out,
-    double **gpu_chAsq_out,
-    double **gpu_chBsq_out
-    ){
+    short ***gpu_in, double ***gpu_out){
     // ==> Ensure that allocate_memory has been called
     // ==> Ensure that background arrays (set to 0 for no correction) have been copied over
 
@@ -162,33 +152,30 @@ void GPU::V1::power_kernel(
     // Dereference the gpu_ch? (which is the address where the GPU memory location is kept)
     // in order to get the actual memory location
     int success = 0;
-    success += cudaMemcpy(*gpu_chA_data, chA_data,
-                          TOTAL_POINTS*sizeof(short),
+    success += cudaMemcpy(*gpu_in[CHA], chA_data,
+                          R_POINTS * SP_POINTS * sizeof(short),
                           cudaMemcpyHostToDevice);
-    success += cudaMemcpy(*gpu_chB_data, chB_data,
-                          TOTAL_POINTS*sizeof(short),
+    success += cudaMemcpy(*gpu_in[CHB], chB_data,
+                          R_POINTS * SP_POINTS * sizeof(short),
                           cudaMemcpyHostToDevice);
     if (success != 0) FAIL("Failed to copy data TO the GPU!");
 
     // Run kernel
-    power_kernel_runner<<<BLOCKS, THREADS_PER_BLOCK>>>(
-        *gpu_chA_data, *gpu_chB_data,
-        *gpu_chA_out, *gpu_chB_out,
-        *gpu_chAsq_out, *gpu_chBsq_out);
+    power_kernel_runner<<<BLOCKS, THREADS_PER_BLOCK>>>(*gpu_in, *gpu_out);
 
     // Copy from device
-    success += cudaMemcpy(data_out[CHA], *gpu_chA_out,
-                          SP_POINTS * sizeof(double),
-                          cudaMemcpyDeviceToHost);
-    success += cudaMemcpy(data_out[CHB], *gpu_chB_out,
-                          SP_POINTS * sizeof(double),
-                          cudaMemcpyDeviceToHost);
-    success += cudaMemcpy(data_out[CHASQ],*gpu_chAsq_out,
-                          SP_POINTS * sizeof(double),
-                          cudaMemcpyDeviceToHost);
-    success += cudaMemcpy(data_out[CHBSQ], *gpu_chBsq_out,
-                          SP_POINTS * sizeof(double),
-                          cudaMemcpyDeviceToHost);
+    // success += cudaMemcpy(data_out[CHA], *gpu_out[CHA],
+    //                       SP_POINTS * sizeof(double),
+    //                       cudaMemcpyDeviceToHost);
+    // success += cudaMemcpy(data_out[CHB], *gpu_out[CHB],
+    //                       SP_POINTS * sizeof(double),
+    //                       cudaMemcpyDeviceToHost);
+    // success += cudaMemcpy(data_out[CHASQ],*gpu_out[CHASQ],
+    //                       SP_POINTS * sizeof(double),
+    //                       cudaMemcpyDeviceToHost);
+    // success += cudaMemcpy(data_out[CHBSQ], *gpu_out[CHBSQ],
+    //                       SP_POINTS * sizeof(double),
+    //                       cudaMemcpyDeviceToHost);
     if (success != 0) FAIL("Failed to copy data FROM the GPU!");
 
     // Manually evaluate sq = chAsq + chBsq
