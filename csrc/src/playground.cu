@@ -16,24 +16,24 @@ float GPU::example_gpu_func(short a, short b) {
 
         // Allocate device and host variables
         float c;
-        float *dev_c;
+        float *gpu_c;
 
         // Memory allocation on device
-        cudaMalloc((void**) &dev_c, sizeof(float));
+        cudaMalloc((void**) &gpu_c, sizeof(float));
 
         // Kernel invoction
-        example_gpu_func_kernel<<<1,1>>>(a, b, dev_c);
+        example_gpu_func_kernel<<<1,1>>>(a, b, gpu_c);
 
         // Copy back to device
         cudaMemcpy(
                 &c,
-                dev_c,
+                gpu_c,
                 sizeof(float),
                 cudaMemcpyDeviceToHost
                 );
 
 
-        cudaFree(dev_c);
+        cudaFree(gpu_c);
         OKGREEN("GPU KERNEL Complete!%s");
 
         std::cout << c << std::endl;

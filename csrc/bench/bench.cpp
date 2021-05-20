@@ -76,13 +76,13 @@ public:
     short* chB_background;
 
     // Allocation on GPU
-    short *dev_chA_data;
-    short *dev_chB_data;
-    double *dev_chA_out;
-    double *dev_chB_out;
-    double *dev_chAsq_out;
-    double *dev_chBsq_out;
-    double *dev_sq_out;
+    short *gpu_chA_data;
+    short *gpu_chB_data;
+    double *gpu_chA_out;
+    double *gpu_chB_out;
+    double *gpu_chAsq_out;
+    double *gpu_chBsq_out;
+    double *gpu_sq_out;
 };
 
 class DigitiserFixture : public celero::TestFixture {
@@ -196,20 +196,20 @@ public:
 
 BASELINE_F(POWER, GPU, PowerKernelFixture, SAMPLES, ITERATIONS)
 {
-    // GPU::allocate_memory_on_gpu(&dev_chA_data, &dev_chB_data,
-    //                             &dev_chA_out, &dev_chB_out,
-    //                             &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out);
+    // GPU::allocate_memory(&gpu_chA_data, &gpu_chB_data,
+    //                             &gpu_chA_out, &gpu_chB_out,
+    //                             &gpu_chAsq_out, &gpu_chBsq_out, &gpu_sq_out);
     // GPU::power_kernel(
     //     chA_data,
     //     chB_data,
     //     data_out,
-    //     &dev_chA_data, &dev_chB_data,
-    //     &dev_chA_out, &dev_chB_out,
-    //     &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out
+    //     &gpu_chA_data, &gpu_chB_data,
+    //     &gpu_chA_out, &gpu_chB_out,
+    //     &gpu_chAsq_out, &gpu_chBsq_out, &gpu_sq_out
     //     );
-    // GPU::free_memory_on_gpu(&dev_chA_data, &dev_chB_data,
-    //                         &dev_chA_out, &dev_chB_out,
-    //                         &dev_chAsq_out, &dev_chBsq_out, &dev_sq_out);
+    // GPU::free_memory(&gpu_chA_data, &gpu_chB_data,
+    //                         &gpu_chA_out, &gpu_chB_out,
+    //                         &gpu_chAsq_out, &gpu_chBsq_out, &gpu_sq_out);
 }
 
 // BASELINE_F(POWER, DIGITIZER, DigitiserFixture, 1, 1)

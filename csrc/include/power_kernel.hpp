@@ -139,6 +139,9 @@ namespace GPU {
     /* Copy background data once into constant memory */
     void copy_background_arrays_to_gpu(short *chA_background, short *chB_background);
 
+    const int outputs_from_gpu[4] = {CHA, CHB, CHASQ, CHBSQ};
+    const int no_outputs_from_gpu = 4;
+
     namespace V1 {
         /*
          * Kernel copies digitiser data once to GPU.
@@ -153,19 +156,19 @@ namespace GPU {
         /**
          * Allocate memory on GPU. The pointers (whose addresses we pass in) hold the GPU addresses allocated.
          */
-        void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data,
-                                    double **dev_chA_out, double **dev_chB_out,
-                                    double **dev_chAsq_out, double **dev_chBsq_out);
-        void free_memory_on_gpu(short **dev_chA_data, short **dev_chB_data,
-                                double **dev_chA_out, double **dev_chB_out,
-                                double **dev_chAsq_out, double **dev_chBsq_out);
+        void allocate_memory(short **gpu_chA_data, short **gpu_chB_data,
+                             double **gpu_chA_out, double **gpu_chB_out,
+                             double **gpu_chAsq_out, double **gpu_chBsq_out);
+        void free_memory(short **gpu_chA_data, short **gpu_chB_data,
+                         double **gpu_chA_out, double **gpu_chB_out,
+                         double **gpu_chAsq_out, double **gpu_chBsq_out);
         void power_kernel(
             short *chA_data,
             short *chB_data,
             double **data_out,
-            short **dev_chA_data, short **dev_chB_data,
-            double **dev_chA_out, double **dev_chB_out,
-            double **dev_chAsq_out, double **dev_chBsq_out
+            short **gpu_chA_data, short **gpu_chB_data,
+            double **gpu_chA_out, double **gpu_chB_out,
+            double **gpu_chAsq_out, double **gpu_chBsq_out
             );
     }
 
@@ -175,27 +178,30 @@ namespace GPU {
          * Streams are used to allow parallel copying and processing of these chunks
          */
 
-        /* Allocate memory on GPU. The pointers (whose addresses we pass in) hold the GPU addresses allocated*/
-        // void allocate_memory_on_gpu(short **dev_chA_data, short **dev_chB_data,
-        //                             double **dev_chA_out, double **dev_chB_out,
-        //                             double **dev_chAsq_out, double **dev_chBsq_out);
-        // void free_memory_on_gpu(short **dev_chA_data, short **dev_chB_data,
-        //                         double **dev_chA_out, double **dev_chB_out,
-        //                         double **dev_chAsq_out, double **dev_chBsq_out);
-
+        /* Memory is allocated for:
+         * - input data on the GPU for both of the streams, for both of the digitiser channels
+         * - output data on the GPU. Preapre it with double** gpu_outX[4];
+         * - output data on the HOST, which needs to be memory locked for safe copying
+         */
+        void allocate_memory(short ***gpu_in0, short ***gpu_in1,
+                             double ***gpu_out0, double ***gpu_out1,
+                             double ***cpu_out0, double ***cpu_out1);
+        void free_memory(short ***gpu_in0, short ***gpu_in1,
+                         double ***gpu_out0, double ***gpu_out1,
+                         double ***cpu_out0, double ***cpu_out1);
         /*
           short* chA_data, chB_data:              raw data from the digitiser
           double** data_out:                      kernel output - use indicies defined at start
-          <T>** dev_:                             pointers to memory allocated on GPU
+          <T>** gpu_:                             pointers to memory allocated on GPU
         */
-        void power_kernel(
-            short *chA_data,
-            short *chB_data,
-            double **data_out,
-            short **dev_chA_data, short **dev_chB_data,
-            double **dev_chA_out, double **dev_chB_out,
-            double **dev_chAsq_out, double **dev_chBsq_out
-            );
+        // void power_kernel(
+        //     short *chA_data,
+        //     short *chB_data,
+        //     double **data_out,
+        //     short **gpu_chA_data, short **gpu_chB_data,
+        //     double **gpu_chA_out, double **gpu_chB_out,
+        //     double **gpu_chAsq_out, double **gpu_chBsq_out
+        //     );
     }
 }
 
