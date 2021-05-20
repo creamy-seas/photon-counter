@@ -26,8 +26,8 @@ class PowerKernelFixture : public celero::TestFixture {
 public:
     void setUp(__attribute__ ((unused)) const celero::TestFixture::ExperimentValue& x) override {
         // Prepare arrays before each sample is run
-        chA_data = new short[TOTAL_POINTS];
-        chB_data = new short[TOTAL_POINTS];
+        chA_data = new short[SP_POINTS * R_POINTS];
+        chB_data = new short[SP_POINTS * R_POINTS];
 
         data_out = new double*[NO_OF_POWER_KERNEL_OUTPUTS];
         for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++) {
@@ -36,7 +36,7 @@ public:
         // Seed generator and populate arrays
         std::srand(std::time(0));
 
-        for (int i(0); i < TOTAL_POINTS; i++) {
+        for (int i(0); i < SP_POINTS * R_POINTS; i++) {
             chA_data[i] = digitiser_code();
             chB_data[i] = digitiser_code();
         }

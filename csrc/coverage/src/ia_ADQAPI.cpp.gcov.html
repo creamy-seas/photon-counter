@@ -31,13 +31,13 @@
             <td class="headerValue">🐋 Test Coverage</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntry">31</td>
-            <td class="headerCovTableEntry">36</td>
-            <td class="headerCovTableEntryMed">86.1 %</td>
+            <td class="headerCovTableEntry">37</td>
+            <td class="headerCovTableEntry">45</td>
+            <td class="headerCovTableEntryMed">82.2 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2021-05-11 12:49:53</td>
+            <td class="headerValue">2021-05-20 19:29:47</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">4</td>
@@ -104,18 +104,18 @@
 <span class="lineNum">      42 </span>            : 
 <span class="lineNum">      43 </span>            :     // Variable
 <span class="lineNum">      44 </span><span class="lineCov">          3 :     if (blink == 1) {</span>
-<span class="lineNum">      45 </span>            :                 YELLOWBG(&quot;Blinking&quot;);
+<span class="lineNum">      45 </span><span class="lineNoCov">          0 :                 YELLOWBG(&quot;Blinking&quot;);</span>
 <span class="lineNum">      46 </span><span class="lineNoCov">          0 :                 ADQ_Blink(adq_cu_ptr, 1);</span>
-<span class="lineNum">      47 </span>            :                 OKGREEN(&quot;Blinking complete!&quot;);
+<span class="lineNum">      47 </span><span class="lineNoCov">          0 :                 OKGREEN(&quot;Blinking complete!&quot;);</span>
 <span class="lineNum">      48 </span>            :         }
 <span class="lineNum">      49 </span>            : 
 <span class="lineNum">      50 </span><span class="lineCov">          3 :         switch (trigger_mode){</span>
 <span class="lineNum">      51 </span>            :         case TRIGGER_SOFTWARE:
-<span class="lineNum">      52 </span>            :                 OKBLUE(&quot;Software trigger&quot;);
+<span class="lineNum">      52 </span><span class="lineCov">          3 :                 OKBLUE(&quot;Software trigger&quot;);</span>
 <span class="lineNum">      53 </span><span class="lineCov">          3 :                 ADQ_SetInternalTriggerPeriod(adq_cu_ptr, 1, 100);</span>
 <span class="lineNum">      54 </span><span class="lineCov">          3 :                 break;</span>
 <span class="lineNum">      55 </span>            :         case TRIGGER_EXTERNAL:
-<span class="lineNum">      56 </span>            :                 WARNING(&quot;External trigger!&quot;);
+<span class="lineNum">      56 </span><span class="lineNoCov">          0 :                 WARNING(&quot;External trigger!&quot;);</span>
 <span class="lineNum">      57 </span><span class="lineNoCov">          0 :                 break;</span>
 <span class="lineNum">      58 </span>            :         case TRIGGER_LEVEL:
 <span class="lineNum">      59 </span><span class="lineNoCov">          0 :                 FAIL(&quot;Level trigger!&quot;);</span>
@@ -124,7 +124,7 @@
 <span class="lineNum">      62 </span>            :         }
 <span class="lineNum">      63 </span><span class="lineCov">          3 :         ADQ_SetTriggerMode(adq_cu_ptr, 1, trigger_mode);</span>
 <span class="lineNum">      64 </span>            : 
-<span class="lineNum">      65 </span>            :         clock_source ==  INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERENCE ? WARNING(&quot;External clock!&quot;) : OKBLUE(&quot;Internal clock&quot;);
+<span class="lineNum">      65 </span><span class="lineCov">          3 :         clock_source ==  INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERENCE ? WARNING(&quot;External clock!&quot;) : OKBLUE(&quot;Internal clock&quot;);</span>
 <span class="lineNum">      66 </span><span class="lineCov">          3 :         ADQ_SetClockSource(adq_cu_ptr, 1, clock_source);</span>
 <span class="lineNum">      67 </span>            : 
 <span class="lineNum">      68 </span><span class="lineCov">          3 :         return adq_cu_ptr;</span>
@@ -143,15 +143,15 @@
 <span class="lineNum">      81 </span><span class="lineCov">          1 :         ADQ_DisarmTrigger(adq_cu_ptr, 1);</span>
 <span class="lineNum">      82 </span><span class="lineCov">          1 :         ADQ_ArmTrigger(adq_cu_ptr, 1);</span>
 <span class="lineNum">      83 </span>            : 
-<span class="lineNum">      84 </span>            :         YELLOWBG(&quot;Begginning aquisition&quot;);
+<span class="lineNum">      84 </span><span class="lineCov">          1 :         YELLOWBG(&quot;Begginning aquisition&quot;);</span>
 <span class="lineNum">      85 </span><span class="lineCov">          6 :         while (!ADQ_GetAcquiredAll(adq_cu_ptr, 1)){</span>
 <span class="lineNum">      86 </span>            : #ifdef TESTENV
-<span class="lineNum">      87 </span>            :                 WARNING(&quot;Software trigger in test environment&quot;);
+<span class="lineNum">      87 </span><span class="lineCov">          4 :                 WARNING(&quot;Software trigger in test environment&quot;);</span>
 <span class="lineNum">      88 </span><span class="lineCov">          4 :                 ADQ_SWTrig(adq_cu_ptr, 1);</span>
 <span class="lineNum">      89 </span>            : #endif
 <span class="lineNum">      90 </span>            :         }
 <span class="lineNum">      91 </span>            : 
-<span class="lineNum">      92 </span>            :         YELLOWBG(&quot;Begginning transfer&quot;);
+<span class="lineNum">      92 </span><span class="lineCov">          1 :         YELLOWBG(&quot;Begginning transfer&quot;);</span>
 <span class="lineNum">      93 </span><span class="lineCov">          1 :         void* target_buffers[2] = { buff_a, buff_b };</span>
 <span class="lineNum">      94 </span>            :         ADQ_GetData(adq_cu_ptr,
 <span class="lineNum">      95 </span>            :                     1,
@@ -167,7 +167,7 @@
 <span class="lineNum">     105 </span><span class="lineCov">          1 :                 );</span>
 <span class="lineNum">     106 </span><span class="lineCov">          1 :         ADQ_DisarmTrigger(adq_cu_ptr, 1);</span>
 <span class="lineNum">     107 </span>            : 
-<span class="lineNum">     108 </span>            :         OKGREEN(&quot;Completed read from digitiser&quot;);
+<span class="lineNum">     108 </span><span class="lineCov">          1 :         OKGREEN(&quot;Completed read from digitiser&quot;);</span>
 <span class="lineNum">     109 </span><span class="lineCov">          1 : }</span>
 </pre>
       </td>

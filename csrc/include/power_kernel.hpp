@@ -1,6 +1,5 @@
 /*
- * Kernels that evalaute averages usings readings from digitiser
- * In general we exepct the digitiser to return SP_POINTS (samples per record) repeated R_POINTS (number of records).
+ * In general we expect the digitiser to return SP_POINTS (samples per record) repeated R_POINTS (number of records).
  * Therefore the chA and chB sizes are SP_POINTS * R_POINTS
  *
  * The kernels will evaluate the average at each SP_POINT (averaged over R_POINTS) for:
@@ -11,8 +10,6 @@
  * - sq
  *
  * Note - GPU and CPU kernels will differ, as for the GPU kernel array sizes need to be known at compile time
- *
- *  Default values for the power kernel
  */
 #ifndef POWER_KERNEL_HPP
 #define POWER_KERNEL_HPP
@@ -35,7 +32,6 @@
 
 // Derived parameters
 #define BLOCKS SP_POINTS
-#define TOTAL_POINTS SP_POINTS*R_POINTS
 
 // Verbose Indexes used for accessing array elements in a human-readable way e.g. array[CHASQ]
 #define NO_OF_POWER_KERNEL_OUTPUTS 5
@@ -143,21 +139,24 @@ namespace GPU {
     const int no_outputs_from_gpu = 4;
 
     namespace V1 {
-        /*
-         * Kernel copies digitiser data once to GPU.
-         * !! Will not work for large number of R_POINTS as the shared memory on GPU runs out !!
-         */
-        /*
-          short* chA_data, chB_data:              raw data from the digitiser
-          double** data_out:                      kernel output - use indicies defined at start
-          <T>** _out:                             pointers to memory allocated on GPU
-        */
+        // Kernel copies digitiser data once to GPU.
+        // !! Will not work for large number of R_POINTS as the shared memory on GPU runs out !!
 
         /**
-         * Allocate memory on GPU. The pointers (whose addresses we pass in) hold the GPU addresses allocated.
+         * Memory management on GPU:
+         * - gpu_in/out should be arrays of ADDRESSES to POINTERS.
+         * - These POINTERS will location of the arrays on GPU.
+         * - Declare pointers in the following way: `short* gpu_chA_data`
+         * - Then store the addresses of these pointers in the arrays: `short*** gpu_in[2] = {&gpu_chA_data, &gpu_chB_data}`
          */
         void allocate_memory(short ***gpu_in, double ***gpu_out);
         void free_memory(short ***gpu_in, double ***gpu_out);
+
+        /*
+          short* chA_data, chB_data:              raw data from the digitiser
+          double** data_out:                      output of the kernel with chA, chB, chAsq, chBsq, sq data. Use the macro indicies to unpack them.
+          gpu_in/gp_out:                          memory allocated on the GPU using the `allocate_memory` function
+        */
         void power_kernel(
             short *chA_data, short *chB_data,
             double **data_out,

@@ -58,9 +58,8 @@ public:
                                            processing_mask,
                                            SP_POINTS, R_POINTS, no_threads);
 
-        for (int i(0); i < 3; i++) {
+        for (int i(0); i < 3; i++)
             CPPUNIT_ASSERT_EQUAL(expected_sq_out[i], data_out[SQ][i]);
-        }
 
 
         delete[] chA_data;
