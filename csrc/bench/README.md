@@ -1,5 +1,5 @@
 # April 30: Original benchmark #
-> cf435b68349770b811ffaa2214983431e1557554
+> 4b0d78cdf6576ee554204fe4d0124c745ac4f81b
 
 <details>
 <summary>Results</summary>
@@ -20,7 +20,7 @@
 
 
 # May 11 2021: GPU better even when processing everything#
-> cbfe20c1d984c7d8a527f57cfd6dc981290dbe0e
+> 419c508dba9ff0bc003f9906fdca74dbc87d6380
 
 <details>
 <summary>Results</summary>
@@ -40,7 +40,7 @@
 </details>
 
 # May 22 2021: GPU using streams even faster, and allows processing of more data #
-> d703e9eddf001ecba737dd400ed20d3c0c1aea5a
+> b0e451f5e91fa1f587ef08d3469f6b341b3be04c
 
 <details>
 <summary>Click this to collapse/fold.</summary>
