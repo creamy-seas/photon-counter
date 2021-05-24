@@ -39,6 +39,30 @@
 
 </details>
 
+# May 22 2021: GPU using streams even faster, and allows processing of more data #
+> d703e9eddf001ecba737dd400ed20d3c0c1aea5a
+
+<details>
+<summary>Click this to collapse/fold.</summary>
+
+> `R_POINTS=1000`, `SP_POINTS=400`, `R_POINTS_PER_CHUNK=500`
+
+| Group | Experiment      | Prob. Space | Samples | Iterations | Baseline | us/Iteration | Iterations/sec | RAM (bytes) |
+|:-----:|:---------------:|:-----------:|:-------:|:----------:|:--------:|:------------:|:--------------:|:-----------:|
+| POWER | 1T_NO_BACK      | Null        | 100     | 100        | 1.00000  | 9366.87000   | 106.76         | 9426067456  |
+| POWER | 2T_NO_BACK      | Null        | 100     | 100        | 1.17076  | 10966.31000  | 91.19          | 9434460160  |
+| POWER | 8T_NO_BACK      | Null        | 100     | 100        | 1.20283  | 11266.78000  | 88.76          | 9451245568  |
+| POWER | 1T_NO_BACK_FULL | Null        | 100     | 100        | 1.51296  | 14171.72000  | 70.56          | 9451245568  |
+| POWER | 1T_CONST_BACK   | Null        | 100     | 100        | 1.00754  | 9437.45000   | 105.96         | 9451245568  |
+| POWER | 1T_CONST_BACK_F | Null        | 100     | 100        | 1.47449  | 13811.38000  | 72.40          | 9451245568  |
+| POWER | 1T_BACK         | Null        | 100     | 100        | 1.25850  | 11788.16000  | 84.83          | 9452847104  |
+| POWER | 1T_BACK_FULL_MA | Null        | 100     | 100        | 1.70077  | 15930.87000  | 62.77          | 9453252608  |
+| POWER | GPU_V1          | Null        | 100     | 100        | 0.04450  | 416.86000    | 2398.89        | 9453658112  |
+| POWER | GPU_V2          | Null        | 100     | 100        | 0.03995  | 374.20000    | 2672.37        | 9453658112  |
+
+
+</details>
+
 # Float vs double: No difference #
 > 4b2b92bdcc7e9de0fce5234998fde309ac71d137
 

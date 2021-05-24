@@ -19,13 +19,10 @@
  *  g1 g2 g3 ...
  *
  *  |
- *  repetition-axis (r_coordinate)
+ *  rep-axis (r_coordinate)
  *
- *  And reduced to the following by summing up over the repetition axis
+ *  And reduced to the following by summing up over the rep axis
  *  <1> <2> <3> ...
- *
- * __ Kernel __
- * This kernel uses shared memory, so only a single copy of data to the GPU is required
  */
 
 #include <stdexcept>
@@ -40,7 +37,7 @@ __constant__ short gpu_chA_background[SP_POINTS];
 __constant__ short gpu_chB_background[SP_POINTS];
 
 /*
-  Call function to copy background for each channel a single time into
+  Call function to copy background for each channel a single time:
   * - gpu_chA_background
   * - gpu_chB_background
   */
@@ -188,100 +185,156 @@ void GPU::V1::power_kernel(
     // Ensure that free_memory is called ==>
 }
 
+__global__ void power_kernel_runner_v2(short *chA_data, short *chB_data,
+                                       double *chA_out, double *chB_out,
+                                       double *chAsq_out, double *chBsq_out){
 
-// void GPU::V2::power_kernel(
-//     short *chA_data,
-//     short *chB_data,
-//     double **data_out,
-//     short **gpu_chA_data0,
-//     short **gpu_chB_data0,
-//     double **gpu_chA_out0,
-//     double **gpu_chB_out0,
-//     double **gpu_chAsq_out0,
-//     double **gpu_chBsq_out0,
-//     short **gpu_chA_data1,
-//     short **gpu_chB_data1,
-//     double **gpu_chA_out1,
-//     double **gpu_chB_out1,
-//     double **gpu_chAsq_out1,
-//     double **gpu_chBsq_out1
-//     ){
-//     // ==> Ensure that allocate_memory has been called
-//     // ==> Ensure that background arrays (set to 0 for no correction) have been copied over
+    // An unsigned long int will be able to hold 2^32/(2^14) = 2^18 = 262144 data points from the 14bit digitiser
+    // Since the SP digitizer will have a maximum of 254200 record (using the GetMaxNofRecordsFromNofSamples(adq_cu_ptr, 1))
+    // This will be able to contain everything
+    __shared__ unsigned long int chA_cumulative_array[R_POINTS_PER_CHUNK];
+    __shared__ unsigned long int chB_cumulative_array[R_POINTS_PER_CHUNK];
+    __shared__ unsigned long int chAsq_cumulative_array[R_POINTS_PER_CHUNK];
+    __shared__ unsigned long int chBsq_cumulative_array[R_POINTS_PER_CHUNK];
 
-//     // Allocate auxillary arrays into which data will be copied in between the stream runs
-//     double *host_chB_data, *host_chB_out, *host_chAsq_out, *host_cbBsq_out;
+    int sp_coordinate = blockIdx.x;
+    int r_coordinate, coordinate;
 
-//     cudaHostAlloc()
+    // Each block deals with a specific SP_POINT
+    // Each thread iterates over R_POINTS_PER_CHUNK for each SP_POINT
+    while (sp_coordinate < SP_POINTS) {
+        r_coordinate = threadIdx.x;
 
-//         // Launch two streams, dealing with alternating chunks
-//         // steam0       stream1     stream0      stream1
-//         // a1a2a3a4.... b1b2b3b4... c1c2c3c4.... d1d2d3d4...
-//         //
-//         // - Each chunk has length SP_POINTS
-//         // - There are R_POINTS/R_POINTS_CHUNK total chunks to iterate through
-//         cudaStream_t stream0, stream1;
-//     cudaStreamCreate(&stream0); cudaStreamCreate(&stream1);
-//     for (int i(0); i < R_POINTS; i+=2*R_POINTS_CHUNK){
-//         // Memcpy, Kernel, Memcpy must be in the order below (breadth first), where copy
-//         // operations are batched to prevent blocking of kernel execution
+        while (r_coordinate < R_POINTS_PER_CHUNK) {
+            coordinate = r_coordinate * SP_POINTS + sp_coordinate;
 
-//         // Copy input data over to GPU asynchornously in chunks
-//         // Dereference the gpu_ch? (which is the address where the GPU memory location is kept)
-//         // in order to get the actual memory location
-//         cudaMemcpyAsync(*gpu_chA_data, chA_data + i*SP_POINTS,
-//                         R_POINTS_CHUNK * SP_POINTS * sizeof(short),
-//                         cudaMemcpyHostToDevice,
-//                         stream0);
-//         cudaMemcpyAsync(*gpu_chA_data, chA_data + (i+R_POINTS_CHUNK)*SP_POINTS,
-//                         R_POINTS_CHUNK * SP_POINTS * sizeof(short),
-//                         cudaMemcpyHostToDevice,
-//                         stream1);
-//         cudaMemcpyAsync(*gpu_chB_data, chB_data+i,
-//                         R_POINTS_CHUNK * SP_POINTS * sizeof(short),
-//                         cudaMemcpyHostToDevice,
-//                         stream0);
-//         cudaMemcpyAsync(*gpu_chB_data, chB_data + (i+R_POINTS_CHUNK)*SP_POINTS,
-//                         R_POINTS_CHUNK * SP_POINTS * sizeof(short),
-//                         cudaMemcpyHostToDevice,
-//                         stream1);
+            chA_cumulative_array[r_coordinate] = chA_data[coordinate] - gpu_chA_background[sp_coordinate];
+            chB_cumulative_array[r_coordinate] = chB_data[coordinate] - gpu_chB_background[sp_coordinate];
 
-//         // Run kernel(s)
-//         power_kernel_runner<<<BLOCKS, THREADS_PER_BLOCK, 0, stream0>>>(
-//             *gpu_chA_data, *gpu_chB_data,
-//             *gpu_chA_out, *gpu_chB_out,
-//             *gpu_chAsq_out, *gpu_chBsq_out);
+            chAsq_cumulative_array[r_coordinate] = chA_cumulative_array[r_coordinate] * chA_cumulative_array[r_coordinate];
+            chBsq_cumulative_array[r_coordinate] = chB_cumulative_array[r_coordinate] * chB_cumulative_array[r_coordinate];
 
-//         power_kernel_runner<<<BLOCKS, THREADS_PER_BLOCK, 0, stream1>>>(
-//             *gpu_chA_data, *gpu_chB_data,
-//             *gpu_chA_out, *gpu_chB_out,
-//             *gpu_chAsq_out, *gpu_chBsq_out);
+            // Once thread has completed, shift the
+            // row index by the number of allocated
+            // threads and continue summation
+            r_coordinate += blockDim.x;
+        }
 
-//         // Copy from device
-//         cudaMemcpyAsync(data_out[CHA], *gpu_chA_out,
-//                         SP_POINTS * sizeof(double),
-//                         cudaMemcpyDeviceToHost,
-//                         stream0);
-//         cudaMemcpyAsync(data_out[CHB], *gpu_chB_out,
-//                         SP_POINTS * sizeof(double),
-//                         cudaMemcpyDeviceToHost,
-//                         stream0);
-//         cudaMemcpyAsync(data_out[CHASQ],*gpu_chAsq_out,
-//                         SP_POINTS * sizeof(double),
-//                         cudaMemcpyDeviceToHost,
-//                         stream0);
-//         cudaMemcpyAsync(data_out[CHBSQ], *gpu_chBsq_out,
-//                         SP_POINTS * sizeof(double),
-//                         cudaMemcpyDeviceToHost,
-//                         stream0);
+        // Ensure that all threads have completed execution
+        __syncthreads();
 
-//         // Manually evaluate sq = chAsq + chBsq
-//         for (int i(0); i < SP_POINTS; i++)
-//             data_out[SQ][i] = data_out[CHASQ][i] + data_out[CHBSQ][i];
+        // Summation
+        reduction_sum(chA_cumulative_array,
+                      chB_cumulative_array,
+                      chAsq_cumulative_array,
+                      chBsq_cumulative_array,
+                      R_POINTS_PER_CHUNK);
+        chA_out[sp_coordinate] = (double)chA_cumulative_array[0] / R_POINTS_PER_CHUNK;
+        chB_out[sp_coordinate] = (double)chB_cumulative_array[0] / R_POINTS_PER_CHUNK;
+        chAsq_out[sp_coordinate] = (double)chAsq_cumulative_array[0] / R_POINTS_PER_CHUNK;
+        chBsq_out[sp_coordinate] = (double)chBsq_cumulative_array[0] / R_POINTS_PER_CHUNK;
 
-//     }
-//     cudaStreamSynchronize(stream0); cudaStreamSynchronize(stream1);
-//     cudaStreamDestroy(stream0); cudaStreamDestroy(stream1);
+        // Shift by number of allocated blocks along main-axis
+        sp_coordinate += gridDim.x;
+    }
+}
 
-//     // Ensure that free_memory is called ==>
-// }
+void GPU::V2::power_kernel(
+    short *chA_data,
+    short *chB_data,
+    double **data_out,
+    short ***gpu_in0, short ***gpu_in1,
+    double ***gpu_out0, double ***gpu_out1,
+    double ***cpu_out
+    ){
+    // ==> Ensure that allocate_memory has been called
+    // ==> Ensure that background arrays (set to 0 for no correction) have been copied over
+
+    // Launch two streams, dealing with alternating chunks
+    // steam0       stream1     stream0      stream1
+    // a1a2a3a4.... b1b2b3b4... c1c2c3c4.... d1d2d3d4...
+    //
+    // - Each chunk has length SP_POINTS
+    // - There are R_POINTS/R_POINTS_PER_CHUNK total chunks to iterate through
+
+    // Note that we need to dereference the addresses of the GPU memory pointer e.g. *gpu_in0[CJA]
+    // In order to get the memory location on the gpu
+
+    int odx; // ouput index
+    cudaStream_t stream0, stream1;
+    cudaStreamCreate(&stream0); cudaStreamCreate(&stream1);
+    for (int  rep(0); rep < R_POINTS; rep+=2*R_POINTS_PER_CHUNK){
+        // Memcpy -> Kernel -> Memcpy must be in the order below (breadth first)
+        // to prevent blocking of kernel execution by batching of similar commands
+
+        // Copy input data over to GPU asynchornously in chunks
+        // Dereference the gpu_ch? (which is the address where the GPU memory location is kept)
+        // in order to get the actual memory location
+        cudaMemcpyAsync(
+            *gpu_in0[CHA], chA_data + rep*SP_POINTS,
+            R_POINTS_PER_CHUNK * SP_POINTS * sizeof(short),
+            cudaMemcpyHostToDevice,
+            stream0);
+        cudaMemcpyAsync(
+            *gpu_in1[CHA], chA_data + (rep+R_POINTS_PER_CHUNK)*SP_POINTS,
+            R_POINTS_PER_CHUNK * SP_POINTS * sizeof(short),
+            cudaMemcpyHostToDevice,
+            stream1);
+        cudaMemcpyAsync(
+            *gpu_in0[CHB], chB_data + rep*SP_POINTS,
+            R_POINTS_PER_CHUNK * SP_POINTS * sizeof(short),
+            cudaMemcpyHostToDevice,
+            stream0);
+        cudaMemcpyAsync(
+            *gpu_in1[CHB], chB_data + (rep+R_POINTS_PER_CHUNK)*SP_POINTS,
+            R_POINTS_PER_CHUNK * SP_POINTS * sizeof(short),
+            cudaMemcpyHostToDevice,
+            stream1);
+
+        // Run kernel(s)
+        power_kernel_runner_v2<<<BLOCKS, THREADS_PER_BLOCK, 0, stream0>>>(
+            *gpu_in0[CHA], *gpu_in0[CHB],
+            *gpu_out0[CHA], *gpu_out0[CHB],
+            *gpu_out0[CHASQ], *gpu_out0[CHBSQ]);
+
+        power_kernel_runner_v2<<<BLOCKS, THREADS_PER_BLOCK, 0, stream1>>>(
+            *gpu_in1[CHA], *gpu_in1[CHB],
+            *gpu_out1[CHA], *gpu_out1[CHB],
+            *gpu_out1[CHASQ], *gpu_out1[CHBSQ]);
+
+        // Copy from GPU to CPU
+        for (int k(0); k < GPU::no_outputs_from_gpu; k++){
+            odx = GPU::outputs_from_gpu[k];
+            cudaMemcpyAsync(
+                *cpu_out[odx] + rep*SP_POINTS,
+                *gpu_out0[odx],
+                SP_POINTS * sizeof(double),
+                cudaMemcpyDeviceToHost,
+                stream0);
+            cudaMemcpyAsync(
+                *cpu_out[odx] + (rep+1)*SP_POINTS,
+                *gpu_out1[odx],
+                SP_POINTS * sizeof(double),
+                cudaMemcpyDeviceToHost,
+                stream1);
+        }
+    }
+    // Ensure that execution of each stream finishes
+    cudaStreamSynchronize(stream0); cudaStreamSynchronize(stream1);
+    cudaStreamDestroy(stream0); cudaStreamDestroy(stream1);
+
+    // Sum on CPU, collecting up the separate chunks into final output
+    // data_out[CHB][0] = (*cpu_out[CHB])[2];
+    for (int sp(0); sp < SP_POINTS; sp++){
+        for (int k(0); k < GPU::no_outputs_from_gpu; k++){
+            odx = GPU::outputs_from_gpu[k];
+            data_out[k][sp] = 0;
+            for (int rep(0); rep < R_POINTS; rep+=2*R_POINTS_PER_CHUNK){
+                data_out[odx][sp] += ((*cpu_out)[odx][sp+rep*SP_POINTS] + (*cpu_out)[odx][sp+(rep+1)*SP_POINTS]) / 2;
+            }
+        }
+        data_out[SQ][sp] = data_out[CHBSQ][sp];// + data_out[CHBSQ][sp];
+    }
+
+    // Ensure that free_memory is called ==>
+}

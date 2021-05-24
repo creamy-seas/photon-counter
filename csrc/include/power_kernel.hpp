@@ -26,8 +26,8 @@
 #error "Need to specify THREADS_PER_BLOCK for power measurements"
 #endif
 
-#ifndef R_POINTS_CHUNK
-#error "Need to specify R_POINTS_CHUNK (how to chunk the repetitions to stay within memory limits of GPU) for power measurements"
+#ifndef R_POINTS_PER_CHUNK
+#error "Need to specify R_POINTS_PER_CHUNK (how to chunk the repetitions to stay within memory limits of GPU) for power measurements"
 #endif
 
 // Derived parameters
@@ -165,34 +165,39 @@ namespace GPU {
 
     namespace V2 {
         /*
-         * The input data for V1 is split into chunks, to avoid the limitation on shared memory
+         * The input data is split into chunks, to avoid the limitation on shared memory
          * Streams are used to allow parallel copying and processing of these chunks
          */
 
-        /* Memory is allocated for:
-         * - input data on the GPU for both of the streams, for both of the digitiser channels
-         * - output data on the GPU. Preapre it with double** gpu_outX[4];
-         * - output data on the HOST, which needs to be memory locked for safe copying
+        /* Memory is allocated for for each stream separately:
+         * - input data on the GPU
+         * - output data on the GPU
+         * - output data on the CPU, which needs to be memory locked for safe copying from GPU->CPU using different streams
          */
-        void allocate_memory(short ***gpu_in0, short ***gpu_in1,
-                             double ***gpu_out0, double ***gpu_out1,
-                             double ***cpu_out0, double ***cpu_out1);
-        void free_memory(short ***gpu_in0, short ***gpu_in1,
-                         double ***gpu_out0, double ***gpu_out1,
-                         double ***cpu_out0, double ***cpu_out1);
+        void allocate_memory(
+            short **chA_data, short **chB_data,
+            short ***gpu_in0, short ***gpu_in1,
+            double ***gpu_out0, double ***gpu_out1,
+            double ***cpu_out);
+        void free_memory(
+            short **chA_data, short **chB_data,
+            short ***gpu_in0, short ***gpu_in1,
+            double ***gpu_out0, double ***gpu_out1,
+            double ***cpu_out);
         /*
           short* chA_data, chB_data:              raw data from the digitiser
           double** data_out:                      kernel output - use indicies defined at start
           <T>** gpu_:                             pointers to memory allocated on GPU
         */
-        // void power_kernel(
-        //     short *chA_data,
-        //     short *chB_data,
-        //     double **data_out,
-        //     short **gpu_chA_data, short **gpu_chB_data,
-        //     double **gpu_chA_out, double **gpu_chB_out,
-        //     double **gpu_chAsq_out, double **gpu_chBsq_out
-        //     );
+        void power_kernel(
+            short *chA_data,
+            short *chB_data,
+            double **data_out,
+            // Auxillary memory allocation
+            short ***gpu_in0, short ***gpu_in1,
+            double ***gpu_out0, double ***gpu_out1,
+            double ***cpu_out
+            );
     }
 }
 

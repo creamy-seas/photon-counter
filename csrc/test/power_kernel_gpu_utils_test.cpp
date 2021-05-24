@@ -76,7 +76,10 @@ public:
 
     void test_allocate_memory_allocation_v2(){
         // Default values that must change once address is assigned. This will hold the address of the arrays allocated on the GPU
+
         // These will change!
+        short* chA_data; short* chB_data;
+
         short* gpu_chA_data0 = 0; short* gpu_chB_data0 = 0;
         short **gpu_in0[2] = {&gpu_chA_data0, &gpu_chB_data0};
         short* gpu_chA_data1 = 0; short* gpu_chB_data1 = 0;
@@ -88,11 +91,9 @@ public:
         double **gpu_out1[4] = {&gpu_chA_out1, &gpu_chB_out1, &gpu_chAsq_out1,&gpu_chBsq_out1};
 
         double* cpu_chA_out0 = 0; double* cpu_chB_out0 = 0; double* cpu_chAsq_out0 = 0; double* cpu_chBsq_out0 = 0;
-        double **cpu_out0[4] = {&cpu_chA_out0, &cpu_chB_out0, &cpu_chAsq_out0, &cpu_chBsq_out0};
-        double* cpu_chA_out1 = 0; double* cpu_chB_out1 = 0; double* cpu_chAsq_out1 = 0; double* cpu_chBsq_out1 = 0;
-        double **cpu_out1[4] = {&cpu_chA_out1, &cpu_chB_out1, &cpu_chAsq_out1, &cpu_chBsq_out1};
+        double **cpu_out[4] = {&cpu_chA_out0, &cpu_chB_out0, &cpu_chAsq_out0, &cpu_chBsq_out0};
 
-        GPU::V2::allocate_memory(gpu_in0, gpu_in1, gpu_out0, gpu_out1, cpu_out0, cpu_out1);
+        GPU::V2::allocate_memory(&chA_data, &chB_data, gpu_in0, gpu_in1, gpu_out0, gpu_out1, cpu_out);
 
         // Check memory has been allocated on GPU i.e. the pointers now hold the addresses
         CPPUNIT_ASSERT(gpu_in0[CHA] != 0);
@@ -109,16 +110,12 @@ public:
         CPPUNIT_ASSERT(gpu_out1[CHASQ] != 0);
         CPPUNIT_ASSERT(gpu_out1[CHBSQ] != 0);
 
-        CPPUNIT_ASSERT(cpu_out0[CHA] != 0);
-        CPPUNIT_ASSERT(cpu_out0[CHB] != 0);
-        CPPUNIT_ASSERT(cpu_out0[CHASQ] != 0);
-        CPPUNIT_ASSERT(cpu_out0[CHBSQ] != 0);
-        CPPUNIT_ASSERT(cpu_out1[CHA] != 0);
-        CPPUNIT_ASSERT(cpu_out1[CHB] != 0);
-        CPPUNIT_ASSERT(cpu_out1[CHASQ] != 0);
-        CPPUNIT_ASSERT(cpu_out1[CHBSQ] != 0);
+        CPPUNIT_ASSERT(cpu_out[CHA] != 0);
+        CPPUNIT_ASSERT(cpu_out[CHB] != 0);
+        CPPUNIT_ASSERT(cpu_out[CHASQ] != 0);
+        CPPUNIT_ASSERT(cpu_out[CHBSQ] != 0);
 
-        GPU::V2::free_memory(gpu_in0, gpu_in1, gpu_out0, gpu_out1, cpu_out0, cpu_out1);
+        GPU::V2::free_memory(&chA_data, &chB_data, gpu_in0, gpu_in1, gpu_out0, gpu_out1, cpu_out);
     }
 
 };
