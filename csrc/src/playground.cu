@@ -1,42 +1,42 @@
-#include <iostream>
-#include "playground.hpp"
-#include "colours.hpp"
+// #include <iostream>
+// #include "playground.hpp"
+// #include "colours.hpp"
 
-__global__ void example_gpu_func_kernel(int a, int b, float *c){
-        *c = (float)(a * a + b * b);
-}
+// __global__ void example_gpu_func_kernel(int a, int b, float *c){
+//         *c = (float)(a * a + b * b);
+// }
 
-float GPU::example_gpu_func(short a, short b) {
+// float GPU::example_gpu_func(short a, short b) {
 
-        // cudaDeviceProp prop = fetch_gpu_parameters();
+//         // cudaDeviceProp prop = fetch_gpu_parameters();
 
-        /* cudaDeviceProp program_prop; */
-        /* memset(&program_prop, 0, sizeof(cudaDeviceProp)); */
-        /* program_prop.maxGridSize[0] = 100; */
+//         /* cudaDeviceProp program_prop; */
+//         /* memset(&program_prop, 0, sizeof(cudaDeviceProp)); */
+//         /* program_prop.maxGridSize[0] = 100; */
 
-        // Allocate device and host variables
-        float c;
-        float *gpu_c;
+//         // Allocate device and host variables
+//         float c;
+//         float *gpu_c;
 
-        // Memory allocation on device
-        cudaMalloc((void**) &gpu_c, sizeof(float));
+//         // Memory allocation on device
+//         cudaMalloc((void**) &gpu_c, sizeof(float));
 
-        // Kernel invoction
-        example_gpu_func_kernel<<<1,1>>>(a, b, gpu_c);
+//         // Kernel invoction
+//         example_gpu_func_kernel<<<1,1>>>(a, b, gpu_c);
 
-        // Copy back to device
-        cudaMemcpy(
-                &c,
-                gpu_c,
-                sizeof(float),
-                cudaMemcpyDeviceToHost
-                );
+//         // Copy back to device
+//         cudaMemcpy(
+//                 &c,
+//                 gpu_c,
+//                 sizeof(float),
+//                 cudaMemcpyDeviceToHost
+//                 );
 
 
-        cudaFree(gpu_c);
-        OKGREEN("GPU KERNEL Complete!%s");
+//         cudaFree(gpu_c);
+//         OKGREEN("GPU KERNEL Complete!%s");
 
-        std::cout << c << std::endl;
+//         std::cout << c << std::endl;
 
-        return c;
-}
+//         return c;
+// }

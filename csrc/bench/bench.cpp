@@ -9,7 +9,7 @@
 CELERO_MAIN
 
 #ifndef SAMPLES
-#define SAMPLES 100
+#define SAMPLES 10
 #endif
 
 #ifndef ITERATIONS_PER_SAMPLE
@@ -30,15 +30,14 @@ public:
         // Prepare arrays before each sample is run
         chA_data = new short[SP_POINTS * R_POINTS];
         chB_data = new short[SP_POINTS * R_POINTS];
-
-        data_out = new double*[NO_OF_POWER_KERNEL_OUTPUTS];
-        for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
-            data_out[i] = new double[R_POINTS];
-
         for (int i(0); i < SP_POINTS * R_POINTS; i++) {
             chA_data[i] = digitiser_code();
             chB_data[i] = digitiser_code();
         }
+
+        data_out = new double*[NO_OF_POWER_KERNEL_OUTPUTS];
+        for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
+            data_out[i] = new double[SP_POINTS];
 
         // Background
         chA_background = new short[SP_POINTS];
@@ -47,9 +46,6 @@ public:
             chA_background[i] = digitiser_code();
             chB_background[i] = digitiser_code();
         }
-
-        // Copy background data to GPU
-        GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
     };
 
     void tearDown() override {
@@ -67,8 +63,8 @@ public:
     double** data_out;
 
     // Background
-    short* chA_background;
-    short* chB_background;
+    short *chA_background;
+    short *chB_background;
 
     // Locking memory on GPU and CPU
     short *gpu_chA_data0; short *gpu_chB_data0;
@@ -85,24 +81,7 @@ public:
     double **cpu_out[4] = {&cpu_chA_out0, &cpu_chB_out0, &cpu_chAsq_out0, &cpu_chBsq_out0};
 };
 
-class PowerKernelGPUV1Fixture : public PowerKernelFixture {
-public:
-    void setUp(__attribute__ ((unused)) const celero::TestFixture::ExperimentValue& x) override {
-        PowerKernelFixture::setUp(x);
-
-        // Validate kernel
-        GPU::fetch_kernel_parameters();
-
-        // Allocate memory
-        GPU::V1::allocate_memory(gpu_in0, gpu_out0);
-    };
-    void tearDown() override {
-        PowerKernelFixture::tearDown();
-        GPU::V1::free_memory(gpu_in0, gpu_out0);
-    };
-};
-
-class PowerKernelGPUV2Fixture : public PowerKernelFixture {
+class PowerKernelGPUFixture : public PowerKernelFixture {
 public:
     // For kernel using streams, data needs to be locked in memory
     short* chA_data_locked;
@@ -114,8 +93,11 @@ public:
         // Validate kernel
         GPU::fetch_kernel_parameters();
 
+        // Copy background data to GPU
+        GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
+
         // Allocate memory
-        GPU::V2::allocate_memory(&chA_data_locked, &chB_data_locked,
+        GPU::allocate_memory(&chA_data_locked, &chB_data_locked,
                                  gpu_in0, gpu_in1, gpu_out0, gpu_out1, cpu_out);
         // Copy over test input data to the locked memory
         for (int i(0); i < 12; i++) {
@@ -126,7 +108,7 @@ public:
 
     void tearDown() override {
         PowerKernelFixture::tearDown();
-        GPU::V2::free_memory(&chA_data_locked, &chB_data_locked,
+        GPU::free_memory(&chA_data_locked, &chB_data_locked,
                              gpu_in0, gpu_in1, gpu_out0, gpu_out1, cpu_out);
     };
 };
@@ -160,101 +142,6 @@ public:
     short *buff_b;
 };
 
-BASELINE_F(POWER, 1T_NO_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    CPU::power_kernel_v1_no_background(
-        chA_data, chB_data, data_out,
-        SQ_MASK,
-        SP_POINTS, R_POINTS, 1
-        );
-}
-
-BENCHMARK_F(POWER, 2T_NO_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    CPU::power_kernel_v1_no_background(
-        chA_data, chB_data, data_out,
-        SQ_MASK,
-        SP_POINTS, R_POINTS, 2
-        );
-}
-
-BENCHMARK_F(POWER, 8T_NO_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    CPU::power_kernel_v1_no_background(
-        chA_data, chB_data, data_out,
-        SQ_MASK,
-        SP_POINTS, R_POINTS, 8
-        );
-}
-
-BENCHMARK_F(POWER, 1T_NO_BACK_FULL_MASK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    CPU::power_kernel_v1_no_background(
-        chA_data, chB_data, data_out,
-        SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK,
-        SP_POINTS, R_POINTS, 1
-        );
-}
-
-
-BENCHMARK_F(POWER, 1T_CONST_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    CPU::power_kernel_v2_const_background(
-        chA_data, chB_data, data_out,
-        SQ_MASK,
-        chA_background[0], chB_background[0],
-        SP_POINTS, R_POINTS, 1
-        );
-}
-
-BENCHMARK_F(POWER, 1T_CONST_BACK_FULL_MASK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    CPU::power_kernel_v2_const_background(
-        chA_data, chB_data, data_out,
-        SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK,
-        chA_background[0], chB_background[0],
-        SP_POINTS, R_POINTS, 1
-        );
-}
-
-BENCHMARK_F(POWER, 1T_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    CPU::power_kernel_v3_background(
-        chA_data, chB_data, data_out,
-        SQ_MASK,
-        chA_background, chB_background,
-        SP_POINTS, R_POINTS, 1
-        );
-}
-
-BENCHMARK_F(POWER, 1T_BACK_FULL_MASK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    CPU::power_kernel_v3_background(
-        chA_data, chB_data, data_out,
-        SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK,
-        chA_background, chB_background,
-        SP_POINTS, R_POINTS, 1
-        );
-}
-
-BENCHMARK_F(POWER, GPU_V1, PowerKernelGPUV1Fixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    GPU::V1::power_kernel(
-        chA_data,
-        chB_data,
-        data_out,
-        gpu_in0, gpu_out0);
-}
-BENCHMARK_F(POWER, GPU_V2, PowerKernelGPUV2Fixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    GPU::V2::power_kernel(
-        chA_data_locked, chB_data_locked,
-        data_out,
-        gpu_in0, gpu_in1,
-        gpu_out0, gpu_out1,
-        cpu_out);
-}
-
 // BASELINE_F(POWER, DIGITIZER, DigitiserFixture, 1, 1)
 // {
 //     // Prepare multirecord mode
@@ -265,6 +152,92 @@ BENCHMARK_F(POWER, GPU_V2, PowerKernelGPUV2Fixture, SAMPLES, ITERATIONS_PER_SAMP
 //     ADQ_MultiRecordClose(adq_cu_ptr, 1);
 // }
 
+// BASELINE_F(POWER, 1T_NO_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
+// {
+//     CPU::power_kernel_v1_no_background(
+//         chA_data, chB_data, data_out,
+//         SQ_MASK,
+//         SP_POINTS, R_POINTS, 1
+//         );
+// }
+
+// BENCHMARK_F(POWER, 2T_NO_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
+// {
+//     CPU::power_kernel_v1_no_background(
+//         chA_data, chB_data, data_out,
+//         SQ_MASK,
+//         SP_POINTS, R_POINTS, 2
+//         );
+// }
+
+// BENCHMARK_F(POWER, 8T_NO_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
+// {
+//     CPU::power_kernel_v1_no_background(
+//         chA_data, chB_data, data_out,
+//         SQ_MASK,
+//         SP_POINTS, R_POINTS, 8
+//         );
+// }
+
+// BENCHMARK_F(POWER, 1T_NO_BACK_FULL_MASK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
+// {
+//     CPU::power_kernel_v1_no_background(
+//         chA_data, chB_data, data_out,
+//         SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK,
+//         SP_POINTS, R_POINTS, 1
+//         );
+// }
+
+
+// BENCHMARK_F(POWER, 1T_CONST_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
+// {
+//     CPU::power_kernel_v2_const_background(
+//         chA_data, chB_data, data_out,
+//         SQ_MASK,
+//         chA_background[0], chB_background[0],
+//         SP_POINTS, R_POINTS, 1
+//         );
+// }
+
+// BENCHMARK_F(POWER, 1T_CONST_BACK_FULL_MASK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
+// {
+//     CPU::power_kernel_v2_const_background(
+//         chA_data, chB_data, data_out,
+//         SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK,
+//         chA_background[0], chB_background[0],
+//         SP_POINTS, R_POINTS, 1
+//         );
+// }
+
+// BENCHMARK_F(POWER, 1T_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
+// {
+//     CPU::power_kernel_v3_background(
+//         chA_data, chB_data, data_out,
+//         SQ_MASK,
+//         chA_background, chB_background,
+//         SP_POINTS, R_POINTS, 1
+//         );
+// }
+
+// BENCHMARK_F(POWER, 1T_BACK_FULL_MASK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
+// {
+//     CPU::power_kernel_v3_background(
+//         chA_data, chB_data, data_out,
+//         SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK,
+//         chA_background, chB_background,
+//         SP_POINTS, R_POINTS, 1
+//         );
+// }
+
+BASELINE_F(POWER, GPU, PowerKernelGPUFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
+{
+    GPU::power_kernel(
+        chA_data_locked, chB_data_locked,
+        data_out,
+        gpu_in0, gpu_in1,
+        gpu_out0, gpu_out1,
+        cpu_out);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //                         Float vs double benchmark                         //

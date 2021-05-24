@@ -6,6 +6,7 @@
 
 #include <cuda_runtime.h> // cudaMalloc cudaFree
 #include <cuda_runtime_api.h> //for cudaDeviceProp
+#include <limits.h>
 
 #include <string>
 #include "colours.hpp" // RED, OKBLUE etc
@@ -52,10 +53,10 @@ GPU::PowerKernelParameters GPU::fetch_kernel_parameters(){
 
     // Check that "chunking" falls within the limits of shared memory on GPU
     cudaDeviceProp prop = fetch_gpu_parameters();
-    int number_of_cumulative_arrays = 4;
-    int shared_memory_required = (R_POINTS_PER_CHUNK
-                                  * sizeof(unsigned int)
-                                  * number_of_cumulative_arrays);
+    const int number_of_cumulative_arrays = 4;
+    const int shared_memory_required = (R_POINTS_PER_CHUNK
+                                        * sizeof(long)
+                                        * number_of_cumulative_arrays);
     if (prop.sharedMemPerBlock < shared_memory_required)
         throw std::runtime_error(
             "Not enough shared memory on GPU ("
@@ -92,10 +93,9 @@ GPU::PowerKernelParameters GPU::fetch_kernel_parameters(){
                 + ") evenly across the 2 streams.");
 
     // Ensure that the cumulative arrays will not overflow.
-    unsigned long int max = -1UL;
-    if ((MAX_CODE * MAX_NUMBER_OF_RECORDS > max) ||
-        (MAX_CODE * MAX_CODE * MAX_NUMBER_OF_RECORDS > max) ||
-        (2 * MAX_CODE * MAX_CODE * MAX_NUMBER_OF_RECORDS > max))
+    if ((MAX_CODE * MAX_NUMBER_OF_RECORDS > LONG_MAX) ||
+        (MAX_CODE * MAX_CODE * MAX_NUMBER_OF_RECORDS > LONG_MAX) ||
+        (2 * MAX_CODE * MAX_CODE * MAX_NUMBER_OF_RECORDS > LONG_MAX))
         throw std::runtime_error(
             "Cumulative arrays will not be able to hold all the intermediate processing data for power measurements");
 
@@ -108,114 +108,85 @@ GPU::PowerKernelParameters GPU::fetch_kernel_parameters(){
         );
 }
 
-void GPU::V1::allocate_memory(short ***gpu_in, double ***gpu_out){
-    // Pass in ADDRESS of pointers (&POINTER) -> this will allocate memory on GPU
-    int success = 0;
-    OKBLUE("Power Kernel: Allocating memory on GPU and CPU.");
-
-    // Input data is fed in chunks of R_POINTS_PER_CHUNK * SP_POINTS
-    success += cudaMalloc((void**)gpu_in[CHA], SP_POINTS * R_POINTS * sizeof(short));
-    success += cudaMalloc((void**)gpu_in[CHB], SP_POINTS * R_POINTS * sizeof(short));
-
-    // Output data is read out from GPU and stored in persistent memory on CPU
-    for (int i(0); i < GPU::no_outputs_from_gpu; i++)
-        success += cudaMalloc((void**)gpu_out[GPU::outputs_from_gpu[i]], SP_POINTS * sizeof(double));
-    if (success != 0) FAIL("Power Kernel: Failed to allocate memory on GPU.");
-
-    OKGREEN("Power Kernel: Allocation done!");
-}
-
-void GPU::V1::free_memory(short ***gpu_in, double ***gpu_out){
-    // Call to deallocated memory on GPU after run is complete
-    int success = 0;
-    OKBLUE("Power Kernel: Deallocating memory on GPU.");
-    success += cudaFree(*gpu_in[CHA]);
-    success += cudaFree(*gpu_in[CHB]);
-
-    for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
-        success += cudaFree(*gpu_out[GPU::outputs_from_gpu[i]]);
-    }
-    if (success != 0) FAIL("Power Kernel: Failed to free  memory on GPU.");
-
-    OKGREEN("Power Kernel: Memory freed!");
-}
-
-void GPU::V2::allocate_memory(
-    short **chA_data,
-    short **chB_data,
-    short ***gpu_in0,
-    short ***gpu_in1,
-    double ***gpu_out0,
-    double ***gpu_out1,
-    double ***cpu_out
-    ){
-    int success = 0;
+void GPU::allocate_memory(
+    short **chA_data, short **chB_data,
+    short ****gpu_in, long****gpu_out, long ****cpu_out, int no_streams){
 
     OKBLUE("Power Kernel: Allocating memory on GPU and CPU.");
+    int success = 0; int odx;
 
-    // Digitiser will transfer data into memory-locked array
+    // Digitiser will transfer data into memory-locked arrays, made with cudaHostAlloc
     success += cudaHostAlloc((void**)chA_data,
                              SP_POINTS * R_POINTS * sizeof(short),
                              cudaHostAllocDefault);
     success += cudaHostAlloc((void**)chB_data,
                              SP_POINTS * R_POINTS * sizeof(short),
                              cudaHostAllocDefault);
-    if (success != 0) FAIL("Power Kernel: Failed to allocate input memory on CPU.");
+    if (success != 0) FAIL("Power Kernel: Failed to allocate locked input memory on CPU.");
 
-    // Input data is fed in chunks of R_POINTS_PER_CHUNK * SP_POINTS
-    success += cudaMalloc((void**)gpu_in0[CHA], SP_POINTS * R_POINTS_PER_CHUNK * sizeof(short));
-    success += cudaMalloc((void**)gpu_in0[CHB], SP_POINTS * R_POINTS_PER_CHUNK * sizeof(short));
-    success += cudaMalloc((void**)gpu_in1[CHA], SP_POINTS * R_POINTS_PER_CHUNK * sizeof(short));
-    success += cudaMalloc((void**)gpu_in1[CHB], SP_POINTS * R_POINTS_PER_CHUNK * sizeof(short));
+    // Input data is fed in chunks of R_POINTS_PER_CHUNK * SP_POINTS to the streams
+    for (int s(0); s < no_streams; s++){
+        success += cudaMalloc((void**)gpu_in[s][CHA], SP_POINTS * R_POINTS_PER_CHUNK * sizeof(short));
+        success += cudaMalloc((void**)gpu_in[s][CHB], SP_POINTS * R_POINTS_PER_CHUNK * sizeof(short));
+    }
     if (success != 0) FAIL("Power Kernel: Failed to allocate input memory on GPU.");
 
-    // Output data is read out from GPU and stored in persistent memory on CPU
-    int odx;
-    for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
-        odx = GPU::outputs_from_gpu[i];
+    // Output data will be written separately by each stream into a dedicated cpu_out array.
+    // (*cpu_out) is used here, because we pass in an empty pointer BY REFFERENCE
+    // in order to assign it to an array in the follow steps.
+    // (*cpu_out) = new long**[no_streams];
+    for (int s(0); s < no_streams; s++) {
+        // (*cpu_out)[s] = new long*[GPU::no_outputs_from_gpu];
 
-        success += cudaMalloc((void**)gpu_out0[odx], SP_POINTS * sizeof(double));
-        success += cudaMalloc((void**)gpu_out1[odx], SP_POINTS * sizeof(double));
-        if (success != 0) FAIL("Power Kernel: Failed to output memory on GPU.");
+        for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
+            odx = GPU::outputs_from_gpu[i];
 
-        success += cudaHostAlloc((void**)cpu_out[odx],
-                                 SP_POINTS * R_POINTS/R_POINTS_PER_CHUNK * sizeof(double),
-                                 cudaHostAllocDefault);
-        if (success != 0) FAIL("Power Kernel: Failed to allocate output memory on CPU.");
+            // Processed Output data will accumulate on the GPU for each stream
+            success += cudaMalloc((void**)gpu_out[s][odx], SP_POINTS * sizeof(long));
+            if (success != 0) FAIL("Power Kernel: Failed to allocate output memory on GPU.");
+
+            // And will be copied and summed on the cpu
+            // (*cpu_out)[s][odx] = new long[SP_POINTS];
+            success += cudaHostAlloc((void**)cpu_out[s][odx], SP_POINTS * sizeof(long), cudaHostAllocDefault);
+            if (success != 0) FAIL("Power Kernel: Failed to allocate locked output memory on CPU.");
+        }
     }
 
     OKGREEN("Power Kernel: Allocation done!");
 }
 
-void GPU::V2::free_memory(
+void GPU::free_memory(
     short **chA_data, short **chB_data,
-    short ***gpu_in0, short ***gpu_in1,
-    double ***gpu_out0, double ***gpu_out1,
-    double ***cpu_out){
-    int success = 0;
+    short ****gpu_in, long ****gpu_out, long ****cpu_out, int no_streams){
 
     OKBLUE("Power Kernel: Deallocating memory on GPU and CPU.");
+    int success = 0; int odx;
+
     success += cudaFreeHost(*chA_data);
     success += cudaFreeHost(*chB_data);
-    if (success != 0) FAIL("Power Kernel: Failed to free input memory on CPU.");
+    if (success != 0) FAIL("Power Kernel: Failed to free locked input memory on CPU.");
 
-    success += cudaFree(*gpu_in0[CHA]);
-    success += cudaFree(*gpu_in0[CHB]);
-    success += cudaFree(*gpu_in1[CHA]);
-    success += cudaFree(*gpu_in1[CHB]);
+    for (int s(0); s < no_streams; s++) {
+        success += cudaFree(*gpu_in[s][CHA]);
+        success += cudaFree(*gpu_in[s][CHB]);
+    }
     if (success != 0) FAIL("Power Kernel: Failed to free input memory on GPU.");
 
-    int odx;
-    for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
-        odx = GPU::outputs_from_gpu[i];
+    for (int s(0); s < no_streams; s++) {
+        for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
+            odx = GPU::outputs_from_gpu[i];
 
-        success += cudaFree(*gpu_out0[odx]);
-        success += cudaFree(*gpu_out1[odx]);
-        if (success != 0) FAIL("Power Kernel: Failed to free  memory on GPU.");
+            success += cudaFree(*gpu_out[s][odx]);
+            if (success != 0) FAIL("Power Kernel: Failed to free output memory on GPU.");
 
-        success += cudaFreeHost(*cpu_out[odx]);
-        if (success != 0) FAIL("Power Kernel: Failed to free memory on CPU.");
+            success += cudaFreeHost(*cpu_out[s][odx]);
+            if (success != 0) FAIL("Power Kernel: Failed to free locked outputa memory on CPU.");
+
+            // delete[] cpu_out[s][odx];
+        }
+        // delete[] cpu_out[s];
     }
+    // delete[] cpu_out;
 
     OKGREEN("Power Kernel: Memory freed!");
 }

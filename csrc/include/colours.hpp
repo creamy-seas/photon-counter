@@ -27,9 +27,11 @@
 #define OKBLUE(str, ...) PRINT_COLOR("\033[94m\033[1m", str, ##__VA_ARGS__)
 #define OKGREEN(str, ...) PRINT_COLOR("\033[92m\033[1m", str, ##__VA_ARGS__)
 #define WARNING(str, ...) PRINT_COLOR("\033[93m\033[1m", str, ##__VA_ARGS__)
-#define FAIL(str) {                                                \
-        PRINT_COLOR("\033[91m\033[1m", str);           \
-        throw std::runtime_error(str);                 \
+#define FAIL(str, ...) {                   \
+        printf("\033[91m\033[1m");               \
+        printf(str, ##__VA_ARGS__);              \
+        printf("%s\n", ENDC);                    \
+        throw std::runtime_error(str);           \
     }
 
 #define UNDERLINE(str, ...) PRINT_COLOR("\033[4m", str, ##__VA_ARGS__)

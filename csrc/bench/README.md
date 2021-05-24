@@ -60,8 +60,15 @@
 | POWER | GPU_V1          | Null        | 100     | 100        | 0.04450  | 416.86000    | 2398.89        | 9453658112  |
 | POWER | GPU_V2          | Null        | 100     | 100        | 0.03995  | 374.20000    | 2672.37        | 9453658112  |
 
-
 </details>
+
+
+# May 22 2021: Comparing Digitiser read speed to GPU #
+>
+> Theoretically:
+> - 400 (1000ns) points, the repetition frequency is 340kHz, so for 254200 records this is 0.74s
+> - 200 (500ns) points, the repetition frequency is 860kHz, so for 254200 records this is 0.3s
+
 
 # Float vs double: No difference #
 > 4b2b92bdcc7e9de0fce5234998fde309ac71d137

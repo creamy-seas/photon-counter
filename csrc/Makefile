@@ -48,10 +48,10 @@ PWD := $(shell pwd)
 
 # Tests and benchmarks #######################################################################
 TEST_FLAGS := -DTESTENV
-TEST_FLAGS += -D R_POINTS=4
-TEST_FLAGS += -D R_POINTS_PER_CHUNK=2
+TEST_FLAGS += -D R_POINTS=8
+TEST_FLAGS += -D R_POINTS_PER_CHUNK=1
 TEST_FLAGS += -D SP_POINTS=3
-TEST_FLAGS += -D THREADS_PER_BLOCK=1024
+TEST_FLAGS += -D DEBUG=0
 
 TEST_LDLIBS += $(shell pkg-config --libs cppunit) # Unittest library
 
@@ -61,6 +61,7 @@ COVERAGE_FOLDER:=./coverage
 COVERAGE_FILE:=$(COVERAGE_FOLDER)/coverage.info
 
 TEST_BIN=./bin/test
+# TEST_RUN=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 cuda-memcheck --tool racecheck
 
 # TEST_SOURCE := $(TEST_FOLDER)/power_gpu_test.cpp $(TEST_FOLDER)/test_runner.cpp #example
 TEST_SOURCE = $(wildcard $(TEST_FOLDER)/*.cpp)
@@ -70,9 +71,9 @@ TEST_OBJECTS += $(patsubst $(FOLDER_SOURCE)/%.cu,$(TEST_BUILD_FOLDER)/%.o,$(CUDA
 
 # Benchmarking speed of CPU vs GPU ############################################
 BENCH_FLAGS := -DTESTENV
-BENCH_FLAGS += -D R_POINTS=1000 # From
-BENCH_FLAGS += -D SP_POINTS=400 # 500ns acquisition time
-BENCH_FLAGS += -D R_POINTS_PER_CHUNK=500
+BENCH_FLAGS += -D R_POINTS=128000 # 129055 for 400 points, 254200 for 200 points
+BENCH_FLAGS += -D SP_POINTS=400
+BENCH_FLAGS += -D R_POINTS_PER_CHUNK=1000
 BENCH_FLAGS += -D THREADS_PER_BLOCK=1024
 BENCH_FLAGS += -D DEBUG=0
 

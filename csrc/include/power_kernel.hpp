@@ -22,16 +22,13 @@
 #error "Need to specify SP_POINTS (sampler per record) for power measurements"
 #endif
 
-#ifndef THREADS_PER_BLOCK
-#error "Need to specify THREADS_PER_BLOCK for power measurements"
-#endif
-
 #ifndef R_POINTS_PER_CHUNK
 #error "Need to specify R_POINTS_PER_CHUNK (how to chunk the repetitions to stay within memory limits of GPU) for power measurements"
 #endif
 
 // Derived parameters
 #define BLOCKS SP_POINTS
+#define THREADS_PER_BLOCK (R_POINTS_PER_CHUNK > 1024) ? 1024 : R_POINTS_PER_CHUNK
 
 // Verbose Indexes used for accessing array elements in a human-readable way e.g. array[CHASQ]
 #define NO_OF_POWER_KERNEL_OUTPUTS 5
@@ -109,96 +106,50 @@ namespace CPU {
 }
 
 namespace GPU {
-    /*
-     * The following will need to be defined:
-     * R_POINTS
-     * SP_POINTS
-     * THREADS_PER_BLOCK
-     */
-
     // Communication of kernel parameters to python
     struct PowerKernelParameters {
-        int r_points;
-        int np_points;
-        int blocks;
-        int threads_per_block;
+        int r_points; int np_points; int blocks; int threads_per_block;
 
-        PowerKernelParameters(
-            int r_points,
-            int np_points,
-            int blocks,
-            int threads_per_block);
+        PowerKernelParameters(int r_points,
+                              int np_points,
+                              int blocks,
+                              int threads_per_block);
         void print();
     };
     PowerKernelParameters fetch_kernel_parameters();
 
-    /* Copy background data once into constant memory */
-    void copy_background_arrays_to_gpu(short *chA_background, short *chB_background);
-
     const int outputs_from_gpu[4] = {CHA, CHB, CHASQ, CHBSQ};
     const int no_outputs_from_gpu = 4;
 
-    namespace V1 {
-        // Kernel copies digitiser data once to GPU.
-        // !! Will not work for large number of R_POINTS as the shared memory on GPU runs out !!
+    /* Copy background data once into constant memory */
+    void copy_background_arrays_to_gpu(short *chA_background, short *chB_background);
 
-        /**
-         * Memory management on GPU:
-         * - gpu_in/out should be arrays of ADDRESSES to POINTERS.
-         * - These POINTERS will location of the arrays on GPU.
-         * - Declare pointers in the following way: `short* gpu_chA_data`
-         * - Then store the addresses of these pointers in the arrays: `short*** gpu_in[2] = {&gpu_chA_data, &gpu_chB_data}`
-         */
-        void allocate_memory(short ***gpu_in, double ***gpu_out);
-        void free_memory(short ***gpu_in, double ***gpu_out);
-
-        /*
-          short* chA_data, chB_data:              raw data from the digitiser
-          double** data_out:                      output of the kernel with chA, chB, chAsq, chBsq, sq data. Use the macro indicies to unpack them.
-          gpu_in/gp_out:                          memory allocated on the GPU using the `allocate_memory` function
-        */
-        void power_kernel(
-            short *chA_data, short *chB_data,
-            double **data_out,
-            short ***gpu_in, double ***gpu_out);
-    }
-
-    namespace V2 {
-        /*
-         * The input data is split into chunks, to avoid the limitation on shared memory
-         * Streams are used to allow parallel copying and processing of these chunks
-         */
-
-        /* Memory is allocated for for each stream separately:
-         * - input data on the GPU
-         * - output data on the GPU
-         * - output data on the CPU, which needs to be memory locked for safe copying from GPU->CPU using different streams
-         */
-        void allocate_memory(
-            short **chA_data, short **chB_data,
-            short ***gpu_in0, short ***gpu_in1,
-            double ***gpu_out0, double ***gpu_out1,
-            double ***cpu_out);
-        void free_memory(
-            short **chA_data, short **chB_data,
-            short ***gpu_in0, short ***gpu_in1,
-            double ***gpu_out0, double ***gpu_out1,
-            double ***cpu_out);
-        /*
-          short* chA_data, chB_data:              raw data from the digitiser
-          double** data_out:                      kernel output - use indicies defined at start
-          <T>** gpu_:                             pointers to memory allocated on GPU
-        */
-        void power_kernel(
-            short *chA_data,
-            short *chB_data,
-            double **data_out,
-            // Auxillary memory allocation
-            short ***gpu_in0, short ***gpu_in1,
-            double ***gpu_out0, double ***gpu_out1,
-            double ***cpu_out
-            );
-    }
+    /*
+     * The input data is split into chunks, to avoid the limitation on shared memory on GPU
+     * Streams are used to process these chunks in parallel
+     *
+     * Memory is allocated for for each stream separately:
+     * - input data on the GPU
+     * - output data on the GPU
+     * - output data on the CPU, which needs to be memory locked for safe copying from GPU->CPU using different streams
+     */
+    void allocate_memory(
+        short **chA_data, short **chB_data,
+        short ****gpu_in, long ****gpu_out, long ****cpu_out, int no_of_streams);
+    void free_memory(
+        short **chA_data, short **chB_data,
+        short ****gpu_in, long ****gpu_out, long ****cpu_out, int no_of_streams);
+    /*
+     * short* chA_data, chB_data:              raw data from the digitiser
+     * double** data_out:                      kernel output [CHA, CHB, CHASQ, CHBSQ]
+     * <T>** gpu_:                             pointers to memory allocated on GPU
+     */
+    void power_kernel(
+        short *chA_data, short *chB_data,
+        double **data_out,
+        // Auxillary memory allocation
+        short ****gpu_in, long ****gpu_out, long ****cpu_out,
+        int no_streams);
 }
 
 #endif
