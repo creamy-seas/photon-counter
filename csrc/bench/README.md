@@ -62,12 +62,22 @@
 
 </details>
 
-
-# May 22 2021: Comparing Digitiser read speed to GPU #
+# May 25 2021: Comparing Digitiser read speed to GPU #
 >
 > Theoretically:
 > - 400 (1000ns) points, the repetition frequency is 340kHz, so for 254200 records this is 0.74s
 > - 200 (500ns) points, the repetition frequency is 860kHz, so for 254200 records this is 0.3s
+
+<details>
+<summary>Click this to collapse/fold.</summary>
+
+> `R_POINTS=128000`, `SP_POINTS=400`, `R_POINTS_PER_CHUNK=1000`
+
+| Group     | Experiment  | Prob. Space | Samples | Iterations | Baseline | us/Iteration | Iterations/sec | RAM (bytes) |
+|:---------:|:-----------:|:-----------:|:-------:|:----------:|:--------:|:------------:|:--------------:|:-----------:|
+| DIGITISER | Theoretical |             |         |            |          | 740,000      | 1.35           |             |
+
+</details>
 
 
 # Float vs double: No difference #
@@ -79,8 +89,8 @@
 | Group          | Experiment      | Prob. Space | Samples | Iterations | Baseline | us/Iteration | Iterations/sec | RAM (bytes) |
 |:--------------:|:---------------:|:-----------:|:-------:|:----------:|:--------:|:------------:|:--------------:|:-----------:|
 | TYPE_BENCHMARK | FLOAT_MULITPLY  | Null        | 1000    | 50000      | 1.00000  | 2.64130      | 378601.45      | 51908608    |
+| TYPE_BENCHMARK | DOUBLE_MULTIPLY | Null        | 1000    | 50000      | 1.00096  | 2.64384      | 378237.71      | 51908608    |
 | TYPE_BENCHMARK | FLOAT_ADD       | Null        | 1000    | 50000      | 0.91550  | 2.41812      | 413544.41      | 51908608    |
 | TYPE_BENCHMARK | DOUBLE_ADD      | Null        | 1000    | 50000      | 0.91822  | 2.42530      | 412320.13      | 51908608    |
-| TYPE_BENCHMARK | DOUBLE_MULTIPLY | Null        | 1000    | 50000      | 1.00096  | 2.64384      | 378237.71      | 51908608    |
 
 </details>

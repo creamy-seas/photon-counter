@@ -114,6 +114,15 @@ void GPU::allocate_memory(
     /** There is a lot of derefenecing in this function, since the arrays ara passed in by address & */
 
     OKBLUE("Power Kernel: Allocating memory on GPU and CPU.");
+    int chunks = R_POINTS / R_POINTS_PER_CHUNK;
+    if (chunks - (chunks / no_streams) * no_streams != 0)
+        throw std::runtime_error(
+            "Power Kernel: no_streams ("
+            + std::to_string(no_streams)
+            + ") does no fit fully into R_POINTS/R_POINTS_PER_CHUNK ("
+            + std::to_string(R_POINTS) + "/" + std::to_string(R_POINTS_PER_CHUNK)
+            + ") = " + std::to_string(chunks));
+
     int success = 0; int odx;
 
     // Digitiser will transfer data into memory-locked arrays, made with cudaHostAlloc

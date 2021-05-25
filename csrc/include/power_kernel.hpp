@@ -81,42 +81,42 @@ namespace CPU {
         short chB_back,
         int sp_points,
         int r_points,
-        int number_of_threads
-        );
+int number_of_threads
+                              );
 
-    /*
-      short* chA_data, chB_data:              raw data from the digitiser
-      double** data_out:                holds arrays of the averaged chA², chB², SQ=chA² + chB² data
-      unsigned int processing mask:           chA²,chB²,SQ e.g. 100==4 will only process SQ
-      short* chA_back, chB_back:              background set of measurements for both channels, OF THE SAME SIZE as the channel data!
-      int no_points = samples_per_record * number of records
-      int number_of_threads:                  number of threads to launch
-    */
-    void power_kernel_v3_background(
-        short *chA_data,
-        short *chB_data,
-        double** data_out,
-        unsigned int processing_mask,
-        short *chA_back,
-        short *chB_back,
-        int sp_points,
-        int r_points,
-        int number_of_threads
-        );
-}
+                          /*
+                            short* chA_data, chB_data:              raw data from the digitiser
+                            double** data_out:                holds arrays of the averaged chA², chB², SQ=chA² + chB² data
+                            unsigned int processing mask:           chA²,chB²,SQ e.g. 100==4 will only process SQ
+                            short* chA_back, chB_back:              background set of measurements for both channels, OF THE SAME SIZE as the channel data!
+                            int no_points = samples_per_record * number of records
+                            int number_of_threads:                  number of threads to launch
+                          */
+                          void power_kernel_v3_background(
+                              short *chA_data,
+                              short *chB_data,
+                              double** data_out,
+                              unsigned int processing_mask,
+                              short *chA_back,
+                              short *chB_back,
+                              int sp_points,
+                              int r_points,
+                              int number_of_threads
+                              );
+                      }
 
-namespace GPU {
-    // Communication of kernel parameters to python
-    struct PowerKernelParameters {
-        int r_points; int np_points; int blocks; int threads_per_block;
+    namespace GPU {
+        // Communication of kernel parameters to python
+        struct PowerKernelParameters {
+            int r_points; int np_points; int blocks; int threads_per_block;
 
-        PowerKernelParameters(int r_points,
-                              int np_points,
-                              int blocks,
-                              int threads_per_block);
-        void print();
-    };
-    PowerKernelParameters fetch_kernel_parameters();
+            PowerKernelParameters(int r_points,
+                                  int np_points,
+                                  int blocks,
+                                  int threads_per_block);
+            void print();
+        };
+PowerKernelParameters fetch_kernel_parameters();
 
     const int outputs_from_gpu[4] = {CHA, CHB, CHASQ, CHBSQ};
     const int no_outputs_from_gpu = 4;

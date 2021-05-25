@@ -21,10 +21,17 @@ class PowerKernelGpuUtilsTest : public CppUnit::TestFixture {
     // Population with tests
     CPPUNIT_TEST( test_fetch_kernel_parameters );
     CPPUNIT_TEST( test_allocate_memory );
+    CPPUNIT_TEST( test_allocate_memory_bad_no_streams );
 
     CPPUNIT_TEST_SUITE_END();
 
 public:
+    // These will hold the address of arrays allocated on GPU or locked CPU memory
+    short *chA_data; short *chB_data;
+    short ***gpu_in;
+    long ***gpu_out;
+    long ***cpu_out;
+
     void test_fetch_kernel_parameters(){
         GPU::PowerKernelParameters kp = GPU::fetch_kernel_parameters();
         // Parameters for test set in Makefile
@@ -32,15 +39,15 @@ public:
         CPPUNIT_ASSERT_EQUAL(3, kp.np_points);
     }
 
+    void test_allocate_memory_bad_no_streams(){
+        const int no_streams = 3;
+        CPPUNIT_ASSERT_THROW_MESSAGE("Allocation should have failed as no of streams does not fit into number of chunks",
+                                     GPU::allocate_memory(&chA_data, &chB_data, &gpu_in, &gpu_out, &cpu_out, no_streams),
+                                     std::runtime_error);
+    }
 
     void test_allocate_memory(){
         const int no_streams = 2;
-
-        // These will hold the address of arrays allocated on GPU or locked CPU memory
-        short *chA_data; short *chB_data;
-        short ***gpu_in;
-        long ***gpu_out;
-        long ***cpu_out;
 
         GPU::allocate_memory(&chA_data, &chB_data, &gpu_in, &gpu_out, &cpu_out, no_streams);
 
