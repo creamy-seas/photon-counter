@@ -51,7 +51,7 @@ TEST_FLAGS := -DTESTENV
 TEST_FLAGS += -D R_POINTS=8
 TEST_FLAGS += -D R_POINTS_PER_CHUNK=1
 TEST_FLAGS += -D SP_POINTS=3
-TEST_FLAGS += -D DEBUG=0
+TEST_FLAGS += -D DEBUG=1
 
 TEST_LDLIBS += $(shell pkg-config --libs cppunit) # Unittest library
 

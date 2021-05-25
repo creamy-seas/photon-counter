@@ -28,10 +28,6 @@
  * In order to get the memory location on the gpu
  */
 
-#include <stdexcept>
-#include <stdio.h>
-#include <string>
-
 #include "colours.hpp"
 #include "power_kernel.hpp"
 
@@ -146,7 +142,7 @@ __global__ void power_kernel_runner(short *chA_data, short *chB_data,
 void GPU::power_kernel(
     short *chA_data, short *chB_data,
     double **data_out,
-    short ****gpu_in, long ****gpu_out, long ****cpu_out,
+    short ***gpu_in, long ***gpu_out, long ***cpu_out,
     int no_streams){
     /**
      * ==> Ensure that allocate_memory has been called
@@ -175,7 +171,7 @@ void GPU::power_kernel(
     for (int s(0); s < no_streams; s++) {
         for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
             odx = GPU::outputs_from_gpu[i];
-            success += cudaMemsetAsync(*gpu_out[s][odx], 0, SP_POINTS*sizeof(long), stream_list[s]);
+            success += cudaMemsetAsync(gpu_out[s][odx], 0, SP_POINTS*sizeof(long), stream_list[s]);
             if (success != 0) FAIL("Power Kernel: Failed to reset arrays on GPU:\nError code %i.", success);
         }
     }
@@ -190,12 +186,12 @@ void GPU::power_kernel(
         // - R_POINTS_PER_CHUNK * SP_POINTS * sizeof(short)  specifies how many bytes to copy
         for (int s(0); s < no_streams; s++){
             cudaMemcpyAsync(
-                *gpu_in[s][CHA], chA_data + (chunk0 + s) * R_POINTS_PER_CHUNK * SP_POINTS,
+                gpu_in[s][CHA], chA_data + (chunk0 + s) * R_POINTS_PER_CHUNK * SP_POINTS,
                 R_POINTS_PER_CHUNK * SP_POINTS * sizeof(short),
                 cudaMemcpyHostToDevice,
                 stream_list[s]);
             cudaMemcpyAsync(
-                *gpu_in[s][CHB], chB_data + (chunk0 + s) * R_POINTS_PER_CHUNK * SP_POINTS,
+                gpu_in[s][CHB], chB_data + (chunk0 + s) * R_POINTS_PER_CHUNK * SP_POINTS,
                 R_POINTS_PER_CHUNK * SP_POINTS * sizeof(short),
                 cudaMemcpyHostToDevice,
                 stream_list[s]);
@@ -204,9 +200,9 @@ void GPU::power_kernel(
         // Launch kernels
         for (int s(0); s < no_streams; s++){
             power_kernel_runner<<<BLOCKS, THREADS_PER_BLOCK, 0, stream_list[s]>>>(
-                *gpu_in[s][CHA], *gpu_in[s][CHB],
-                *gpu_out[s][CHA], *gpu_out[s][CHB],
-                *gpu_out[s][CHASQ], *gpu_out[s][CHBSQ]);
+                gpu_in[s][CHA], gpu_in[s][CHB],
+                gpu_out[s][CHA], gpu_out[s][CHB],
+                gpu_out[s][CHASQ], gpu_out[s][CHBSQ]);
         }
     }
     // Copy over accumulated data from GPU to CPU
@@ -214,8 +210,8 @@ void GPU::power_kernel(
         for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
             odx = GPU::outputs_from_gpu[i];
             cudaMemcpyAsync(
-                *cpu_out[s][odx],
-                *gpu_out[s][odx],
+                cpu_out[s][odx],
+                gpu_out[s][odx],
                 SP_POINTS * sizeof(long),
                 cudaMemcpyDeviceToHost,
                 stream_list[s]);
@@ -233,11 +229,8 @@ void GPU::power_kernel(
     for (int sp(0); sp < SP_POINTS; sp++) {
         for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
             odx = GPU::outputs_from_gpu[i];
-            for (int s(0); s < no_streams; s++){
-                // cpu_out[s][odx] is the ADDRESS of the POINTER to the array with the data
-                // therefore it is derefferenced before accessing the array elements [sp].
-                data_out[odx][sp] += (double)(*cpu_out[s][odx])[sp];
-            }
+            for (int s(0); s < no_streams; s++)
+                data_out[odx][sp] += (double)cpu_out[s][odx][sp];
             data_out[odx][sp] /= chunks;
         }
         data_out[SQ][sp] = data_out[CHASQ][sp] + data_out[CHBSQ][sp];

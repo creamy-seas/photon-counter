@@ -133,22 +133,8 @@ public:
         // 2. In order to modify these pointers, we need to pass them in as addresses (&pointer_name) into the functions that allocate and bind the GPU memory
         // 3. There are addresses for every computation being run: chA, chB, chAsq, chBsq
         // 4. There are addresses for every stream being run: stream0, stream1
-        // This it's a 2D array (**) that keeps the (*)ADDRESSES or the (*)GPU POINTERS so it's a quadruple pointer
-        short *gpu_chA_data_s0; short *gpu_chB_data_s0; short **gpu_in_s0[2] = {&gpu_chA_data_s0, &gpu_chB_data_s0};
-        short *gpu_chA_data_s1; short *gpu_chB_data_s1; short **gpu_in_s1[2] = {&gpu_chA_data_s1, &gpu_chB_data_s1};
-        short ***gpu_in[2] = {gpu_in_s0, gpu_in_s1};
-
-        long *gpu_chA_out_s0; long *gpu_chB_out_s0; long *gpu_chAsq_out_s0; long *gpu_chBsq_out_s0;
-        long **gpu_out0[4] = {&gpu_chA_out_s0, &gpu_chB_out_s0, &gpu_chAsq_out_s0, &gpu_chBsq_out_s0};
-        long *gpu_chA_out_s1; long *gpu_chB_out_s1; long *gpu_chAsq_out_s1; long *gpu_chBsq_out_s1;
-        long **gpu_out1[4] = {&gpu_chA_out_s1, &gpu_chB_out_s1, &gpu_chAsq_out_s1, &gpu_chBsq_out_s1};
-        long ***gpu_out[2] = {gpu_out0, gpu_out1};
-
-        long *cpu_chA_out_s0(0), *cpu_chB_out_s0(0), *cpu_chAsq_out_s0(0), *cpu_chBsq_out_s0(0);
-        long **cpu_out0[4] = {&cpu_chA_out_s0, &cpu_chB_out_s0, &cpu_chAsq_out_s0, &cpu_chBsq_out_s0};
-        long *cpu_chA_out_s1, *cpu_chB_out_s1, *cpu_chAsq_out_s1, *cpu_chBsq_out_s1;
-        long **cpu_out1[4] = {&cpu_chA_out_s1, &cpu_chB_out_s1, &cpu_chAsq_out_s1, &cpu_chBsq_out_s1};
-        long ***cpu_out[2] = {cpu_out0, cpu_out1};
+        // This it's a 2D array (**) that keeps the (*)GPU POINTERS so it's a triple pointer
+        short*** gpu_in; long ***gpu_out; long ***cpu_out;
 
         // Check kernel
         GPU::fetch_kernel_parameters();
@@ -157,7 +143,7 @@ public:
         GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
 
         // Allocate memory and fill it up
-        GPU::allocate_memory(&chA_data_locked, &chB_data_locked, gpu_in, gpu_out, cpu_out, no_streams);
+        GPU::allocate_memory(&chA_data_locked, &chB_data_locked, &gpu_in, &gpu_out, &cpu_out, no_streams);
         for (int i(0); i < 24; i++) {
             chA_data_locked[i] = chA_data[i];
             chB_data_locked[i] = chB_data[i];
@@ -181,6 +167,18 @@ public:
     }
 
     void test_power_kernel_1_streams() {
+        /* Data would be split like so
+         * chA
+         * 1  0  0   stream0
+         * 0  0  0   stream0
+         * 0  0  0   stream1
+         * 0  0  0   stream1
+         * 2  1  1   stream0
+         * 4  3  2   stream0
+         * 3  1  1   stream1
+         * 3  1  8   stream1
+         */
+
         // For kernel using streams, data needs to be locked in memory
         short* chA_data_locked;
         short* chB_data_locked;
@@ -191,17 +189,8 @@ public:
         // 2. In order to modify these pointers, we need to pass them in as addresses (&pointer_name) into the functions that allocate and bind the GPU memory
         // 3. There are addresses for every computation being run: chA, chB, chAsq, chBsq
         // 4. There are addresses for every stream being run: stream0, stream1
-        // This it's a 2D array (**) that keeps the (*)ADDRESSES or the (*)GPU POINTERS so it's a quadruple pointer
-        short *gpu_chA_data_s0; short *gpu_chB_data_s0; short **gpu_in_s0[2] = {&gpu_chA_data_s0, &gpu_chB_data_s0};
-        short ***gpu_in[2] = {gpu_in_s0};
-
-        long *gpu_chA_out_s0; long *gpu_chB_out_s0; long *gpu_chAsq_out_s0; long *gpu_chBsq_out_s0;
-        long **gpu_out0[4] = {&gpu_chA_out_s0, &gpu_chB_out_s0, &gpu_chAsq_out_s0, &gpu_chBsq_out_s0};
-        long ***gpu_out[2] = {gpu_out0};
-
-        long *cpu_chA_out_s0(0), *cpu_chB_out_s0(0), *cpu_chAsq_out_s0(0), *cpu_chBsq_out_s0(0);
-        long **cpu_out0[4] = {&cpu_chA_out_s0, &cpu_chB_out_s0, &cpu_chAsq_out_s0, &cpu_chBsq_out_s0};
-        long ***cpu_out[2] = {cpu_out0};
+        // This it's a 2D array (**) that keeps the (*)GPU POINTERS so it's a triple pointer
+        short*** gpu_in; long ***gpu_out; long ***cpu_out;
 
         // Check kernel
         GPU::fetch_kernel_parameters();
@@ -210,7 +199,7 @@ public:
         GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
 
         // Allocate memory and fill it up
-        GPU::allocate_memory(&chA_data_locked, &chB_data_locked, gpu_in, gpu_out, cpu_out, no_streams);
+        GPU::allocate_memory(&chA_data_locked, &chB_data_locked, &gpu_in, &gpu_out, &cpu_out, no_streams);
         for (int i(0); i < 24; i++) {
             chA_data_locked[i] = chA_data[i];
             chB_data_locked[i] = chB_data[i];

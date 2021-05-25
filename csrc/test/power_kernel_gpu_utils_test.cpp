@@ -2,8 +2,9 @@
 #include <string>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Exception.h>
-// #include <iostream>
-// using namespace std;
+
+#include <iostream>
+using namespace std;
 
 #include "power_kernel.hpp"
 #include "utils.hpp"
@@ -35,33 +36,21 @@ public:
     void test_allocate_memory(){
         const int no_streams = 2;
 
-        // Default values that must change once address is assigned. This will hold the address of the arrays allocated on the GPU
-        // These will change!
+        // These will hold the address of arrays allocated on GPU or locked CPU memory
         short *chA_data; short *chB_data;
+        short ***gpu_in;
+        long ***gpu_out;
+        long ***cpu_out;
 
-        short *gpu_chA_data0(0), *gpu_chB_data0(0), **gpu_in0[2] = {&gpu_chA_data0, &gpu_chB_data0};
-        short *gpu_chA_data1(0), *gpu_chB_data1(0), **gpu_in1[2] = {&gpu_chA_data1, &gpu_chB_data1};
-        short ***gpu_in[2] = {gpu_in0, gpu_in1};
-
-        long *gpu_chA_out0(0), *gpu_chB_out0(0), *gpu_chAsq_out0(0), *gpu_chBsq_out0(0);
-        long **gpu_out0[4] = {&gpu_chA_out0, &gpu_chB_out0, &gpu_chAsq_out0, &gpu_chBsq_out0};
-        long *gpu_chA_out1(0), *gpu_chB_out1(0), *gpu_chAsq_out1(0), *gpu_chBsq_out1(0);
-        long **gpu_out1[4] = {&gpu_chA_out1, &gpu_chB_out1, &gpu_chAsq_out1,&gpu_chBsq_out1};
-        long ***gpu_out[2] = {gpu_out0, gpu_out1};
-
-        long *cpu_chA_out_s0, *cpu_chB_out_s0, *cpu_chAsq_out_s0, *cpu_chBsq_out_s0;
-        long **cpu_out0[4] = {&cpu_chA_out_s0, &cpu_chB_out_s0, &cpu_chAsq_out_s0, &cpu_chBsq_out_s0};
-        long *cpu_chA_out_s1, *cpu_chB_out_s1, *cpu_chAsq_out_s1, *cpu_chBsq_out_s1;
-        long **cpu_out1[4] = {&cpu_chA_out_s1, &cpu_chB_out_s1, &cpu_chAsq_out_s1, &cpu_chBsq_out_s1};
-        long ***cpu_out[2] = {cpu_out0, cpu_out1};
-
-        GPU::allocate_memory(&chA_data, &chB_data, gpu_in, gpu_out, cpu_out, no_streams);
+        GPU::allocate_memory(&chA_data, &chB_data, &gpu_in, &gpu_out, &cpu_out, no_streams);
 
         // Check memory has been allocated on GPU i.e. the pointers now hold the addresses
-        CPPUNIT_ASSERT(gpu_in[0][CHA] != 0);
-        CPPUNIT_ASSERT(gpu_in[0][CHB] != 0);
-        CPPUNIT_ASSERT(gpu_in[1][CHA] != 0);
-        CPPUNIT_ASSERT(gpu_in[1][CHB] != 0);
+        CPPUNIT_ASSERT_MESSAGE("Failed gpu_in memory allocation - not set", gpu_in[0][CHA] != 0);
+        CPPUNIT_ASSERT_MESSAGE("Failed gpu_in memory allocation - not set", gpu_in[0][CHB] != 0);
+        CPPUNIT_ASSERT_MESSAGE("Failed gpu_in memory allocation - not set", gpu_in[1][CHA] != 0);
+        CPPUNIT_ASSERT_MESSAGE("Failed gpu_in memory allocation - not set", gpu_in[1][CHB] != 0);
+        CPPUNIT_ASSERT_MESSAGE("Failed gpu_in memory allocation - duplicate address", gpu_in[0][CHA] != gpu_in[0][CHB]);
+        CPPUNIT_ASSERT_MESSAGE("Failed gpu_in memory allocation - duplicate address", gpu_in[1][CHA] != gpu_in[1][CHB]);
 
         CPPUNIT_ASSERT(gpu_out[0][CHA] != 0);
         CPPUNIT_ASSERT(gpu_out[0][CHB] != 0);

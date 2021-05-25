@@ -129,27 +129,30 @@ namespace GPU {
      * Streams are used to process these chunks in parallel
      *
      * Memory is allocated for for each stream separately:
+     * - input data on the CPU which needs to be memeory locked for safe copying CPU -> GPU using different streams
      * - input data on the GPU
      * - output data on the GPU
      * - output data on the CPU, which needs to be memory locked for safe copying from GPU->CPU using different streams
+     *
+     * Pass in the ADDRESSES of the pointers that will store these arrays i.e. `short ***gpu_in` will be paseed in as &gpu_in
      */
     void allocate_memory(
         short **chA_data, short **chB_data,
         short ****gpu_in, long ****gpu_out, long ****cpu_out, int no_of_streams);
     void free_memory(
         short **chA_data, short **chB_data,
-        short ****gpu_in, long ****gpu_out, long ****cpu_out, int no_of_streams);
+        short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_of_streams);
+
     /*
      * short* chA_data, chB_data:              raw data from the digitiser
      * double** data_out:                      kernel output [CHA, CHB, CHASQ, CHBSQ]
-     * <T>** gpu_:                             pointers to memory allocated on GPU
+     * <T>** gpu_:                             addresses of the allocated memory
      */
     void power_kernel(
         short *chA_data, short *chB_data,
         double **data_out,
         // Auxillary memory allocation
-        short ****gpu_in, long ****gpu_out, long ****cpu_out,
-        int no_streams);
+        short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams);
 }
 
 #endif
