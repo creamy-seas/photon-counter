@@ -63,19 +63,34 @@
 </details>
 
 # May 25 2021: Comparing Digitiser read speed to GPU #
->
-> Theoretically:
-> - 400 (1000ns) points, the repetition frequency is 340kHz, so for 254200 records this is 0.74s
-> - 200 (500ns) points, the repetition frequency is 860kHz, so for 254200 records this is 0.3s
+> 68079aea94f892bbac75a7de04f7b434824ffee0
+
+Theoretically the digitise will work at:
+- 400 (1000ns) points, the repetition frequency is 340kHz, so for 254200 records this is `0.74s`
+- 200 (500ns) points, the repetition frequency is 860kHz, so for 254200 records this is `0.3s`
+
+It seems that the GPU kernel peaks at 2 streams in terms of performance.
 
 <details>
 <summary>Click this to collapse/fold.</summary>
 
 > `R_POINTS=128000`, `SP_POINTS=400`, `R_POINTS_PER_CHUNK=1000`
 
-| Group     | Experiment  | Prob. Space | Samples | Iterations | Baseline | us/Iteration | Iterations/sec | RAM (bytes) |
-|:---------:|:-----------:|:-----------:|:-------:|:----------:|:--------:|:------------:|:--------------:|:-----------:|
-| DIGITISER | Theoretical |             |         |            |          | 740,000      | 1.35           |             |
+| Group     | Experiment      | Prob. Space | Samples | Iterations | Baseline | us/Iteration  | Iterations/sec | RAM (bytes) |
+|:---------:|:---------------:|:-----------:|:-------:|:----------:|:--------:|:-------------:|:--------------:|:-----------:|
+| DIGITISER | Theoretical     |             |         |            |          | 740,000       | 1.35           |             |
+| POWER     | 1T_NO_BACK      | Null        | 30      | 1          | 1.00000  | 1927193.00000 | 0.52           | 60559360    |
+| POWER     | 2T_NO_BACK      | Null        | 30      | 1          | 1.31233  | 2529108.00000 | 0.40           | 68952064    |
+| POWER     | 8T_NO_BACK      | Null        | 30      | 1          | 1.40540  | 2708469.00000 | 0.37           | 85737472    |
+| POWER     | 1T_NO_BACK_FULL | Null        | 30      | 1          | 1.69837  | 3273092.00000 | 0.31           | 85737472    |
+| POWER     | 1T_CONST_BACK   | Null        | 30      | 1          | 1.05101  | 2025497.00000 | 0.49           | 85737472    |
+| POWER     | 1T_CONST_BACK_F | Null        | 30      | 1          | 1.75032  | 3373199.00000 | 0.30           | 85737472    |
+| POWER     | 1T_BACK         | Null        | 30      | 1          | 1.32643  | 2556294.00000 | 0.39           | 85737472    |
+| POWER     | 1T_BACK_FULL_MA | Null        | 30      | 1          | 2.01473  | 3882780.00000 | 0.26           | 85737472    |
+| POWER     | GPU_1ST         | Null        | 30      | 20         | 0.02414  | 46523.55000   | 21.49          | 9418448896  |
+| POWER     | GPU_2ST         | Null        | 30      | 29         | 0.01728  | 33303.72414   | 30.03          | 9418448896  |
+| POWER     | GPU_8ST         | Null        | 30      | 30         | 0.01706  | 32872.36667   | 30.42          | 9418448896  |
+| POWER     | GPU_16ST        | Null        | 30      | 30         | 0.01719  | 33132.93333   | 30.18          | 9552666624  |
 
 </details>
 
