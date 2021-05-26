@@ -31,20 +31,18 @@ static unsigned char FETCH_CHANNEL_BOTH = 0x3;
 extern "C" {
 #endif
     /**
-     * Rewrapped function not available in python
+     * Rewrapped function not available in python.
      *
-     * @param adq_cu_ptr Allocated pointer for communication with digitizer
-     * @param no_of_records
+     * @param adq_cu_ptr Allocated pointer for communication with digitizer.
      *
      * @returns maximum number of samples that the digitizer can acuumulate for supplied number of repetitions
      */
     int GetMaxNofSamplesFromNofRecords(void* adq_cu_ptr, int no_of_records);
 
     /**
-     * Rewrapped function not available in python
+     * Rewrapped function not available in python.
      *
      * @param adq_cu_ptr Allocated pointer for communication with digitizer
-     * @param no_of_samples
      *
      * @returns maximum number of records that the digitizer can acuumulate for supplied number of samples
      */

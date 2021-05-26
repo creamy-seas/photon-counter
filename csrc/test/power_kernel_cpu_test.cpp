@@ -14,9 +14,7 @@ class PowerCpuTest : public CppUnit::TestFixture {
 
     // Population with tests
     // CPPUNIT_TEST_EXCEPTION( 🐙, CppUnit::Exception );
-    CPPUNIT_TEST( test_power_kernel_v1_no_background );
-    CPPUNIT_TEST( test_power_kernel_v2_const_background );
-    CPPUNIT_TEST( test_power_kernel_v3_background );
+    CPPUNIT_TEST( test_power_kernel);
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -65,46 +63,7 @@ public:
         delete[] data_out;
     }
 
-    void test_power_kernel_v1_no_background(){
-        no_threads = 4;
-
-        expected_sq_out = new double[3]{29, 33.625, 60.25};
-        processing_mask = SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK;
-
-        CPU::power_kernel_v1_no_background(chA_data, chB_data, data_out,
-                                           processing_mask,
-                                           SP_POINTS, R_POINTS, no_threads);
-
-        for (int i(0); i < 3; i++)
-            CPPUNIT_ASSERT_EQUAL(expected_sq_out[i], data_out[SQ][i]);
-
-
-        delete[] expected_sq_out;
-    }
-
-    void test_power_kernel_v2_const_background(){
-        no_threads = 10;
-
-        short chA_const_background = 1;
-        short chB_const_background = 0;
-
-        expected_sq_out = new double[3]{24.75, 29.125, 52.25};
-        processing_mask = SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK;
-
-        CPU::power_kernel_v2_const_background(
-            chA_data, chB_data, data_out,
-            processing_mask,
-            chA_const_background, chB_const_background,
-            SP_POINTS, R_POINTS, no_threads
-            );
-        for (int i(0); i < 3; i++) {
-            CPPUNIT_ASSERT_EQUAL(expected_sq_out[i], data_out[SQ][i]);
-        }
-
-        delete[] expected_sq_out;
-    }
-
-    void test_power_kernel_v3_background(){
+    void test_power_kernel(){
         no_threads = 1;
 
         short *chA_background = new short[3]{1, 2, 3};
@@ -116,7 +75,7 @@ public:
 
         processing_mask = SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK;
 
-        CPU::power_kernel_v3_background(
+        CPU::power_kernel(
             chA_data, chB_data, data_out,
             processing_mask,
             chA_background, chB_background,

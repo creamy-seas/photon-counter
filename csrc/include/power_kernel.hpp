@@ -14,8 +14,8 @@
 #endif
 
 // Derived parameters
-#define BLOCKS SP_POINTS ///< Each `SP_POINT` will be mapped to a GPU block.
-#define THREADS_PER_BLOCK (R_POINTS_PER_CHUNK > 1024) ? 1024 : R_POINTS_PER_CHUNK ///< Allocation of maximum
+#define BLOCKS SP_POINTS ///< Each `SP_POINT` will be processed by a separate GPU block.
+#define THREADS_PER_BLOCK (R_POINTS_PER_CHUNK > 1024) ? 1024 : R_POINTS_PER_CHUNK ///< Allocationg up to 1024 GPU threads for dealing with repetitions. If there are more repeitions than this, threads will be reused.
 
 // Verbose Indexes used for accessing array elements in a human-readable way e.g. array[CHASQ]
 #define NO_OF_POWER_KERNEL_OUTPUTS 5
@@ -32,57 +32,13 @@
 #define CHBSQ_MASK (1 << CHBSQ)
 #define SQ_MASK (1 << SQ)
 
-/**
- * Evaluations performed on CPU
- */
 namespace CPU {
 
-    /*
-      short* chA_data, chB_data:              raw data from the digitiser
-      double** data_out:                holds arrays of the averaged chA², chB², SQ=chA² + chB² data
-      unsigned int processing mask:                    SQ,chA²,chB² e.g. 100==4 will only process SQ
-      int no_points = samples_per_record * number of records
-      number_of_threads:                      number of threads to launch
-    */
-    void power_kernel_v1_no_background(
-        short* chA_data,
-        short* chB_data,
-        double** data_out,
-        unsigned int processing_mask,
-        int sp_points,
-        int r_points,
-        int number_of_threads
-        );
-
-    /*
-      short* chA_data, chB_data:              raw data from the digitiser
-      double** data_out:                holds arrays of the averaged chA², chB², SQ=chA² + chB² data
-      unsigned int processing mask:                    SQ,chA²,chB² e.g. 100==4 will only process SQ
-      short chA_back, chB_back:               background average on both channels
-      int no_points = samples_per_record * number of records
-      int number_of_threads:                  number of threads to launch
-    */
-    void power_kernel_v2_const_background(
-        short *chA_data,
-        short *chB_data,
-        double** data_out,
-        unsigned int processing_mask,
-        short chA_back,
-        short chB_back,
-        int sp_points,
-        int r_points,
-        int number_of_threads
-        );
-
-    /*
-      short* chA_data, chB_data:              raw data from the digitiser
-      double** data_out:                holds arrays of the averaged chA², chB², SQ=chA² + chB² data
-      unsigned int processing mask:           chA²,chB²,SQ e.g. 100==4 will only process SQ
-      short* chA_back, chB_back:              background set of measurements for both channels, OF THE SAME SIZE as the channel data!
-      int no_points = samples_per_record * number of records
-      int number_of_threads:                  number of threads to launch
-    */
-    void power_kernel_v3_background(
+    /**
+     * @param processing_mask selection of computations to run. Should be a bitwise or of CHA_MASK, CHB_MASK, CHASQ_MASK, CHBSQ_MASK, SQ_MASK to determine what averages to run.
+     * @param chA_back, chB_back background set of measurements for both channels
+     */
+    void power_kernel(
         short *chA_data,
         short *chB_data,
         double** data_out,
@@ -96,16 +52,6 @@ namespace CPU {
 
 }
 
-/**
- * Power measurment evaluations performed on GPU. Provides kernel to evaluate
- * - \f[ \left\langle{chA}\right\rangle \f]
- * - \f[ \left\langle{chB}\right\rangle \f]
- * - \f[ \left\langle{chA^2}\right\rangle \f]
- * - \f[ \left\langle{chB^2}\right\rangle \f]
- * - \f[ \left\langle{chA^2 + chB^2}\right\rangle \f]
- *
- * and supporting memory allocation and copying functions.
- */
 namespace GPU {
     /**
      * Communication of kernel parameters, for inspection and validation in python.
@@ -113,10 +59,8 @@ namespace GPU {
     struct PowerKernelParameters {
         int r_points; int np_points; int blocks; int threads_per_block;
 
-        PowerKernelParameters(int r_points,
-                              int np_points,
-                              int blocks,
-                              int threads_per_block);
+        PowerKernelParameters(int r_points, int np_points, int blocks, int threads_per_block);
+
         void print();
     };
     /**

@@ -54,6 +54,9 @@ void GPU::copy_background_arrays_to_gpu(short *chA_background, short *chB_backgr
 
 }
 
+/**
+ * @copydoc ./power_kernel.cpp reduction_average
+ */
 __device__ void reduction_sum(
     long *chA_cumulative_array,
     long *chB_cumulative_array,
