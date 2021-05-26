@@ -70,7 +70,7 @@ public:
 
         CPPUNIT_ASSERT(cpu_out != 0);
 
-        GPU::free_memory(&chA_data, &chB_data, gpu_in, gpu_out, cpu_out, no_streams);
+        GPU::free_memory(chA_data, chB_data, gpu_in, gpu_out, cpu_out, no_streams);
     }
 
 };

@@ -11,7 +11,7 @@
 static unsigned char FETCH_CHANNEL_BOTH = 0x3;
 
 // UL suffix in order to compare with unsigned long int in the code
-#define MAX_CODE (1UL << 14) ///< Digitiser is 14 bit
+#define MAX_DIGITISER_CODE (1UL << 14) ///< Digitiser is 14 bit
 #define MAX_NUMBER_OF_RECORDS 254200UL
 
 #define TRIGGER_SOFTWARE 1
@@ -55,7 +55,7 @@ extern "C" {
      * @param buff_a, buff_b Allocataed memeory where data will be read into
      * @param samples_per_record, number_of_records
      */
-    void fetch_channel_data(
+    void fetch_digitiser_data(
         void* adq_cu_ptr,
         short* buff_a, short* buff_b,
         unsigned int samples_per_record,

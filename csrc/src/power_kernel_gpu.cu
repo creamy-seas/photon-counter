@@ -35,6 +35,8 @@
 __constant__ short gpu_chA_background[SP_POINTS];
 __constant__ short gpu_chB_background[SP_POINTS];
 
+int odx; ///< Output inDeX for CHA, CHB, CHASQ ...
+
 /*
   Call function to copy background for each channel a single time:
   * - gpu_chA_background
@@ -142,26 +144,58 @@ __global__ void power_kernel_runner(short *chA_data, short *chB_data,
     }
 }
 
-void GPU::power_kernel(
+/**
+ * Data from `cpu_out` is appended to `data_out`.
+ */
+void accumulate(long** data_out, long ***cpu_out, int no_streams, int no_chunks){
+    int odx;
+
+    for (int sp(0); sp < SP_POINTS; sp++) {
+        for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
+            odx = GPU::outputs_from_gpu[i];
+            for (int s(0); s < no_streams; s++)
+                data_out[odx][sp] += cpu_out[s][odx][sp];
+        }
+        data_out[SQ][sp] = data_out[CHASQ][sp] + data_out[CHBSQ][sp];
+    }
+}
+
+/**
+ * Data from `cpu_out` is appended to `data_out` **and normalised**.
+ */
+void accumulate(double** data_out, long ***cpu_out, int no_streams, int no_chunks){
+    int odx;
+
+    for (int sp(0); sp < SP_POINTS; sp++) {
+        for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
+            odx = GPU::outputs_from_gpu[i];
+            for (int s(0); s < no_streams; s++)
+                data_out[odx][sp] += (double)cpu_out[s][odx][sp];
+            data_out[odx][sp] /= no_chunks;
+        }
+        data_out[SQ][sp] = data_out[CHASQ][sp] + data_out[CHBSQ][sp];
+    }
+}
+
+template<typename T> int GPU::power_kernel(
     short *chA_data, short *chB_data,
-    double **data_out,
-    short ***gpu_in, long ***gpu_out, long ***cpu_out,
-    int no_streams){
+    T **data_out,
+    short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams){
     /**
      * ==> Ensure that allocate_memory has been called
      * ==> Ensure that background arrays (set to 0 for no correction) have been copied over
      *
-     * Launch streams, dealing with alternating chunks
+     * Launch streams, dealing with alternating no_chunks
      * steam0       stream1     stream0      stream1
      * a1a2a3a4.... b1b2b3b4... c1c2c3c4.... d1d2d3d4...
      *
      * - Each chunk has length SP_POINTS
-     * - There are R_POINTS/R_POINTS_PER_CHUNK total chunks to iterate through, split evenly between the streams
+     * - There are R_POINTS/R_POINTS_PER_CHUNK total no_chunks to iterate through, split evenly between the streams
      */
 
     int success = 0;
     int odx; // ouput index, CHA, CHB ...
-    int chunks = R_POINTS / R_POINTS_PER_CHUNK;
+    int no_chunks = R_POINTS / R_POINTS_PER_CHUNK;
 
     // Create streams
     cudaStream_t *stream_list = new cudaStream_t[no_streams];
@@ -179,12 +213,12 @@ void GPU::power_kernel(
         }
     }
 
-    for (int chunk0(0); chunk0 < chunks; chunk0+=no_streams){
+    for (int chunk0(0); chunk0 < no_chunks; chunk0+=no_streams){
         // Memcpy -> Kernel -> Memcpy must be in the order below (breadth first)
         // to prevent blocking of kernel execution by batching of similar commands
         // Therefore, do NOT try to combine the for loops: copying must be issued first, then the kernels, then the copying again
 
-        // Copy over the chA and chB data in chunks to each stream
+        // Copy over the chA and chB data in no_chunks to each stream
         // - (chunk0 + s) * R_POINTS_PER_CHUNK * SP_POINTS  provides the correct offset when copying input data
         // - R_POINTS_PER_CHUNK * SP_POINTS * sizeof(short)  specifies how many bytes to copy
         for (int s(0); s < no_streams; s++){
@@ -221,23 +255,28 @@ void GPU::power_kernel(
         }
     }
 
-    // Ensure that execution of each stream finishes
+    // Await and close each stream
     for (int s(0); s < no_streams; s++) {
         cudaStreamSynchronize(stream_list[s]);
         cudaStreamDestroy(stream_list[s]);
     }
     delete[] stream_list;
 
-    // Sum up totals from the different streams
-    for (int sp(0); sp < SP_POINTS; sp++) {
-        for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
-            odx = GPU::outputs_from_gpu[i];
-            for (int s(0); s < no_streams; s++)
-                data_out[odx][sp] += (double)cpu_out[s][odx][sp];
-            data_out[odx][sp] /= chunks;
-        }
-        data_out[SQ][sp] = data_out[CHASQ][sp] + data_out[CHBSQ][sp];
-    }
+    // Sum up totals from the different streams:
+    // - If data_out is of type double**, normalise by the number of chunks for a ready result.
+    // - If data_out is of type long**, only accumulate the data to normalise later on.
+    accumulate(data_out, cpu_out, no_streams, no_chunks);
 
     /** Ensure that free_memory is called ==> */
+    return no_chunks;
 }
+
+template int GPU::power_kernel<double>(
+    short *chA_data, short *chB_data,
+    double **data_out,
+    short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams); ///< When data_out is passed in as `double**` it is infered that data should be normalised as this is a single run.
+
+template int GPU::power_kernel<long>(
+    short *chA_data, short *chB_data,
+    long **data_out,
+    short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams); ///< When data_out is paseed in as `long**` it is infered that data should be accumulated, as there will be further repititions.

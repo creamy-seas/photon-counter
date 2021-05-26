@@ -72,8 +72,7 @@ public:
                 arr_to_dump[0] = new short[4]{1,2,3,4};
                 arr_to_dump[1] = new short[4]{3,4,5,6};
 
-                dump_arrays_to_file(arr_to_dump, 2, 4, "./test/test_bin/dump-example.txt", "#Series 1\tSeries 2");
-
+                dump_arrays_to_file(arr_to_dump, 2, 4, "./test/test_bin/dump-example.txt", "#Series 1\tSeries 2", 1);
         }
 
         void test_load_arrays_from_file__fail(){
@@ -111,7 +110,8 @@ public:
                 dump_arrays_to_file(arr_to_dump,
                                     3,
                                     4,
-                                    "./test/test_bin/dump-example.txt", "#Series 1\tSeries 2\tSeries 3");
+                                    "./test/test_bin/dump-example.txt", "#Series 1\tSeries 2\tSeries 3",
+                                    1);
 
                 double** arr_to_load = new double*[3];
                 arr_to_load[0] = new double[4];

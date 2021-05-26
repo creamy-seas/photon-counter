@@ -71,7 +71,7 @@ void* master_setup(int blink, int clock_source, unsigned int trigger_mode) {
 /*
  * Fetch data from the digitiser. Ensure that multirecord has been setup before this function is run!
  */
-void fetch_channel_data(
+void fetch_digitiser_data(
         void* adq_cu_ptr,
         short* buff_a, short* buff_b,
         unsigned int samples_per_record,

@@ -124,7 +124,7 @@ ldd ./bin/ia_1488.so
 | `sp_digitizer.py` (Python) | `ia_ADQAPI.cpp` (C++)                 |
 |:---------------------------|---------------------------------------|
 | 🏆 extensive setup         | essential setup only for tests        |
-|                            | 🏆 `fetch_channel_data` to fetch data |
+|                            | 🏆 `fetch_digitiser_data` to fetch data |
 
 ## GPU Utils ##
 > Complete
@@ -152,7 +152,7 @@ ldd ./bin/ia_1488.so
 |:---------------------------------|----------------------------------------------------|
 | allocation of arrays             | allocation of arrays                               |
 | call in order:                   | 3 threads (read, process, save) in single function |
-| - C++: `fetch_channel_data`      |                                                    |
+| - C++: `fetch_digitiser_data`      |                                                    |
 | - C++: `power_kernel_vXXXX`      |                                                    |
 | - Python: Post processing        |                                                    |
 |                                  | 🏆 just need to make sure that data dumping safe   |

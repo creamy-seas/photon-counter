@@ -78,7 +78,7 @@ It seems that the GPU kernel peaks at 2 streams in terms of performance.
 
 | Group     | Experiment      | Prob. Space | Samples | Iterations | Baseline | us/Iteration  | Iterations/sec | RAM (bytes) |
 |:---------:|:---------------:|:-----------:|:-------:|:----------:|:--------:|:-------------:|:--------------:|:-----------:|
-| DIGITISER | Theoretical     |             |         |            |          | 740,000       | 1.35           |             |
+| DIGITISER | Theoretical     |             |         |            |          | 740000        | 1.35           |             |
 | POWER     | 1T_NO_BACK      | Null        | 30      | 1          | 1.00000  | 1927193.00000 | 0.52           | 60559360    |
 | POWER     | 2T_NO_BACK      | Null        | 30      | 1          | 1.31233  | 2529108.00000 | 0.40           | 68952064    |
 | POWER     | 8T_NO_BACK      | Null        | 30      | 1          | 1.40540  | 2708469.00000 | 0.37           | 85737472    |
@@ -91,6 +91,7 @@ It seems that the GPU kernel peaks at 2 streams in terms of performance.
 | POWER     | GPU_2ST         | Null        | 30      | 29         | 0.01728  | 33303.72414   | 30.03          | 9418448896  |
 | POWER     | GPU_8ST         | Null        | 30      | 30         | 0.01706  | 32872.36667   | 30.42          | 9418448896  |
 | POWER     | GPU_16ST        | Null        | 30      | 30         | 0.01719  | 33132.93333   | 30.18          | 9552666624  |
+| POWER     | FILE_WRITTING   | Null        | 30      | 239        | 0.00046  | 1791.52301    | 558.18         | 9409736704  |
 
 </details>
 

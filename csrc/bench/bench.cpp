@@ -3,7 +3,9 @@
 #include <ctime> // time
 #include <cmath>
 #include "power_kernel.hpp"
-#include "ia_ADQAPI.hpp" // fetch_channel_data
+
+#include "utils.hpp"
+#include "ia_ADQAPI.hpp" // fetch_digitiser_data
 #include "ADQAPI.h" // DeleteAdqControlUnit
 
 CELERO_MAIN
@@ -100,7 +102,7 @@ public:
 
     void tearDown() override {
         PowerKernelFixture::tearDown();
-        GPU::free_memory(&chA_data_locked, &chB_data_locked,
+        GPU::free_memory(chA_data_locked, chB_data_locked,
                          gpu_in, gpu_out, cpu_out, no_streams);
     };
 };
@@ -155,7 +157,7 @@ BASELINE_F(POWER, DIGITIZER, DigitiserFixture, 1, 1)
 {
     // Prepare multirecord mode
     ADQ_MultiRecordSetup(adq_cu_ptr, 1, number_of_records,  SP_POINTS);
-    fetch_channel_data(adq_cu_ptr,
+    fetch_digitiser_data(adq_cu_ptr,
                        buff_a, buff_b,
                        SP_POINTS, number_of_records);
     ADQ_MultiRecordClose(adq_cu_ptr, 1);
@@ -170,14 +172,14 @@ BASELINE_F(POWER, DIGITIZER, DigitiserFixture, 1, 1)
 //         );
 // }
 
-BASELINE_F(POWER, 1T_BACK_FULL_MASK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
-    CPU::power_kernel(
-        chA_data, chB_data, data_out,
-        SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK,
-        chA_background, chB_background,
-        SP_POINTS, R_POINTS, 1
-        );
-}
+// BASELINE_F(POWER, 1T_BACK_FULL_MASK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+//     CPU::power_kernel(
+//         chA_data, chB_data, data_out,
+//         SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK,
+//         chA_background, chB_background,
+//         SP_POINTS, R_POINTS, 1
+//         );
+// }
 
 // BENCHMARK_F(POWER, GPU_1ST, PowerKernelGPU1StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
 //     GPU::power_kernel(
@@ -185,11 +187,14 @@ BASELINE_F(POWER, 1T_BACK_FULL_MASK, PowerKernelFixture, SAMPLES, ITERATIONS_PER
 //         data_out,
 //         gpu_in, gpu_out, cpu_out, no_streams);
 // }
-BENCHMARK_F(POWER, GPU_2ST, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+BASELINE_F(POWER, GPU_2ST, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
     GPU::power_kernel(
         chA_data_locked, chB_data_locked,
         data_out,
         gpu_in, gpu_out, cpu_out, no_streams);
+    dump_arrays_to_file(data_out, 5, SP_POINTS,
+                        "./test/test_bin/bench-example.txt",
+                        "#CHA\tCHB\tCHASQ\tCHBSQ\tSQ");
 }
 // BENCHMARK_F(POWER, GPU_8ST, PowerKernelGPU8StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
 //     GPU::power_kernel(
@@ -202,6 +207,12 @@ BENCHMARK_F(POWER, GPU_2ST, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PE
 //         chA_data_locked, chB_data_locked,
 //         data_out,
 //         gpu_in, gpu_out, cpu_out, no_streams);
+// }
+
+// BENCHMARK_F(POWER, FILE_WRITTING, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+//     dump_arrays_to_file(data_out, 5, SP_POINTS,
+//                         "./test/test_bin/bench-example.txt",
+//                         "#CHA\tCHB\tCHASQ\tCHBSQ\tSQ");
 // }
 
 ///////////////////////////////////////////////////////////////////////////////

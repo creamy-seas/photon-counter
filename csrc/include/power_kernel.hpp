@@ -49,7 +49,6 @@ namespace CPU {
         int r_points,
         int number_of_threads
         );
-
 }
 
 namespace GPU {
@@ -81,24 +80,32 @@ namespace GPU {
      */
     void copy_background_arrays_to_gpu(short *chA_background, short *chB_background);
 
-    /*
+    /**
      * The input data is split into chunks, to avoid the limitation on shared memory on GPU.
-     * Streams are used to process these chunks in parallel.
-     * Memory is allocated for for each stream separately to avoid race conditions
+     * - Streams are used to process these chunks in parallel.
+     * - Memory is allocated for for each stream separately to avoid race conditions.
+     * - Memory on the CPU needs to be pinned so that it is never paged and always accessible to streams.
+     * - Memory on the GPU will be allocated and it's address (`short*`) stored in an array.
      *
+     * Pass in the ADDRESSES of the pointers that will store these arrays e.g.
      *
-     * - input data on the CPU which needs to be memeory locked for safe copying CPU -> GPU using different streams
-     * - input data on the GPU
-     * - output data on the GPU
-     * - output data on the CPU, which needs to be memory locked for safe copying from GPU->CPU using different streams
+     *     short ***gpu_in; short **gpu_out; long ***cpu_out; short *chA_data, short *chB_data;
+     *     allocate_memory(&chA_data, &chB_data, &gpu_in, &gpu_out, &cpu_out, 2);
      *
-     * Pass in the ADDRESSES of the pointers that will store these arrays i.e. `short ***gpu_in` will be paseed in as &gpu_in
+     * Pass in 0 to skip allocation for certain inputs
+     *
+     *     short *chA_data, short *chB_data;
+     *     allocate_memory(&chA_data, &chB_data, 0, 0, 0, 2);
+     *
+     * @param chA_data, chB_data arrays to be populated by the digitiser. Pinned
+     * @param gpu_in, gpu_out arrays holding the addresses of the GPU arrays
+     * @param cpu_out Pinned memory on CPU
      */
     void allocate_memory(
         short **chA_data, short **chB_data,
         short ****gpu_in, long ****gpu_out, long ****cpu_out, int no_of_streams);
     void free_memory(
-        short **chA_data, short **chB_data,
+        short *chA_data, short *chB_data,
         short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_of_streams);
 
     /**
@@ -111,17 +118,35 @@ namespace GPU {
      * - \f[ \left\langle{chA^2 + chB^2}\right\rangle \f]
      * each of `SP_POINTS` in length as the repetitions are averaged.
      *
-     * **GPU kernels will need array sizes need to be known at compile time** so used GPU::fetch_kernel_parameters to
-     * ensure that correct data is passed into it.
+     * **Important**
+     * - GPU kernels is compiled with fixed array sizes - use GPU::fetch_kernel_parameters to ensure that correct array sizes are passed into it.
+     * - The actual data is processes in chunks of size `R_POINTS_PER_CHUNK` each. Depending on whether data is accumulated (`long **data_out`)
+     *   or normalised (`double **data_out`) normalisation may need to take place outside the function.
      *
      * @param chA_data, chB_data raw data from the digitiser
-     * @param data_out kernel output in the following order: `[CHA, CHB, CHASQ, CHBSQ]`
-     * @param gpui, gpu_out, cpu_out auxillary arrays allocated using `allocate_memory` function
+     * @param data_out kernel output: `[CHA, CHB, CHASQ, CHBSQ]`.
+     * @tparam T specifies whether data_out should be accumulated (long, for repetitive invocations) or normalised (double, for a single run)
+     * @param gpui, gpu_out, cpu_out auxillary arrays allocated using `allocate_memory` function.
      * @param no_streams to launch on GPU. Benchmarking indicates that 2 is the optimal choice.
+     * @param accumulate if true, dataa will be accumulated in `data_out` with no normalisation. This will allow stacking
+     *
+     * @returns int number of chunks to be used when normalising the accumulated `long **data_out`.
+     *
+     *     long** data_out = new long*[NO_OF_POWER_KERNEL_OUTPUTS];
+     *     for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
+     *         data_out[i] = new long[SP_POINTS]();
+     *
+     *     int no_chunks;
+     *     for (int r(0); r < total_repetitions; r++)
+     *         no_chunks = GPU::power_kernel(chA_data, chB_data, data_out, gpu_in, gpu_out, cpu_out, no_streams);
+     *     for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++){
+     *         for (int sp(0); sp < SP_POINTS; sp++)
+     *             data_out[i][sp] /= (chunks * total_repetitions)
+     *     }
      */
-    void power_kernel(
+    template <typename T> int power_kernel(
         short *chA_data, short *chB_data,
-        double **data_out,
+        T **data_out,
         // Auxillary memory allocation
         short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams);
 }

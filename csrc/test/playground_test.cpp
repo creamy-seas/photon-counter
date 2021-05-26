@@ -23,4 +23,4 @@ public:
                 //         GPU::example_gpu_func(1, 2));
         }
 };
-CPPUNIT_TEST_SUITE_REGISTRATION( PlaygroundTest );
+// CPPUNIT_TEST_SUITE_REGISTRATION( PlaygroundTest );

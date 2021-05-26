@@ -1,0 +1,200 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - 🐋 Test Coverage - src/power_pipeline.cpp</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - power_pipeline.cpp<span style="font-size: 80%;"> (source / <a href="power_pipeline.cpp.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">🐋 Test Coverage</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">47</td>
+            <td class="headerCovTableEntry">47</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-05-27 20:33:34</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">4</td>
+            <td class="headerCovTableEntry">4</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : #include &lt;stdexcept&gt; //for std::runtime_error</a>
+<span class="lineNum">       2 </span>            : #include &lt;string&gt; // for std::to_string
+<span class="lineNum">       3 </span>            : #include &lt;thread&gt; // for std::thread
+<span class="lineNum">       4 </span>            : #include &lt;limits.h&gt; // For LONG_MAX
+<span class="lineNum">       5 </span>            : 
+<span class="lineNum">       6 </span>            : #include &lt;iostream&gt;
+<span class="lineNum">       7 </span>            : 
+<span class="lineNum">       8 </span>            : #include &quot;colours.hpp&quot;
+<span class="lineNum">       9 </span>            : #include &quot;utils.hpp&quot;
+<span class="lineNum">      10 </span>            : #include &quot;ia_ADQAPI.hpp&quot;
+<span class="lineNum">      11 </span>            : #include &quot;power_pipeline.hpp&quot;
+<span class="lineNum">      12 </span>            : #include &quot;power_kernel.hpp&quot;
+<span class="lineNum">      13 </span>            : 
+<span class="lineNum">      14 </span>            : const int NO_THREADS = 2; ///&lt; One thread will be used to request data from digitiser. Other thread will process the data and store it in file
+<span class="lineNum">      15 </span>            : const int NO_GPU_STREAMS = 2; ///&lt; Benchmarking showed that 2 streams should be used on the GPU for best performance.
+<span class="lineNum">      16 </span>            : 
+<span class="lineNum">      17 </span>            : /**
+<span class="lineNum">      18 </span>            :  * \copy GPU::power_kernel
+<span class="lineNum">      19 </span>            :  *
+<span class="lineNum">      20 </span>            :  * Evaluates the following from chA_data and chB_data data
+<span class="lineNum">      21 </span>            :  * - \f[ \left\langle{chA_data}\right\rangle \f]
+<span class="lineNum">      22 </span>            :  * - \f[ \left\langle{chB_data}\right\rangle \f]
+<span class="lineNum">      23 </span>            :  * - \f[ \left\langle{chA_data^2}\right\rangle \f]
+<span class="lineNum">      24 </span>            :  * - \f[ \left\langle{chB_data^2}\right\rangle \f]
+<span class="lineNum">      25 </span>            :  * - \f[ \left\langle{chA_data^2 + chB_data^2}\right\rangle \f]
+<span class="lineNum">      26 </span>            :  *
+<span class="lineNum">      27 </span>            :  * @param chA_data, chB_data data from the digitiser. Must be of length `SP_POINTS * R_POINTS`.
+<span class="lineNum">      28 </span>            :  * @param data_out cumulative array which will be incremented with the power kernel outputs
+<span class="lineNum">      29 </span>            :  * @param repetition cumulative data is normalised by the number runs completed
+<a name="30"><span class="lineNum">      30 </span>            :  * @param output_filename where data is dumped so that Python can plot it.</a>
+<span class="lineNum">      31 </span>            :  */
+<span class="lineNum">      32 </span><span class="lineCov">         20 : void process_digitiser_data(short *chA_data, short *chB_data,</span>
+<span class="lineNum">      33 </span>            :                             long **data_out,
+<span class="lineNum">      34 </span>            :                             short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams,
+<span class="lineNum">      35 </span>            :                             unsigned long repetition, std::string output_filename){
+<span class="lineNum">      36 </span>            :     int normalisation = GPU::power_kernel(
+<span class="lineNum">      37 </span>            :         chA_data, chB_data,
+<span class="lineNum">      38 </span>            :         data_out,
+<span class="lineNum">      39 </span><span class="lineCov">         20 :         gpu_in, gpu_out, cpu_out, no_streams);</span>
+<span class="lineNum">      40 </span>            : 
+<span class="lineNum">      41 </span><span class="lineCov">         20 :     normalisation *= repetition;</span>
+<span class="lineNum">      42 </span>            : 
+<span class="lineNum">      43 </span>            :     dump_arrays_to_file(data_out,
+<span class="lineNum">      44 </span>            :                         NO_OF_POWER_KERNEL_OUTPUTS,
+<span class="lineNum">      45 </span>            :                         SP_POINTS,
+<span class="lineNum">      46 </span>            :                         output_filename,
+<span class="lineNum">      47 </span>            :                         &quot;CHA\tCHB\tCHASQ\tCHBSQ\tSQ&quot;,
+<span class="lineNum">      48 </span><span class="lineCov">         20 :                         (double)normalisation);</span>
+<span class="lineNum">      49 </span>            : 
+<a name="50"><span class="lineNum">      50 </span><span class="lineCov">         20 : };</span></a>
+<span class="lineNum">      51 </span>            : 
+<span class="lineNum">      52 </span><span class="lineCov">          4 : void run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, std::string output_filename){</span>
+<span class="lineNum">      53 </span>            : 
+<span class="lineNum">      54 </span>            :     // Casting to largest data type of comparisson
+<span class="lineNum">      55 </span><span class="lineCov">          8 :     if ((unsigned long long)no_repetitions * MAX_DIGITISER_CODE * R_POINTS</span>
+<span class="lineNum">      56 </span><span class="lineCov">          4 :         &gt;</span>
+<span class="lineNum">      57 </span>            :         (unsigned long long)LONG_MAX)
+<span class="lineNum">      58 </span>            :         throw std::runtime_error(&quot;No repetitions (&quot;
+<span class="lineNum">      59 </span><span class="lineCov">          4 :                                  + std::to_string(no_repetitions)</span>
+<span class="lineNum">      60 </span><span class="lineCov">          4 :                                  + &quot;) x 14bit Code (&quot;</span>
+<span class="lineNum">      61 </span><span class="lineCov">          8 :                                  + std::to_string(MAX_DIGITISER_CODE)</span>
+<span class="lineNum">      62 </span><span class="lineCov">          4 :                                  + &quot;) x R_POINTS(number of records per point=&quot;</span>
+<span class="lineNum">      63 </span><span class="lineCov">          8 :                                  + std::to_string(R_POINTS)</span>
+<span class="lineNum">      64 </span><span class="lineCov">          4 :                                  + &quot;) can overflow the cumulative arrays of type LONG (&quot;</span>
+<span class="lineNum">      65 </span><span class="lineCov">          8 :                                  + std::to_string(LONG_MAX)</span>
+<span class="lineNum">      66 </span><span class="lineCov">          6 :                                  + &quot;)&quot;);</span>
+<span class="lineNum">      67 </span>            : 
+<span class="lineNum">      68 </span>            :     // 1. Allocation of memory
+<span class="lineNum">      69 </span>            :     // There will be 2 copies of chA_data and chB_data.
+<span class="lineNum">      70 </span>            :     // One thread can be reading into one pair (chA, chB),
+<span class="lineNum">      71 </span>            :     // Other thread can be processing the other pair (chA, chB)
+<span class="lineNum">      72 </span><span class="lineCov">          2 :     short** chA_data = new short*[NO_THREADS];</span>
+<span class="lineNum">      73 </span><span class="lineCov">          2 :     short** chB_data = new short*[NO_THREADS];</span>
+<span class="lineNum">      74 </span><span class="lineCov">          2 :     GPU::allocate_memory(&amp;chA_data[1], &amp;chB_data[1], 0, 0, 0, NO_GPU_STREAMS);</span>
+<span class="lineNum">      75 </span>            : 
+<span class="lineNum">      76 </span>            :     // Single copy of these, since only the processing thread will use them
+<span class="lineNum">      77 </span>            :     short ***gpu_in; long ***gpu_out; long ***cpu_out;
+<span class="lineNum">      78 </span><span class="lineCov">          2 :     GPU::allocate_memory(&amp;chA_data[0], &amp;chB_data[0], &amp;gpu_in, &amp;gpu_out, &amp;cpu_out, NO_GPU_STREAMS);</span>
+<span class="lineNum">      79 </span><span class="lineCov">          2 :     long** data_out = new long*[NO_OF_POWER_KERNEL_OUTPUTS];</span>
+<span class="lineNum">      80 </span><span class="lineCov">         12 :     for (int i(0); i &lt; NO_OF_POWER_KERNEL_OUTPUTS; i++)</span>
+<span class="lineNum">      81 </span><span class="lineCov">         10 :         data_out[i] = new long[SP_POINTS];</span>
+<span class="lineNum">      82 </span>            : 
+<span class="lineNum">      83 </span>            :     // 2. Launch 2 parrallel threads, alternating between fetching from digitiser and processing on GPU.
+<span class="lineNum">      84 </span><span class="lineCov">          6 :     std::thread thread_list[NO_THREADS];</span>
+<span class="lineNum">      85 </span><span class="lineCov">          2 :     int dth(0), pth(1); // flip-floppers between 0 and 1. DigitizerTHread and ProcessingTHread</span>
+<span class="lineNum">      86 </span>            : 
+<span class="lineNum">      87 </span>            :     // Initial read into digitiser
+<span class="lineNum">      88 </span><span class="lineCov">          2 :     fetch_digitiser_data(adq_cu_ptr, chA_data[dth], chB_data[dth], SP_POINTS, R_POINTS);</span>
+<span class="lineNum">      89 </span><span class="lineCov">         20 :     for (unsigned long r(1); r &lt; no_repetitions; r++) {</span>
+<span class="lineNum">      90 </span>            :         // XOR to switch 0 &lt;-&gt; 1
+<span class="lineNum">      91 </span><span class="lineCov">         18 :         dth ^= 1; pth ^= 1;</span>
+<span class="lineNum">      92 </span>            : 
+<span class="lineNum">      93 </span><span class="lineCov">         72 :         thread_list[0] = std::thread(fetch_digitiser_data,</span>
+<span class="lineNum">      94 </span>            :                                      adq_cu_ptr,
+<span class="lineNum">      95 </span><span class="lineCov">         36 :                                      chA_data[dth], chB_data[dth],</span>
+<span class="lineNum">      96 </span><span class="lineCov">         18 :                                      SP_POINTS, R_POINTS);</span>
+<span class="lineNum">      97 </span>            : 
+<span class="lineNum">      98 </span><span class="lineCov">         72 :         thread_list[1] = std::thread(process_digitiser_data,</span>
+<span class="lineNum">      99 </span><span class="lineCov">         36 :                                      chA_data[pth], chB_data[pth],</span>
+<span class="lineNum">     100 </span>            :                                      data_out,
+<span class="lineNum">     101 </span>            :                                      gpu_in, gpu_out, cpu_out,
+<span class="lineNum">     102 </span>            :                                      NO_GPU_STREAMS,
+<span class="lineNum">     103 </span><span class="lineCov">         18 :                                      r, output_filename);</span>
+<span class="lineNum">     104 </span><span class="lineCov">         18 :         thread_list[dth].join();</span>
+<span class="lineNum">     105 </span><span class="lineCov">         18 :         thread_list[pth].join();</span>
+<span class="lineNum">     106 </span>            :     }
+<span class="lineNum">     107 </span><span class="lineCov">          2 :     dth ^= 1; pth ^= 1;</span>
+<span class="lineNum">     108 </span>            :     // Closing accumulation
+<span class="lineNum">     109 </span>            :     process_digitiser_data(
+<span class="lineNum">     110 </span><span class="lineCov">          4 :         chA_data[pth], chB_data[pth],</span>
+<span class="lineNum">     111 </span>            :         data_out,
+<span class="lineNum">     112 </span>            :         gpu_in, gpu_out, cpu_out,
+<span class="lineNum">     113 </span>            :         NO_GPU_STREAMS,
+<span class="lineNum">     114 </span><span class="lineCov">          6 :         no_repetitions, output_filename);</span>
+<span class="lineNum">     115 </span>            : 
+<span class="lineNum">     116 </span>            :     // Deallocation of memory
+<span class="lineNum">     117 </span><span class="lineCov">          2 :     GPU::free_memory(chA_data[0], chB_data[0], gpu_in, gpu_out, cpu_out, NO_GPU_STREAMS);</span>
+<span class="lineNum">     118 </span><span class="lineCov">          2 :     GPU::free_memory(chA_data[1], chB_data[1], 0, 0, 0, NO_GPU_STREAMS);</span>
+<span class="lineNum">     119 </span><span class="lineCov">          2 :     delete[] chA_data;</span>
+<span class="lineNum">     120 </span><span class="lineCov">          2 :     delete[] chB_data;</span>
+<span class="lineNum">     121 </span><span class="lineCov">         12 :     for (int i(0); i &lt; NO_OF_POWER_KERNEL_OUTPUTS; i++)</span>
+<a name="122"><span class="lineNum">     122 </span><span class="lineCov">         10 :         delete[] data_out[i];</span></a>
+<span class="lineNum">     123 </span><span class="lineCov">          6 :     delete[] data_out;</span>
+<span class="lineNum">     124 </span><span class="lineCov">          8 : };</span>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

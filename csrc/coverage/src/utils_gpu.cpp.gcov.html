@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2021-05-26 16:03:59</td>
+            <td class="headerValue">2021-05-27 20:33:34</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">1</td>
@@ -68,73 +68,73 @@
 <span class="lineNum">       6 </span>            : #include &quot;colours.hpp&quot;
 <a name="7"><span class="lineNum">       7 </span>            : #include &quot;utils_gpu.hpp&quot;</a>
 <span class="lineNum">       8 </span>            : 
-<span class="lineNum">       9 </span><span class="lineCov">         46 : cudaDeviceProp fetch_gpu_parameters(){</span>
+<span class="lineNum">       9 </span><span class="lineCov">         35 : cudaDeviceProp fetch_gpu_parameters(){</span>
 <span class="lineNum">      10 </span>            :     // Already implemented in python
 <span class="lineNum">      11 </span>            : 
 <span class="lineNum">      12 </span>            :     cudaDeviceProp prop;
-<span class="lineNum">      13 </span><span class="lineCov">         46 :     cudaGetDeviceProperties(&amp;prop, 0);</span>
+<span class="lineNum">      13 </span><span class="lineCov">         35 :     cudaGetDeviceProperties(&amp;prop, 0);</span>
 <span class="lineNum">      14 </span>            : 
-<span class="lineNum">      15 </span><span class="lineCov">         46 :     OKBLUE(&quot;===========================================&quot;);</span>
-<span class="lineNum">      16 </span><span class="lineCov">         46 :     OKBLUE(&quot;Device parameters&quot;);</span>
-<span class="lineNum">      17 </span><span class="lineCov">         46 :     WHITE(&quot;Name: %s\n&quot;, prop.name );</span>
-<span class="lineNum">      18 </span><span class="lineCov">         46 :     WHITE(&quot;Compute capability: %d.%d\n&quot;, prop.major, prop.minor );</span>
-<span class="lineNum">      19 </span><span class="lineCov">         46 :     WHITE(&quot;Clock rate: %d\n&quot;, prop.clockRate );</span>
-<span class="lineNum">      20 </span><span class="lineCov">         46 :     WHITE(&quot;Device copy overlap: &quot; );</span>
-<span class="lineNum">      21 </span><span class="lineCov">         46 :     if (prop.deviceOverlap){</span>
-<span class="lineNum">      22 </span><span class="lineCov">         46 :         OKGREEN(&quot;Enabled&quot;);</span>
+<span class="lineNum">      15 </span><span class="lineCov">         35 :     OKBLUE(&quot;===========================================&quot;);</span>
+<span class="lineNum">      16 </span><span class="lineCov">         35 :     OKBLUE(&quot;Device parameters&quot;);</span>
+<span class="lineNum">      17 </span><span class="lineCov">         35 :     WHITE(&quot;Name: %s\n&quot;, prop.name );</span>
+<span class="lineNum">      18 </span><span class="lineCov">         35 :     WHITE(&quot;Compute capability: %d.%d\n&quot;, prop.major, prop.minor );</span>
+<span class="lineNum">      19 </span><span class="lineCov">         35 :     WHITE(&quot;Clock rate: %d\n&quot;, prop.clockRate );</span>
+<span class="lineNum">      20 </span><span class="lineCov">         35 :     WHITE(&quot;Device copy overlap: &quot; );</span>
+<span class="lineNum">      21 </span><span class="lineCov">         35 :     if (prop.deviceOverlap){</span>
+<span class="lineNum">      22 </span><span class="lineCov">         35 :         OKGREEN(&quot;Enabled&quot;);</span>
 <span class="lineNum">      23 </span>            :     }
 <span class="lineNum">      24 </span>            :     else{
 <span class="lineNum">      25 </span><span class="lineNoCov">          0 :         WARNING(&quot;Disabled&quot;);</span>
 <span class="lineNum">      26 </span>            :     }
-<span class="lineNum">      27 </span><span class="lineCov">         46 :     WHITE( &quot;Kernel execition timeout : &quot; );</span>
-<span class="lineNum">      28 </span><span class="lineCov">         46 :     if (prop.kernelExecTimeoutEnabled){</span>
+<span class="lineNum">      27 </span><span class="lineCov">         35 :     WHITE( &quot;Kernel execition timeout : &quot; );</span>
+<span class="lineNum">      28 </span><span class="lineCov">         35 :     if (prop.kernelExecTimeoutEnabled){</span>
 <span class="lineNum">      29 </span><span class="lineNoCov">          0 :         OKGREEN(&quot;Enabled&quot;);</span>
 <span class="lineNum">      30 </span>            :     }
 <span class="lineNum">      31 </span>            :     else{
-<span class="lineNum">      32 </span><span class="lineCov">         46 :         WARNING(&quot;Disabled&quot;);</span>
+<span class="lineNum">      32 </span><span class="lineCov">         35 :         WARNING(&quot;Disabled&quot;);</span>
 <span class="lineNum">      33 </span>            :     }
 <span class="lineNum">      34 </span>            : 
-<span class="lineNum">      35 </span><span class="lineCov">         46 :     OKBLUE(&quot;Memory Information for device&quot;);</span>
+<span class="lineNum">      35 </span><span class="lineCov">         35 :     OKBLUE(&quot;Memory Information for device&quot;);</span>
 <span class="lineNum">      36 </span>            : 
-<span class="lineNum">      37 </span><span class="lineCov">         46 :     WHITE(</span>
+<span class="lineNum">      37 </span><span class="lineCov">         35 :     WHITE(</span>
 <span class="lineNum">      38 </span>            :         &quot;Total global mem (in bytes): %ld (int: %ld) (float, long int: %ld)\n&quot;,
 <span class="lineNum">      39 </span>            :         prop.totalGlobalMem,
 <span class="lineNum">      40 </span>            :         prop.totalGlobalMem / 2,
 <span class="lineNum">      41 </span>            :         prop.totalGlobalMem / 4
 <span class="lineNum">      42 </span>            :         );
 <span class="lineNum">      43 </span>            : 
-<span class="lineNum">      44 </span><span class="lineCov">         46 :     WHITE(&quot;Total constant Mem: %ld\n&quot;, prop.totalConstMem );</span>
-<span class="lineNum">      45 </span><span class="lineCov">         46 :     WHITE(&quot;Max mem pitch: %ld\n&quot;, prop.memPitch );</span>
-<span class="lineNum">      46 </span><span class="lineCov">         46 :     WHITE(&quot;Texture Alignment: %ld\n&quot;, prop.textureAlignment );</span>
+<span class="lineNum">      44 </span><span class="lineCov">         35 :     WHITE(&quot;Total constant Mem: %ld\n&quot;, prop.totalConstMem );</span>
+<span class="lineNum">      45 </span><span class="lineCov">         35 :     WHITE(&quot;Max mem pitch: %ld\n&quot;, prop.memPitch );</span>
+<span class="lineNum">      46 </span><span class="lineCov">         35 :     WHITE(&quot;Texture Alignment: %ld\n&quot;, prop.textureAlignment );</span>
 <span class="lineNum">      47 </span>            : 
-<span class="lineNum">      48 </span><span class="lineCov">         46 :     OKBLUE(&quot;MP Information for device&quot;);</span>
-<span class="lineNum">      49 </span><span class="lineCov">         46 :     if (prop.deviceOverlap){</span>
-<span class="lineNum">      50 </span><span class="lineCov">         46 :         OKGREEN(&quot;Streams will speed computation up!&quot;);</span>
+<span class="lineNum">      48 </span><span class="lineCov">         35 :     OKBLUE(&quot;MP Information for device&quot;);</span>
+<span class="lineNum">      49 </span><span class="lineCov">         35 :     if (prop.deviceOverlap){</span>
+<span class="lineNum">      50 </span><span class="lineCov">         35 :         OKGREEN(&quot;Streams will speed computation up!&quot;);</span>
 <span class="lineNum">      51 </span>            :     }
 <span class="lineNum">      52 </span>            :     else{
 <span class="lineNum">      53 </span><span class="lineNoCov">          0 :         WARNING(&quot;Streams will not speed computation up.&quot;);</span>
 <span class="lineNum">      54 </span>            :     }
-<span class="lineNum">      55 </span><span class="lineCov">         46 :     WHITE(&quot;Multiprocessor count: %d\n&quot;,</span>
+<span class="lineNum">      55 </span><span class="lineCov">         35 :     WHITE(&quot;Multiprocessor count: %d\n&quot;,</span>
 <span class="lineNum">      56 </span>            :           prop.multiProcessorCount );
-<span class="lineNum">      57 </span><span class="lineCov">         46 :     WHITE(</span>
+<span class="lineNum">      57 </span><span class="lineCov">         35 :     WHITE(</span>
 <span class="lineNum">      58 </span>            :         &quot;Shared mem per block: %ld (int: %ld) (float, long int: %ld)\n&quot;,
 <span class="lineNum">      59 </span>            :         prop.sharedMemPerBlock,
 <span class="lineNum">      60 </span>            :         prop.sharedMemPerBlock / 2,
 <span class="lineNum">      61 </span>            :         prop.sharedMemPerBlock / 4
 <span class="lineNum">      62 </span>            :         );
-<span class="lineNum">      63 </span><span class="lineCov">         46 :     WHITE(&quot;Registers per block: %d\n&quot;, prop.regsPerBlock );</span>
-<span class="lineNum">      64 </span><span class="lineCov">         46 :     WHITE(&quot;Threads in warp: %d\n&quot;, prop.warpSize );</span>
-<span class="lineNum">      65 </span><span class="lineCov">         46 :     WHITE(&quot;Max threads per block: %d\n&quot;,</span>
+<span class="lineNum">      63 </span><span class="lineCov">         35 :     WHITE(&quot;Registers per block: %d\n&quot;, prop.regsPerBlock );</span>
+<span class="lineNum">      64 </span><span class="lineCov">         35 :     WHITE(&quot;Threads in warp: %d\n&quot;, prop.warpSize );</span>
+<span class="lineNum">      65 </span><span class="lineCov">         35 :     WHITE(&quot;Max threads per block: %d\n&quot;,</span>
 <span class="lineNum">      66 </span>            :           prop.maxThreadsPerBlock );
-<span class="lineNum">      67 </span><span class="lineCov">         46 :     WHITE(&quot;Max block dimensions: (%d, %d, %d)\n&quot;,</span>
+<span class="lineNum">      67 </span><span class="lineCov">         35 :     WHITE(&quot;Max block dimensions: (%d, %d, %d)\n&quot;,</span>
 <span class="lineNum">      68 </span>            :           prop.maxThreadsDim[0], prop.maxThreadsDim[1],
 <span class="lineNum">      69 </span>            :           prop.maxThreadsDim[2] );
-<span class="lineNum">      70 </span><span class="lineCov">         46 :     WHITE(&quot;Max grid dimensions: (%d, %d, %d)\n&quot;,</span>
+<span class="lineNum">      70 </span><span class="lineCov">         35 :     WHITE(&quot;Max grid dimensions: (%d, %d, %d)\n&quot;,</span>
 <span class="lineNum">      71 </span>            :           prop.maxGridSize[0], prop.maxGridSize[1],
 <span class="lineNum">      72 </span>            :           prop.maxGridSize[2] );
-<span class="lineNum">      73 </span><span class="lineCov">         46 :     OKBLUE(&quot;===========================================&quot;);</span>
+<span class="lineNum">      73 </span><span class="lineCov">         35 :     OKBLUE(&quot;===========================================&quot;);</span>
 <span class="lineNum">      74 </span>            : 
-<span class="lineNum">      75 </span><span class="lineCov">         46 :     return prop;</span>
+<span class="lineNum">      75 </span><span class="lineCov">         35 :     return prop;</span>
 <span class="lineNum">      76 </span>            : }
 </pre>
       </td>

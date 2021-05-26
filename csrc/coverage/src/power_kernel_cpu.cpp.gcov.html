@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2021-05-26 16:03:59</td>
+            <td class="headerValue">2021-05-27 20:33:34</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">3</td>
@@ -93,43 +93,43 @@
 <span class="lineNum">      31 </span>            :  *
 <a name="32"><span class="lineNum">      32 </span>            :  * @param flat_cumulative_data 2D array of sequntial data to accumulate (or average)</a>
 <span class="lineNum">      33 </span>            :  */
-<span class="lineNum">      34 </span><span class="lineCov">          4 : void reduction_average(unsigned int** flat_cumulative_data, double** data_out,</span>
+<span class="lineNum">      34 </span><span class="lineCov">          7 : void reduction_average(unsigned int** flat_cumulative_data, double** data_out,</span>
 <span class="lineNum">      35 </span>            :                        unsigned int processing_mask,
 <span class="lineNum">      36 </span>            :                        int sp_points, int r_points) {
 <span class="lineNum">      37 </span>            : 
 <span class="lineNum">      38 </span>            :     // At least it is clear what is going on
-<span class="lineNum">      39 </span><span class="lineCov">         16 :     for (int sp(0); sp &lt; sp_points; sp++) {</span>
-<span class="lineNum">      40 </span><span class="lineCov">         96 :         for (int r(1); r &lt; r_points; r++) {</span>
-<span class="lineNum">      41 </span><span class="lineCov">         84 :             if (processing_mask &amp; CHA_MASK) flat_cumulative_data[CHA][sp] += flat_cumulative_data[CHA][sp + r * sp_points];</span>
-<span class="lineNum">      42 </span><span class="lineCov">         84 :             if (processing_mask &amp; CHB_MASK) flat_cumulative_data[CHB][sp] += flat_cumulative_data[CHB][sp + r * sp_points];</span>
-<span class="lineNum">      43 </span><span class="lineCov">         84 :             if (processing_mask &amp; CHASQ_MASK) flat_cumulative_data[CHASQ][sp] += flat_cumulative_data[CHASQ][sp + r * sp_points];</span>
-<span class="lineNum">      44 </span><span class="lineCov">         84 :                 if (processing_mask &amp; CHBSQ_MASK) flat_cumulative_data[CHBSQ][sp] += flat_cumulative_data[CHBSQ][sp + r * sp_points];</span>
-<span class="lineNum">      45 </span><span class="lineCov">         84 :                 if (processing_mask &amp; SQ_MASK) flat_cumulative_data[SQ][sp] += flat_cumulative_data[SQ][sp + r * sp_points];</span>
+<span class="lineNum">      39 </span><span class="lineCov">         28 :     for (int sp(0); sp &lt; sp_points; sp++) {</span>
+<span class="lineNum">      40 </span><span class="lineCov">        168 :         for (int r(1); r &lt; r_points; r++) {</span>
+<span class="lineNum">      41 </span><span class="lineCov">        147 :             if (processing_mask &amp; CHA_MASK) flat_cumulative_data[CHA][sp] += flat_cumulative_data[CHA][sp + r * sp_points];</span>
+<span class="lineNum">      42 </span><span class="lineCov">        147 :             if (processing_mask &amp; CHB_MASK) flat_cumulative_data[CHB][sp] += flat_cumulative_data[CHB][sp + r * sp_points];</span>
+<span class="lineNum">      43 </span><span class="lineCov">        147 :             if (processing_mask &amp; CHASQ_MASK) flat_cumulative_data[CHASQ][sp] += flat_cumulative_data[CHASQ][sp + r * sp_points];</span>
+<span class="lineNum">      44 </span><span class="lineCov">        147 :                 if (processing_mask &amp; CHBSQ_MASK) flat_cumulative_data[CHBSQ][sp] += flat_cumulative_data[CHBSQ][sp + r * sp_points];</span>
+<span class="lineNum">      45 </span><span class="lineCov">        147 :                 if (processing_mask &amp; SQ_MASK) flat_cumulative_data[SQ][sp] += flat_cumulative_data[SQ][sp + r * sp_points];</span>
 <span class="lineNum">      46 </span>            : }
-<span class="lineNum">      47 </span><span class="lineCov">         12 :         if (processing_mask &amp; CHA_MASK) data_out[CHA][sp] = (double)flat_cumulative_data[CHA][sp] / r_points;</span>
-<span class="lineNum">      48 </span><span class="lineCov">         12 :         if (processing_mask &amp; CHB_MASK) data_out[CHB][sp] = (double)flat_cumulative_data[CHB][sp] / r_points;</span>
-<span class="lineNum">      49 </span><span class="lineCov">         12 :         if (processing_mask &amp; CHASQ_MASK) data_out[CHASQ][sp] = (double)flat_cumulative_data[CHASQ][sp] / r_points;</span>
-<span class="lineNum">      50 </span><span class="lineCov">         12 :         if (processing_mask &amp; CHBSQ_MASK) data_out[CHBSQ][sp] = (double)flat_cumulative_data[CHBSQ][sp] / r_points;</span>
-<span class="lineNum">      51 </span><span class="lineCov">         12 :         if (processing_mask &amp; SQ_MASK) data_out[SQ][sp] = (double)flat_cumulative_data[SQ][sp] / r_points;</span>
+<span class="lineNum">      47 </span><span class="lineCov">         21 :         if (processing_mask &amp; CHA_MASK) data_out[CHA][sp] = (double)flat_cumulative_data[CHA][sp] / r_points;</span>
+<span class="lineNum">      48 </span><span class="lineCov">         21 :         if (processing_mask &amp; CHB_MASK) data_out[CHB][sp] = (double)flat_cumulative_data[CHB][sp] / r_points;</span>
+<span class="lineNum">      49 </span><span class="lineCov">         21 :         if (processing_mask &amp; CHASQ_MASK) data_out[CHASQ][sp] = (double)flat_cumulative_data[CHASQ][sp] / r_points;</span>
+<span class="lineNum">      50 </span><span class="lineCov">         21 :         if (processing_mask &amp; CHBSQ_MASK) data_out[CHBSQ][sp] = (double)flat_cumulative_data[CHBSQ][sp] / r_points;</span>
+<span class="lineNum">      51 </span><span class="lineCov">         21 :         if (processing_mask &amp; SQ_MASK) data_out[SQ][sp] = (double)flat_cumulative_data[SQ][sp] / r_points;</span>
 <span class="lineNum">      52 </span>            :     }
-<a name="53"><span class="lineNum">      53 </span><span class="lineCov">          4 : }</span></a>
+<a name="53"><span class="lineNum">      53 </span><span class="lineCov">          7 : }</span></a>
 <span class="lineNum">      54 </span>            : 
-<span class="lineNum">      55 </span><span class="lineCov">          4 : void power_kernel_runner(</span>
+<span class="lineNum">      55 </span><span class="lineCov">          7 : void power_kernel_runner(</span>
 <span class="lineNum">      56 </span>            :     short* chA_data, short* chB_data, unsigned int** flat_cumulative_data,
 <span class="lineNum">      57 </span>            :     short *chA_back, short *chB_back,
 <span class="lineNum">      58 </span>            :     int start_idx, int stop_idx, int* cycle_array) {
 <span class="lineNum">      59 </span>            : 
-<span class="lineNum">      60 </span><span class="lineCov">        100 :     for (int i(start_idx); i &lt; stop_idx; i++) {</span>
+<span class="lineNum">      60 </span><span class="lineCov">        175 :     for (int i(start_idx); i &lt; stop_idx; i++) {</span>
 <span class="lineNum">      61 </span>            :         // As the background data only countains sp_points, a cycle wrap is required
-<span class="lineNum">      62 </span><span class="lineCov">         96 :         flat_cumulative_data[CHA][i] = chA_data[i] - chA_back[cycle_array[i]];</span>
-<span class="lineNum">      63 </span><span class="lineCov">         96 :         flat_cumulative_data[CHB][i] = chB_data[i] - chB_back[cycle_array[i]];</span>
-<span class="lineNum">      64 </span><span class="lineCov">         96 :         flat_cumulative_data[CHASQ][i] = flat_cumulative_data[CHA][i] * flat_cumulative_data[CHA][i];</span>
-<span class="lineNum">      65 </span><span class="lineCov">         96 :         flat_cumulative_data[CHBSQ][i] = flat_cumulative_data[CHB][i] * flat_cumulative_data[CHB][i];</span>
-<span class="lineNum">      66 </span><span class="lineCov">         96 :         flat_cumulative_data[SQ][i] = flat_cumulative_data[CHASQ][i] + flat_cumulative_data[CHBSQ][i];</span>
+<span class="lineNum">      62 </span><span class="lineCov">        168 :         flat_cumulative_data[CHA][i] = chA_data[i] - chA_back[cycle_array[i]];</span>
+<span class="lineNum">      63 </span><span class="lineCov">        168 :         flat_cumulative_data[CHB][i] = chB_data[i] - chB_back[cycle_array[i]];</span>
+<span class="lineNum">      64 </span><span class="lineCov">        168 :         flat_cumulative_data[CHASQ][i] = flat_cumulative_data[CHA][i] * flat_cumulative_data[CHA][i];</span>
+<span class="lineNum">      65 </span><span class="lineCov">        168 :         flat_cumulative_data[CHBSQ][i] = flat_cumulative_data[CHB][i] * flat_cumulative_data[CHB][i];</span>
+<span class="lineNum">      66 </span><span class="lineCov">        168 :         flat_cumulative_data[SQ][i] = flat_cumulative_data[CHASQ][i] + flat_cumulative_data[CHBSQ][i];</span>
 <span class="lineNum">      67 </span>            :     }
-<a name="68"><span class="lineNum">      68 </span><span class="lineCov">          4 : }</span></a>
+<a name="68"><span class="lineNum">      68 </span><span class="lineCov">          7 : }</span></a>
 <span class="lineNum">      69 </span>            : 
-<span class="lineNum">      70 </span><span class="lineCov">          4 : void CPU::power_kernel(</span>
+<span class="lineNum">      70 </span><span class="lineCov">          7 : void CPU::power_kernel(</span>
 <span class="lineNum">      71 </span>            :     short *chA_data, short *chB_data, double **data_out,
 <span class="lineNum">      72 </span>            :     unsigned int processing_mask,
 <span class="lineNum">      73 </span>            :     short *chA_back, short *chB_back,
@@ -137,28 +137,28 @@
 <span class="lineNum">      75 </span>            :     int r_points,
 <span class="lineNum">      76 </span>            :     int number_of_threads){
 <span class="lineNum">      77 </span>            : 
-<span class="lineNum">      78 </span><span class="lineCov">          4 :     int no_points  = sp_points * r_points;</span>
+<span class="lineNum">      78 </span><span class="lineCov">          7 :     int no_points  = sp_points * r_points;</span>
 <span class="lineNum">      79 </span>            : 
 <span class="lineNum">      80 </span>            :     // 1. Prepare processing arrays
-<span class="lineNum">      81 </span><span class="lineCov">          4 :     unsigned int** flat_cumulative_data = new unsigned int*[NO_OF_POWER_KERNEL_OUTPUTS];</span>
-<span class="lineNum">      82 </span><span class="lineCov">         24 :     for (int i(0); i &lt; NO_OF_POWER_KERNEL_OUTPUTS; i++)</span>
-<span class="lineNum">      83 </span><span class="lineCov">         20 :         flat_cumulative_data[i] = new unsigned int[no_points]();</span>
+<span class="lineNum">      81 </span><span class="lineCov">          7 :     unsigned int** flat_cumulative_data = new unsigned int*[NO_OF_POWER_KERNEL_OUTPUTS];</span>
+<span class="lineNum">      82 </span><span class="lineCov">         42 :     for (int i(0); i &lt; NO_OF_POWER_KERNEL_OUTPUTS; i++)</span>
+<span class="lineNum">      83 </span><span class="lineCov">         35 :         flat_cumulative_data[i] = new unsigned int[no_points]();</span>
 <span class="lineNum">      84 </span>            :     // As the background data only countains sp_points, an auxillary cycle array
 <span class="lineNum">      85 </span>            :     // will hold the valid indicies for accessing the bacgkound data
-<span class="lineNum">      86 </span><span class="lineCov">          4 :     int* cycle_array = new int[no_points];</span>
-<span class="lineNum">      87 </span><span class="lineCov">         16 :     for (int sp(0); sp &lt; sp_points; sp++) {</span>
-<span class="lineNum">      88 </span><span class="lineCov">        108 :         for (int r(0); r &lt; r_points; r++) {</span>
-<span class="lineNum">      89 </span><span class="lineCov">         96 :             cycle_array[sp + r * sp_points] = sp;</span>
+<span class="lineNum">      86 </span><span class="lineCov">          7 :     int* cycle_array = new int[no_points];</span>
+<span class="lineNum">      87 </span><span class="lineCov">         28 :     for (int sp(0); sp &lt; sp_points; sp++) {</span>
+<span class="lineNum">      88 </span><span class="lineCov">        189 :         for (int r(0); r &lt; r_points; r++) {</span>
+<span class="lineNum">      89 </span><span class="lineCov">        168 :             cycle_array[sp + r * sp_points] = sp;</span>
 <span class="lineNum">      90 </span>            :         }
 <span class="lineNum">      91 </span>            :     }
 <span class="lineNum">      92 </span>            : 
 <span class="lineNum">      93 </span>            :     // 2. Preapare threads
-<span class="lineNum">      94 </span><span class="lineCov">          4 :     std::thread* t = new std::thread[number_of_threads];</span>
-<span class="lineNum">      95 </span><span class="lineCov">          4 :     int idx = 0;</span>
-<span class="lineNum">      96 </span><span class="lineCov">          4 :     int increment = floor((no_points) / number_of_threads);</span>
+<span class="lineNum">      94 </span><span class="lineCov">          7 :     std::thread* t = new std::thread[number_of_threads];</span>
+<span class="lineNum">      95 </span><span class="lineCov">          7 :     int idx = 0;</span>
+<span class="lineNum">      96 </span><span class="lineCov">          7 :     int increment = floor((no_points) / number_of_threads);</span>
 <span class="lineNum">      97 </span>            : 
 <span class="lineNum">      98 </span>            :     // 3. launch multiple parallel threads
-<span class="lineNum">      99 </span><span class="lineCov">          4 :     for (int i(0); i &lt; number_of_threads - 1; i++) {</span>
+<span class="lineNum">      99 </span><span class="lineCov">          7 :     for (int i(0); i &lt; number_of_threads - 1; i++) {</span>
 <span class="lineNum">     100 </span><span class="lineNoCov">          0 :         t[i] = std::thread(</span>
 <span class="lineNum">     101 </span>            :             power_kernel_runner,
 <span class="lineNum">     102 </span>            :             chA_data, chB_data, flat_cumulative_data,
@@ -166,27 +166,27 @@
 <span class="lineNum">     104 </span><span class="lineNoCov">          0 :             idx, idx + increment, cycle_array);</span>
 <span class="lineNum">     105 </span><span class="lineNoCov">          0 :         idx += increment;</span>
 <span class="lineNum">     106 </span>            :     }
-<span class="lineNum">     107 </span><span class="lineCov">          8 :     t[number_of_threads - 1] = std::thread(</span>
+<span class="lineNum">     107 </span><span class="lineCov">         14 :     t[number_of_threads - 1] = std::thread(</span>
 <span class="lineNum">     108 </span>            :         power_kernel_runner,
 <span class="lineNum">     109 </span>            :         chA_data, chB_data, flat_cumulative_data,
 <span class="lineNum">     110 </span>            :         chA_back, chB_back,
-<span class="lineNum">     111 </span><span class="lineCov">          4 :         idx, no_points, cycle_array);</span>
+<span class="lineNum">     111 </span><span class="lineCov">          7 :         idx, no_points, cycle_array);</span>
 <span class="lineNum">     112 </span>            : 
 <span class="lineNum">     113 </span>            :      // 4. join the threads
-<span class="lineNum">     114 </span><span class="lineCov">          8 :     for (int i(0); i &lt; number_of_threads; i++)</span>
-<span class="lineNum">     115 </span><span class="lineCov">          4 :         t[i].join();</span>
+<span class="lineNum">     114 </span><span class="lineCov">         14 :     for (int i(0); i &lt; number_of_threads; i++)</span>
+<span class="lineNum">     115 </span><span class="lineCov">          7 :         t[i].join();</span>
 <span class="lineNum">     116 </span>            : 
 <span class="lineNum">     117 </span>            :      // 5. Average the cumualtive arrays
 <span class="lineNum">     118 </span>            :     reduction_average(flat_cumulative_data, data_out,
 <span class="lineNum">     119 </span>            :                       processing_mask,
-<span class="lineNum">     120 </span><span class="lineCov">          4 :                       sp_points, r_points);</span>
+<span class="lineNum">     120 </span><span class="lineCov">          7 :                       sp_points, r_points);</span>
 <span class="lineNum">     121 </span>            : 
 <span class="lineNum">     122 </span>            :     // 6. Free processing arrays
-<span class="lineNum">     123 </span><span class="lineCov">         24 :     for (int i(0); i &lt; NO_OF_POWER_KERNEL_OUTPUTS; i++)</span>
-<span class="lineNum">     124 </span><span class="lineCov">         20 :         delete[] flat_cumulative_data[i];</span>
-<span class="lineNum">     125 </span><span class="lineCov">          4 :     delete[] cycle_array;</span>
-<span class="lineNum">     126 </span><span class="lineCov">          4 :     delete[] t;</span>
-<span class="lineNum">     127 </span><span class="lineCov">          4 : }</span>
+<span class="lineNum">     123 </span><span class="lineCov">         42 :     for (int i(0); i &lt; NO_OF_POWER_KERNEL_OUTPUTS; i++)</span>
+<span class="lineNum">     124 </span><span class="lineCov">         35 :         delete[] flat_cumulative_data[i];</span>
+<span class="lineNum">     125 </span><span class="lineCov">          7 :     delete[] cycle_array;</span>
+<span class="lineNum">     126 </span><span class="lineCov">          7 :     delete[] t;</span>
+<span class="lineNum">     127 </span><span class="lineCov">          7 : }</span>
 </pre>
       </td>
     </tr>
