@@ -1,9 +1,9 @@
-///////////////////////////////////////////////////////////////////////////////
-//                          Shorthand colour macros                          //
-///////////////////////////////////////////////////////////////////////////////
-// Read https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html for explanation
-// of ## and macro argument expansion
-// Read https://www.geeksforgeeks.org/multiline-macros-in-c/ about multiline macros
+/**
+ * Shorthand colour macros
+ * Read https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html for explanation
+ * of ## and macro argument expansion
+ * Read https://www.geeksforgeeks.org/multiline-macros-in-c/ about multiline macros
+ */
 #include <stdio.h>
 #include <stdexcept>
 

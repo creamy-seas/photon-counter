@@ -1,16 +1,3 @@
-/*
- * In general we expect the digitiser to return SP_POINTS (samples per record) repeated R_POINTS (number of records).
- * Therefore the chA and chB sizes are SP_POINTS * R_POINTS
- *
- * The kernels will evaluate the average at each SP_POINT (averaged over R_POINTS) for:
- * - chA
- * - chB
- * - chAsq
- * - chBsq
- * - sq
- *
- * Note - GPU and CPU kernels will differ, as for the GPU kernel array sizes need to be known at compile time
- */
 #ifndef POWER_KERNEL_HPP
 #define POWER_KERNEL_HPP
 
@@ -27,8 +14,8 @@
 #endif
 
 // Derived parameters
-#define BLOCKS SP_POINTS
-#define THREADS_PER_BLOCK (R_POINTS_PER_CHUNK > 1024) ? 1024 : R_POINTS_PER_CHUNK
+#define BLOCKS SP_POINTS ///< Each `SP_POINT` will be mapped to a GPU block.
+#define THREADS_PER_BLOCK (R_POINTS_PER_CHUNK > 1024) ? 1024 : R_POINTS_PER_CHUNK ///< Allocation of maximum
 
 // Verbose Indexes used for accessing array elements in a human-readable way e.g. array[CHASQ]
 #define NO_OF_POWER_KERNEL_OUTPUTS 5
@@ -45,6 +32,9 @@
 #define CHBSQ_MASK (1 << CHBSQ)
 #define SQ_MASK (1 << SQ)
 
+/**
+ * Evaluations performed on CPU
+ */
 namespace CPU {
 
     /*
@@ -81,54 +71,78 @@ namespace CPU {
         short chB_back,
         int sp_points,
         int r_points,
-int number_of_threads
-                              );
+        int number_of_threads
+        );
 
-                          /*
-                            short* chA_data, chB_data:              raw data from the digitiser
-                            double** data_out:                holds arrays of the averaged chA², chB², SQ=chA² + chB² data
-                            unsigned int processing mask:           chA²,chB²,SQ e.g. 100==4 will only process SQ
-                            short* chA_back, chB_back:              background set of measurements for both channels, OF THE SAME SIZE as the channel data!
-                            int no_points = samples_per_record * number of records
-                            int number_of_threads:                  number of threads to launch
-                          */
-                          void power_kernel_v3_background(
-                              short *chA_data,
-                              short *chB_data,
-                              double** data_out,
-                              unsigned int processing_mask,
-                              short *chA_back,
-                              short *chB_back,
-                              int sp_points,
-                              int r_points,
-                              int number_of_threads
-                              );
-                      }
+    /*
+      short* chA_data, chB_data:              raw data from the digitiser
+      double** data_out:                holds arrays of the averaged chA², chB², SQ=chA² + chB² data
+      unsigned int processing mask:           chA²,chB²,SQ e.g. 100==4 will only process SQ
+      short* chA_back, chB_back:              background set of measurements for both channels, OF THE SAME SIZE as the channel data!
+      int no_points = samples_per_record * number of records
+      int number_of_threads:                  number of threads to launch
+    */
+    void power_kernel_v3_background(
+        short *chA_data,
+        short *chB_data,
+        double** data_out,
+        unsigned int processing_mask,
+        short *chA_back,
+        short *chB_back,
+        int sp_points,
+        int r_points,
+        int number_of_threads
+        );
 
-    namespace GPU {
-        // Communication of kernel parameters to python
-        struct PowerKernelParameters {
-            int r_points; int np_points; int blocks; int threads_per_block;
+}
 
-            PowerKernelParameters(int r_points,
-                                  int np_points,
-                                  int blocks,
-                                  int threads_per_block);
-            void print();
-        };
-PowerKernelParameters fetch_kernel_parameters();
+/**
+ * Power measurment evaluations performed on GPU. Provides kernel to evaluate
+ * - \f[ \left\langle{chA}\right\rangle \f]
+ * - \f[ \left\langle{chB}\right\rangle \f]
+ * - \f[ \left\langle{chA^2}\right\rangle \f]
+ * - \f[ \left\langle{chB^2}\right\rangle \f]
+ * - \f[ \left\langle{chA^2 + chB^2}\right\rangle \f]
+ *
+ * and supporting memory allocation and copying functions.
+ */
+namespace GPU {
+    /**
+     * Communication of kernel parameters, for inspection and validation in python.
+     */
+    struct PowerKernelParameters {
+        int r_points; int np_points; int blocks; int threads_per_block;
 
-    const int outputs_from_gpu[4] = {CHA, CHB, CHASQ, CHBSQ};
-    const int no_outputs_from_gpu = 4;
+        PowerKernelParameters(int r_points,
+                              int np_points,
+                              int blocks,
+                              int threads_per_block);
+        void print();
+    };
+    /**
+     * As the GPU kernel will be compiled a single time, this will return the variables
+     * that should be used when calling it.
+     *
+     * @returns PowerKernelParameters struct, with details on the compiled kernel parmeters.
+     */
+    PowerKernelParameters fetch_kernel_parameters();
 
-    /* Copy background data once into constant memory */
+    const int outputs_from_gpu[4] = {CHA, CHB, CHASQ, CHBSQ}; ///< Convenience array for iteration through the different computations running on GPU.
+    const int no_outputs_from_gpu = 4; ///< GPU will be computing this number of results.
+
+    /**
+     * Copying of background data once into constant memory on the GPU - this will be subtracted from all input data before processing.
+     *
+     * @param chA_background, chB_background arrays of length `SP_POINTS` to copy over to GPU.
+     */
     void copy_background_arrays_to_gpu(short *chA_background, short *chB_background);
 
     /*
-     * The input data is split into chunks, to avoid the limitation on shared memory on GPU
-     * Streams are used to process these chunks in parallel
+     * The input data is split into chunks, to avoid the limitation on shared memory on GPU.
+     * Streams are used to process these chunks in parallel.
+     * Memory is allocated for for each stream separately to avoid race conditions
      *
-     * Memory is allocated for for each stream separately:
+     *
      * - input data on the CPU which needs to be memeory locked for safe copying CPU -> GPU using different streams
      * - input data on the GPU
      * - output data on the GPU
@@ -143,10 +157,23 @@ PowerKernelParameters fetch_kernel_parameters();
         short **chA_data, short **chB_data,
         short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_of_streams);
 
-    /*
-     * short* chA_data, chB_data:              raw data from the digitiser
-     * double** data_out:                      kernel output [CHA, CHB, CHASQ, CHBSQ]
-     * <T>** gpu_:                             addresses of the allocated memory
+    /**
+     * We expect the digitiser to return `SP_POINTS` (samples per record) repeated `R_POINTS` (number of records).
+     * Therefore the chA and chB sizes are `SP_POINTS * R_POINTS`, which are processed to give:
+     * - \f[ \left\langle{chA}\right\rangle \f]
+     * - \f[ \left\langle{chB}\right\rangle \f]
+     * - \f[ \left\langle{chA^2}\right\rangle \f]
+     * - \f[ \left\langle{chB^2}\right\rangle \f]
+     * - \f[ \left\langle{chA^2 + chB^2}\right\rangle \f]
+     * each of `SP_POINTS` in length as the repetitions are averaged.
+     *
+     * **GPU kernels will need array sizes need to be known at compile time** so used GPU::fetch_kernel_parameters to
+     * ensure that correct data is passed into it.
+     *
+     * @param chA_data, chB_data raw data from the digitiser
+     * @param data_out kernel output in the following order: `[CHA, CHB, CHASQ, CHBSQ]`
+     * @param gpui, gpu_out, cpu_out auxillary arrays allocated using `allocate_memory` function
+     * @param no_streams to launch on GPU. Benchmarking indicates that 2 is the optimal choice.
      */
     void power_kernel(
         short *chA_data, short *chB_data,

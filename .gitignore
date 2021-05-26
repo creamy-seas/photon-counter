@@ -9,3 +9,5 @@ GTAGS
 /example_cufft/
 /c_lib/coverage/coverage.info
 *.csv
+/csrc/html/
+/csrc/latex/

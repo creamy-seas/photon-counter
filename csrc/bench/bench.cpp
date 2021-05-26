@@ -161,75 +161,67 @@ BASELINE_F(POWER, DIGITIZER, DigitiserFixture, 1, 1)
     ADQ_MultiRecordClose(adq_cu_ptr, 1);
 }
 
-BASELINE_F(POWER, 1T_NO_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    CPU::power_kernel_v1_no_background(
-        chA_data, chB_data, data_out,
-        SQ_MASK,
-        SP_POINTS, R_POINTS, 1
-        );
-}
+// BASELINE_F(POWER, 1T_NO_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+//     CPU::power_kernel_v1_no_background(
+//         chA_data, chB_data, data_out,
+//         SQ_MASK,
+//         SP_POINTS, R_POINTS, 1
+//         );
+// }
 
-BENCHMARK_F(POWER, 2T_NO_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    CPU::power_kernel_v1_no_background(
-        chA_data, chB_data, data_out,
-        SQ_MASK,
-        SP_POINTS, R_POINTS, 2
-        );
-}
+// BENCHMARK_F(POWER, 2T_NO_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+//     CPU::power_kernel_v1_no_background(
+//         chA_data, chB_data, data_out,
+//         SQ_MASK,
+//         SP_POINTS, R_POINTS, 2
+//         );
+// }
 
-BENCHMARK_F(POWER, 8T_NO_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    CPU::power_kernel_v1_no_background(
-        chA_data, chB_data, data_out,
-        SQ_MASK,
-        SP_POINTS, R_POINTS, 8
-        );
-}
+// BENCHMARK_F(POWER, 8T_NO_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+//     CPU::power_kernel_v1_no_background(
+//         chA_data, chB_data, data_out,
+//         SQ_MASK,
+//         SP_POINTS, R_POINTS, 8
+//         );
+// }
 
-BENCHMARK_F(POWER, 1T_NO_BACK_FULL_MASK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    CPU::power_kernel_v1_no_background(
-        chA_data, chB_data, data_out,
-        SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK,
-        SP_POINTS, R_POINTS, 1
-        );
-}
+// BENCHMARK_F(POWER, 1T_NO_BACK_FULL_MASK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+//     CPU::power_kernel_v1_no_background(
+//         chA_data, chB_data, data_out,
+//         SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK,
+//         SP_POINTS, R_POINTS, 1
+//         );
+// }
 
 
-BENCHMARK_F(POWER, 1T_CONST_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    CPU::power_kernel_v2_const_background(
-        chA_data, chB_data, data_out,
-        SQ_MASK,
-        chA_background[0], chB_background[0],
-        SP_POINTS, R_POINTS, 1
-        );
-}
+// BENCHMARK_F(POWER, 1T_CONST_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+//     CPU::power_kernel_v2_const_background(
+//         chA_data, chB_data, data_out,
+//         SQ_MASK,
+//         chA_background[0], chB_background[0],
+//         SP_POINTS, R_POINTS, 1
+//         );
+// }
 
-BENCHMARK_F(POWER, 1T_CONST_BACK_FULL_MASK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    CPU::power_kernel_v2_const_background(
-        chA_data, chB_data, data_out,
-        SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK,
-        chA_background[0], chB_background[0],
-        SP_POINTS, R_POINTS, 1
-        );
-}
+// BENCHMARK_F(POWER, 1T_CONST_BACK_FULL_MASK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+//     CPU::power_kernel_v2_const_background(
+//         chA_data, chB_data, data_out,
+//         SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK,
+//         chA_background[0], chB_background[0],
+//         SP_POINTS, R_POINTS, 1
+//         );
+// }
 
-BENCHMARK_F(POWER, 1T_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
-    CPU::power_kernel_v3_background(
-        chA_data, chB_data, data_out,
-        SQ_MASK,
-        chA_background, chB_background,
-        SP_POINTS, R_POINTS, 1
-        );
-}
+// BENCHMARK_F(POWER, 1T_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+//     CPU::power_kernel_v3_background(
+//         chA_data, chB_data, data_out,
+//         SQ_MASK,
+//         chA_background, chB_background,
+//         SP_POINTS, R_POINTS, 1
+//         );
+// }
 
-BENCHMARK_F(POWER, 1T_BACK_FULL_MASK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE)
-{
+BASELINE_F(POWER, 1T_BACK_FULL_MASK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
     CPU::power_kernel_v3_background(
         chA_data, chB_data, data_out,
         SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK,
@@ -238,30 +230,30 @@ BENCHMARK_F(POWER, 1T_BACK_FULL_MASK, PowerKernelFixture, SAMPLES, ITERATIONS_PE
         );
 }
 
-BENCHMARK_F(POWER, GPU_1ST, PowerKernelGPU1StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
-    GPU::power_kernel(
-        chA_data_locked, chB_data_locked,
-        data_out,
-        gpu_in, gpu_out, cpu_out, no_streams);
-}
+// BENCHMARK_F(POWER, GPU_1ST, PowerKernelGPU1StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+//     GPU::power_kernel(
+//         chA_data_locked, chB_data_locked,
+//         data_out,
+//         gpu_in, gpu_out, cpu_out, no_streams);
+// }
 BENCHMARK_F(POWER, GPU_2ST, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
     GPU::power_kernel(
         chA_data_locked, chB_data_locked,
         data_out,
         gpu_in, gpu_out, cpu_out, no_streams);
 }
-BENCHMARK_F(POWER, GPU_8ST, PowerKernelGPU8StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
-    GPU::power_kernel(
-        chA_data_locked, chB_data_locked,
-        data_out,
-        gpu_in, gpu_out, cpu_out, no_streams);
-}
-BENCHMARK_F(POWER, GPU_16ST, PowerKernelGPU16StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
-    GPU::power_kernel(
-        chA_data_locked, chB_data_locked,
-        data_out,
-        gpu_in, gpu_out, cpu_out, no_streams);
-}
+// BENCHMARK_F(POWER, GPU_8ST, PowerKernelGPU8StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+//     GPU::power_kernel(
+//         chA_data_locked, chB_data_locked,
+//         data_out,
+//         gpu_in, gpu_out, cpu_out, no_streams);
+// }
+// BENCHMARK_F(POWER, GPU_16ST, PowerKernelGPU16StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+//     GPU::power_kernel(
+//         chA_data_locked, chB_data_locked,
+//         data_out,
+//         gpu_in, gpu_out, cpu_out, no_streams);
+// }
 
 ///////////////////////////////////////////////////////////////////////////////
 //                         Float vs double benchmark                         //
