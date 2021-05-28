@@ -2,3 +2,7 @@
 *.gcno
 *.gcov
 bin
+build
+coverage
+html
+latex

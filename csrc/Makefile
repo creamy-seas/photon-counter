@@ -1,3 +1,8 @@
+# Auxillary parameters
+#BROWSER := ns
+BROWSER := ck
+PWD := $(shell pwd)
+
 CXX := g++
 # CXX := /usr/bin/g++
 
@@ -24,165 +29,134 @@ INCS += -L./../Celero/build # Celero libraries (benchmarking)
 LDLIBS := $(shell pkg-config --libs libadq) # Digitiser library
 LDLIBS += -lcudart # Cuda runtime (high level functions)
 
-# Folders
-FOLDER_SOURCE:=./src ./playground
-FOLDER_BUILD:=./build
-
-# Source and object files
-# CPP_SOURCE := ./src/ia_ADQAPI.cpp #example
-CPP_SOURCE := $(wildcard $(FOLDER_SOURCE)/*.cpp)
-CPP_OBJECTS := $(patsubst $(FOLDER_SOURCE)/%.cpp,$(FOLDER_BUILD)/%.o,$(CPP_SOURCE))
-CUDA_SOURCE := $(wildcard $(FOLDER_SOURCE)/*.cu)
-CUDA_OBJECTS := $(patsubst $(FOLDER_SOURCE)/%.cu,$(FOLDER_BUILD)/%.o,$(CUDA_SOURCE))
+# Source and object files evaluted from the directory with the source files
+BUILD_FOLDER := ./build/${BUILD_SOURCE}
+CPP_SOURCE := $(wildcard $(BUILD_SOURCE)/*.cpp)
+CPP_OBJECTS := $(patsubst $(BUILD_SOURCE)/%.cpp,$(BUILD_FOLDER)/%.o,$(CPP_SOURCE))
+CUDA_SOURCE := $(wildcard $(BUILD_SOURCE)/*.cu)
+CUDA_OBJECTS := $(patsubst $(BUILD_SOURCE)/%.cu,$(BUILD_FOLDER)/%.o,$(CUDA_SOURCE))
 
 OBJECTS := $(CPP_OBJECTS) $(CUDA_OBJECTS)
 
-SOURCE := $(wildcard $(FSOURCE)/*.cpp)
-lll:
-	@echo $(SOURCE)
-	@echo "===================="
+.PHONY: clean build test
 
-kkk:
-	@make \
-		FSOURCE=./playground \
-		lll
+clean:
+	@echo "🗑  Cleaning build objects"
+	@rm -rfv *.out ./build/*/*.o *.gcda *.gcno *.log *.o ./bin/*
+	@echo "✅ [***] Done"
+	@echo
 
-# Auxillary parameters
-#BROWSER := ns
-BROWSER := ck
-PWD := $(shell pwd)
+###############################################################################
+# Generic templates for building.
+# - Run with @make build
+# - pass in BUILD_SOURCE, BUILD_FLAGS, BUILD_LDLIBS, BUILD_BIN
+###############################################################################
+make_folders:
+	@mkdir -p $(BUILD_FOLDER) ./build ./bin
 
-# Tests and benchmarks #######################################################################
+# Triggers the building of cpp and cu files (see *)
+build_objects: $(OBJECTS)
+	@echo "✅ [***] Built files in $(BUILD_SOURCE)"
+	@echo
+
+# Before making binary, always build the core code in the ./src directory
+build_core_objects:
+	@make --no-print-directory \
+		BUILD_SOURCE="./src" \
+		BUILD_FLAGS="$(BUILD_FLAGS)" \
+		build_objects
+
+# Building of cpp object files (*)
+# PositionIndependentCode
+$(BUILD_FOLDER)/%.o: $(BUILD_SOURCE)/%.cpp | make_folders
+	@echo 🍕 [cpp] Building $^ ⟶ $@
+	@$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) $(BUILD_FLAGS) $(EXTRA_CXX_FLAGS) -fPIC -c -o $@ $^
+
+# Building of cuda object files
+$(BUILD_FOLDER)/%.o: $(BUILD_SOURCE)/%.cu | make_folders
+	@echo 🐍 [cu ] Building $^ ⟶ $@
+	@nvcc $(CUDA_FLAGS) $(INCS) $(BUILD_FLAGS) --compiler-options -fPIC -c -o $@ $^
+
+# Collect up all the built files
+compile_binary:
+	@echo "🏗  [***] Building binary file $(BUILD_BIN)"
+	@$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) $(BUILD_LDLIBS) $(EXTRA_CXX_FLAGS)\
+		-o $(BUILD_BIN) \
+		$(wildcard build/$(BUILD_SOURCE)/*.o) $(wildcard build/src/*.o)
+	@echo "✅ [***] Built binary $(BUILD_BIN)"
+	@echo
+
+# Main entrypoint for building. Builds the target, core objects and compiles them
+build:
+	@make --no-print-directory build_objects
+	@make --no-print-directory build_core_objects
+	@make --no-print-directory compile_binary
+
+###############################################################################
+#                              Single executables                             #
+###############################################################################
+PLAY_SOURCE := ./playground
+
+PLAY_FLAGS := -D R_POINTS=254000
+PLAY_FLAGS += -D R_POINTS_PER_CHUNK=1000
+PLAY_FLAGS += -D SP_POINTS=200
+PLAY_FLAGS += -D DEBUG=1
+
+PLAY_BIN := ./bin/run
+
+play:
+	@make --no-print-directory \
+		BUILD_SOURCE="$(PLAY_SOURCE)" \
+		BUILD_FLAGS="$(PLAY_FLAGS)" \
+		BUILD_LDLIBS="$(PLAY_LDLIBS)" \
+		BUILD_BIN="$(PLAY_BIN)" \
+		build
+	$(PLAY_RUN) $(PLAY_BIN)
+
+###############################################################################
+#                                    Tests                                    #
+###############################################################################
+TEST_SOURCE := ./test
+
 TEST_FLAGS := -DTESTENV
 TEST_FLAGS += -D R_POINTS=8
 TEST_FLAGS += -D R_POINTS_PER_CHUNK=1
 TEST_FLAGS += -D SP_POINTS=3
-TEST_FLAGS += -D DEBUG=1
+TEST_FLAGS += -D DEBUG=0
 
-TEST_LDLIBS += $(shell pkg-config --libs cppunit) # Unittest library
+EXTRA_TEST_FLAGS := -fprofile-arcs -ftest-coverage -lgcov
 
-TEST_FOLDER:=./test
-TEST_BUILD_FOLDER:=./build/test_build
-COVERAGE_FOLDER:=./coverage
-COVERAGE_FILE:=$(COVERAGE_FOLDER)/coverage.info
+TEST_LDLIBS := $(shell pkg-config --libs cppunit) # Unittest library
 
-TEST_BIN=./bin/test
+TEST_BIN := ./bin/test
+
 # TEST_RUN=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 cuda-memcheck --tool racecheck
 
-TEST_SOURCE = $(wildcard $(TEST_FOLDER)/*.cpp)
-TEST_OBJECTS = $(patsubst $(TEST_FOLDER)/%.cpp,$(TEST_BUILD_FOLDER)/%.o,$(TEST_SOURCE))
-TEST_OBJECTS += $(patsubst $(FOLDER_SOURCE)/%.cpp,$(TEST_BUILD_FOLDER)/%.o,$(CPP_SOURCE))
-TEST_OBJECTS += $(patsubst $(FOLDER_SOURCE)/%.cu,$(TEST_BUILD_FOLDER)/%.o,$(CUDA_SOURCE))
-
-# Benchmarking speed of CPU vs GPU ############################################
-BENCH_FLAGS := -DTESTENV
-BENCH_FLAGS += -D R_POINTS=128000 # 129055 for 400 points, 254200 for 200 points
-BENCH_FLAGS += -D SP_POINTS=400
-BENCH_FLAGS += -D R_POINTS_PER_CHUNK=1000
-BENCH_FLAGS += -D DEBUG=0
-
-BENCH_LDLIBS += -lcelero # Bechmarking library
-#This is used during runtime to locate Celero. cuda-memcheck can be used to audit the GPU for errors
-BENCH_RUN=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 #cuda-memcheck
-
-BENCH_FOLDER:=./bench
-BENCH_BUILD_FOLDER:=./build/bench_build
-
-BENCH_BIN=./bin/bench
-
-# One off runs ################################################################
-BUILD_FLAGS += -D R_POINTS=254000
-BUILD_FLAGS += -D R_POINTS_PER_CHUNK=1000
-BUILD_FLAGS += -D SP_POINTS=200
-BUILD_FLAGS += -D DEBUG=1
-
-# PLAY_RUN=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 #cuda-memcheck
-
-.PHONY: clean test bench
-
-###############################################################################
-#           Same as for test, but with replaced flags and libraries           #
-###############################################################################
-bench:
-	@make \
-		TEST_FLAGS="$(BENCH_FLAGS)" \
-		TEST_LDLIBS="$(BENCH_LDLIBS)" \
-		TEST_FOLDER="$(BENCH_FOLDER)" \
-		TEST_BUILD_FOLDER="$(BENCH_BUILD_FOLDER)" \
-		TEST_BIN="$(BENCH_BIN)" \
-		TEST_RUN="$(BENCH_RUN)" \
-		test
-
-###############################################################################
-#                                   Library                                   #
-###############################################################################
-BIN_LIB=./bin/ia_1488.so
-
-# PositionIndependentCode
-# Building of cpp object files
-$(FOLDER_BUILD)/%.o: $(FOLDER_SOURCE)/%.cpp
-	@echo 🐋 [cpp] Building $^ ⟶ $@
-	@$(CXX) $(CXXFLAGS) $(BUILD_FLAGS) $(INCS) $(LDLIBS) -fPIC -c -o $@ $^
-
-# Building of cuda object files
-$(FOLDER_BUILD)/%.o: $(FOLDER_SOURCE)/%.cu
-	@echo 🐍 [cu] Building $^ ⟶ $@
-	@nvcc $(CUDA_FLAGS) $(BUILD_FLAGS) $(INCS) --compiler-options -fPIC -c -o $@ $^
-
-lib: $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -shared -o $(BIN_LIB) $^
-
-###############################################################################
-#                     Single run executable (development)                     #
-###############################################################################
-BIN_PLAY=./bin/run
-
-play: $(OBJECTS)
-	@$(CXX) $(CXXFLAGS) $(BUILD_FLAGS) $(INCS) $(LDLIBS) -o $(BIN_PLAY) $^
-	$(PLAY_RUN) $(BIN_PLAY)
-
-###############################################################################
-#                                     Test                                    #
-###############################################################################
-# First build all the object files for the test ###############################
-$(TEST_BUILD_FOLDER)/%.o: $(TEST_FOLDER)/%.cpp
-	@mkdir -p $(TEST_BUILD_FOLDER)
-	@echo 🤖 Building [test] file: $^ ⟶ $@
-	@$(CXX) \
-		$(TEST_FLAGS) -fprofile-arcs -ftest-coverage \
-		$(CXXFLAGS) $(INCS) $(LDLIBS) $(TEST_LDLIBS) \
-		-c -o $@ $^
-
-$(TEST_BUILD_FOLDER)/%.o: $(FOLDER_SOURCE)/%.cpp
-	@mkdir -p $(TEST_BUILD_FOLDER)
-	@echo 🤖 Building [cpp] file: $^ ⟶ $@
-	@$(CXX) \
-		$(TEST_FLAGS) -fprofile-arcs -ftest-coverage \
-		$(CXXFLAGS) $(INCS) $(LDLIBS) $(TEST_LDLIBS) \
-		-c -o $@ $^
-
-$(TEST_BUILD_FOLDER)/%.o: $(FOLDER_SOURCE)/%.cu
-	@mkdir -p $(TEST_BUILD_FOLDER)
-	@echo 🤖 Building [cuda] file: $^ ⟶ $@
-	@nvcc $(TEST_FLAGS) $(CUDA_FLAGS) $(INCS) -c -o $@ $^
-
-test: $(TEST_OBJECTS)
-	@echo 🤖 Linking files and running test
-	@$(CXX) \
-		$(TEST_FLAGS) -fprofile-arcs -ftest-coverage -lgcov \
-		$(CXXFLAGS) $(INCS) $(LDLIBS) $(TEST_LDLIBS)\
-		-o $(TEST_BIN) $^ -pthread
+test:
+	@make --no-print-directory \
+		BUILD_SOURCE="$(TEST_SOURCE)" \
+		BUILD_FLAGS="$(TEST_FLAGS)" \
+		EXTRA_CXX_FLAGS="$(EXTRA_TEST_FLAGS)" \
+		BUILD_LDLIBS="$(TEST_LDLIBS)" \
+		BUILD_BIN="$(TEST_BIN)" \
+		build
 	$(TEST_RUN) $(TEST_BIN)
 
-# Run pre-test to remove .o files for coverage information.
-# Add it as an order-only prerequisite | pre-test
-pre-test:
-	@rm -rf $(TEST_BUILD_FOLDER)/*.o
-	@echo "⚰  Removed all test .o files before test!"
+# Coverage report from the tests ##############################################
+TEST_BUILD_FOLDER := ./build/$(TEST_SOURCE)
+COVERAGE_FOLDER := ./coverage
+COVERAGE_FILE := $(COVERAGE_FOLDER)/coverage.info
 
-cov: $(TEST_OBJECTS) | test pre-test
+# Run pre-coverage to remove .o files for coverage information.
+# Add it as an order-only prerequisite | pre-coverage
+pre-coverage:
+	@rm -rf $(TEST_BUILD_FOLDER)/*.o
+	@echo "🗑  Removed all test .o files before generating coverage report!"
+	@echo
+
+coverage_report:
 	@mkdir -p $(COVERAGE_FOLDER)
-	@gcov --branch-probabilities -o $(TEST_BUILD_FOLDER) $^
+	@gcov --branch-probabilities -o $(TEST_BUILD_FOLDER) $(wildcard $(TEST_BUILD_FOLDER)/*.o)
 	# Generate coverage report
 	@lcov --capture --base-directory . --directory $(TEST_BUILD_FOLDER) --output $(COVERAGE_FILE)
 	# Clean from std libraries and test functions
@@ -191,9 +165,42 @@ cov: $(TEST_OBJECTS) | test pre-test
 	@lcov --remove $(COVERAGE_FILE) "*test_runner.cpp" --output $(COVERAGE_FILE)
 	@genhtml --output coverage -t "🐋 Test Coverage" $(COVERAGE_FILE)
 	@rm -rf *.log
-	@echo "Launching in browser"
 	@${BROWSER} ${PWD}/coverage/index.html &
 
-clean:
-		@echo "🖌 Cleaning build objects"
-		@rm -rfv *.out $(BENCH_BUILD_FOLDER) $(TEST_BUILD_FOLDER) $(FOLDER_BUILD)/*.o *.gcda *.gcno *.log *.o ./bin/*
+cov:
+	@make --no-print-directory test
+	@make --no-print coverage_report
+
+###############################################################################
+#                              Speed benchmarking                             #
+###############################################################################
+BENCH_SOURCE := ./bench
+
+BENCH_FLAGS := -DTESTENV
+BENCH_FLAGS += -D R_POINTS=128000 # 129055 for 400 points, 254200 for 200 points
+BENCH_FLAGS += -D SP_POINTS=400
+BENCH_FLAGS += -D R_POINTS_PER_CHUNK=1000
+BENCH_FLAGS += -D DEBUG=0
+
+BENCH_LDLIBS := -lcelero # Bechmarking library
+
+BENCH_BIN := ./bin/bench
+
+#This is used during runtime to locate Celero. cuda-memcheck can be used to audit the GPU for errors
+BENCH_RUN=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 #cuda-memcheck
+
+bench:
+	@make --no-print-directory \
+		BUILD_SOURCE="$(BENCH_SOURCE)" \
+		BUILD_FLAGS="$(BENCH_FLAGS)" \
+		BUILD_LDLIBS="$(BENCH_LDLIBS)" \
+		BUILD_BIN="$(BENCH_BIN)" \
+		build
+	$(BENCH_RUN) $(BENCH_BIN)
+
+###############################################################################
+#                                   Library                                   #
+###############################################################################
+# LIB_BIN=./bin/ia_1488.so
+# lib: $(OBJECTS)
+# $(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -shared -o $(LIB_BIN) $^
