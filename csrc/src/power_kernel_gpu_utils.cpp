@@ -53,20 +53,20 @@ GPU::PowerKernelParameters GPU::fetch_kernel_parameters(){
 
     // Check that "chunking" falls within the limits of shared memory on GPU
     cudaDeviceProp prop = fetch_gpu_parameters();
-    const int number_of_cumulative_arrays = 4;
     const int shared_memory_required = (R_POINTS_PER_CHUNK
                                         * sizeof(long)
-                                        * number_of_cumulative_arrays);
+                                        * GPU::no_outputs_from_gpu);
     if (prop.sharedMemPerBlock < shared_memory_required)
         throw std::runtime_error(
-            "Not enough shared memory on GPU ("
+            "Power Kernel: Not enough shared memory on GPU.\n\tR_POINTS_PER_CHUNK ("
+            + std::to_string(R_POINTS_PER_CHUNK)
+            + ") x LONG (8) x arrays used in GPU ("
+            + std::to_string(GPU::no_outputs_from_gpu)
+            + ") = "
             + std::to_string(shared_memory_required)
             + " > "
             + std::to_string(prop.sharedMemPerBlock)
-            + " bytes) for using R_POINTS_PER_CHUNK="
-            + std::to_string(R_POINTS_PER_CHUNK)
-            + " in power mesurements."
-            );
+            + " bytes availabel per GPU block.");
 
     // Check that chunking of R_POINTS is valid
     if (R_POINTS < R_POINTS_PER_CHUNK)

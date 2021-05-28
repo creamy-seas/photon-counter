@@ -13,11 +13,11 @@ class ia_ADQAPITest : public CppUnit::TestFixture {
         CPPUNIT_TEST( test_GetMaxNofRecordsFromNofSamples );
         CPPUNIT_TEST( test_GetMaxNofSamplesFromNofRecords );
         CPPUNIT_TEST( test_fetch_channel_data );
-        // CPPUNIT_TEST( test_setup_with_blink );
+        CPPUNIT_TEST( test_setup_with_blink );
 
-        CPPUNIT_TEST_SUITE_END();
+    CPPUNIT_TEST_SUITE_END();
 private:
-        void* adq_cu_ptr;
+    void* adq_cu_ptr;
 public:
     void setUp() {
         adq_cu_ptr = master_setup(

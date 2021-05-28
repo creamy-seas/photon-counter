@@ -47,25 +47,26 @@ void* master_setup(int blink, int clock_source, unsigned int trigger_mode) {
                 OKGREEN("Blinking complete!");
         }
 
-        switch (trigger_mode){
-        case TRIGGER_SOFTWARE:
-                OKBLUE("Software trigger");
-                ADQ_SetInternalTriggerPeriod(adq_cu_ptr, 1, 100);
-                break;
-        case TRIGGER_EXTERNAL:
-                WARNING("External trigger!");
-                break;
-        case TRIGGER_LEVEL:
-                FAIL("Level trigger!");
-        default :
-                FAIL("Please select valid trigger!");
-        }
-        ADQ_SetTriggerMode(adq_cu_ptr, 1, trigger_mode);
+    switch (trigger_mode) {
+    case TRIGGER_SOFTWARE:
+        OKBLUE("Software trigger");
+        ADQ_SetInternalTriggerPeriod(adq_cu_ptr, 1, 100);
+        break;
+    case TRIGGER_EXTERNAL:
+        WARNING("External trigger!");
+        break;
+    case TRIGGER_LEVEL:
+        FAIL("Level trigger!");
+    default :
+        FAIL("Please select valid trigger!");
+    }
+    ADQ_SetTriggerMode(adq_cu_ptr, 1, trigger_mode);
 
-        clock_source ==  INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERENCE ? WARNING("External clock!") : OKBLUE("Internal clock");
-        ADQ_SetClockSource(adq_cu_ptr, 1, clock_source);
 
-        return adq_cu_ptr;
+    clock_source ==  INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERENCE ? WARNING("External clock!") : OKBLUE("Internal clock");
+    ADQ_SetClockSource(adq_cu_ptr, 1, clock_source);
+
+    return adq_cu_ptr;
 }
 
 /*
@@ -82,10 +83,11 @@ void fetch_digitiser_data(
         ADQ_ArmTrigger(adq_cu_ptr, 1);
 
         YELLOWBG("Begginning aquisition");
+
         while (!ADQ_GetAcquiredAll(adq_cu_ptr, 1)){
 #ifdef TESTENV
-                WARNING("Software trigger in test environment");
-                ADQ_SWTrig(adq_cu_ptr, 1);
+            WARNING("Software trigger in test environment");
+            ADQ_SWTrig(adq_cu_ptr, 1);
 #endif
         }
 

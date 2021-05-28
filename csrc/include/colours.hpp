@@ -11,7 +11,7 @@
 #define _COLOURS_
 
 #ifndef DEBUG
-#define DEBUG 1
+#define DEBUG 0
 #endif
 
 #define ENDC "\033[0m"

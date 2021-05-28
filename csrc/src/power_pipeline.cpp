@@ -22,32 +22,33 @@ const int NO_GPU_STREAMS = 2; ///< Benchmarking showed that 2 streams should be 
  * - \f[ \left\langle{chB_data^2}\right\rangle \f]
  * - \f[ \left\langle{chA_data^2 + chB_data^2}\right\rangle \f]
  *
+ * Data is dumped to a file using log rotation format.
+ *
  * @param chA_data, chB_data data from the digitiser. Must be of length `SP_POINTS * R_POINTS`.
  * @param data_out cumulative array which will be incremented with the power kernel outputs
- * @param repetition cumulative data is normalised by the number runs completed
- * @param output_filename where data is dumped so that Python can plot it.
+ * @param repetition cumulative data is normalised by the number runs completed. This also specifies the unique log rotate command
+ * @param base_filename Used to ctonar data is dumped so that Python can plot it.
  */
 void process_digitiser_data(short *chA_data, short *chB_data,
                             long **data_out,
                             short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams,
-                            unsigned long repetition, std::string output_filename){
+                            unsigned long repetition, std::string base_filename){
     int normalisation = GPU::power_kernel(
         chA_data, chB_data,
         data_out,
         gpu_in, gpu_out, cpu_out, no_streams);
 
-    normalisation *= repetition;
+    normalisation *= repetition * R_POINTS_PER_CHUNK;
 
-    dump_arrays_to_file(data_out,
-                        NO_OF_POWER_KERNEL_OUTPUTS,
-                        SP_POINTS,
-                        output_filename,
-                        "CHA\tCHB\tCHASQ\tCHBSQ\tSQ",
-                        (double)normalisation);
-
+    dump_arrays_to_file(
+        data_out, NO_OF_POWER_KERNEL_OUTPUTS,
+        SP_POINTS,
+        base_filename + std::to_string(repetition % LOG_ROTATE) + ".txt",
+        "CHA\tCHB\tCHASQ\tCHBSQ\tSQ",
+        (double)normalisation);
 };
 
-void run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, std::string output_filename){
+void run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, std::string base_filename){
 
     // Casting to largest data type of comparisson
     if ((unsigned long long)no_repetitions * MAX_DIGITISER_CODE * R_POINTS
@@ -76,7 +77,7 @@ void run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, std:
     GPU::allocate_memory(&chA_data[0], &chB_data[0], &gpu_in, &gpu_out, &cpu_out, NO_GPU_STREAMS);
     long** data_out = new long*[NO_OF_POWER_KERNEL_OUTPUTS];
     for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
-        data_out[i] = new long[SP_POINTS];
+        data_out[i] = new long[SP_POINTS]();
 
     // 2. Launch 2 parrallel threads, alternating between fetching from digitiser and processing on GPU.
     std::thread thread_list[NO_THREADS];
@@ -98,7 +99,7 @@ void run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, std:
                                      data_out,
                                      gpu_in, gpu_out, cpu_out,
                                      NO_GPU_STREAMS,
-                                     r, output_filename);
+                                     r, base_filename);
         thread_list[dth].join();
         thread_list[pth].join();
     }
@@ -109,7 +110,7 @@ void run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, std:
         data_out,
         gpu_in, gpu_out, cpu_out,
         NO_GPU_STREAMS,
-        no_repetitions, output_filename);
+        no_repetitions, base_filename);
 
     // Deallocation of memory
     GPU::free_memory(chA_data[0], chB_data[0], gpu_in, gpu_out, cpu_out, NO_GPU_STREAMS);

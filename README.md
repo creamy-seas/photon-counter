@@ -99,6 +99,26 @@ print(ia_ADQAPI.example_gpu_func(10,2))
 - Use cuda-11.0
 - `nvcc` will automatically lookup relevant headers and libraries, so it can be used for compilation. It can even pass the non-gpu code to the standard compuler. But it will not be able to inject `-fprofile-arcs` and `-ftest-coverage` so it is better to use it for only building object files and not the total compilation.
 
+# Digitiser Notes #
+- ADQ214 Digitiser
+- Can run in **MultiRecord** mode only (no reading and streaming capabilities) see *14-1171-B Acquisition modes app note.pdf*
+- We do not want to waveform average, as we would not be able to extract chA² or chB²
+
+From *10-0569-ADQ214-datasheet.pdf*
+- Trigger accurancy is 625ps (1/4 of 2.5ns sampling rate)
+- 790Mb/s transfer rate, meaning
+- 4.4Vpp input voltage on chA and chB
+- 3V trigger input
+
+Attenuation of `χdB` will lower voltage signal by `√(10^(χ/10))`.
+
+| Keyisght Signal | Output | Attenuator (dB) | Output |
+|:---------------:|:------:|:---------------:|:------:|
+| CH1             | 4Vpp   | 6               | 2Vpp   |
+| CH2             | 4Vpp   | 1               | 3.5Vpp |
+| Trigger         | 5V     | 10              | 1.6V   |
+
+
 # Tools #
 - Check the objects in a library file
 ```shell

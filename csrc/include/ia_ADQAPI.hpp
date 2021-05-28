@@ -64,6 +64,8 @@ extern "C" {
 
     /**
      * Only use for development in c++
+     * @param clock_source either INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE or INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE
+     * @param trigger_type either TRIGGER_SOFTWARE, TRIGGER_EXTERNAL, TRIGGER_LEVEL
      */
     void* master_setup(int blink, int clock_source, unsigned int trigger_type);
 

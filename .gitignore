@@ -11,3 +11,4 @@ GTAGS
 *.csv
 /csrc/html/
 /csrc/latex/
+csrc/coverage

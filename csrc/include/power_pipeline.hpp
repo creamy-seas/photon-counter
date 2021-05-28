@@ -3,6 +3,8 @@
 
 #include <string>
 
+#define LOG_ROTATE 100 ///< Rotation of log files for safe reading/writting between Cpp and python
+
 /**
  * Run pipeline for power measurements using 2 threads parallel that alternate between:
  * - Read in from digitiser
@@ -15,8 +17,15 @@
  *
  * @param adq_cu_ptr Allocated pointer for communication with digitizer.
  * @param no_repetitions Number of times to repeat the measurements.
- * @param output_filename File to which to dump the results.
+ * @param base_filename File to which to dump the results, using log-rotation format `base_filename_X.txt`
  */
-void run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, std::string output_filename);
+void run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, std::string base_filename);
+
+#ifdef TESTENV
+void process_digitiser_data(short *chA_data, short *chB_data,
+                            long **data_out,
+                            short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams,
+                            unsigned long repetition, std::string base_filename);
+#endif
 
 #endif

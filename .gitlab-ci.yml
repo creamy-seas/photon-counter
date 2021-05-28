@@ -1,12 +1,12 @@
-pages:
-  stage: deploy
-  script:
-    - mkdir .public
-    - cp -r ./c_lib/coverage/* .public
-    - ls -l .public
-    - mv .public public
-  artifacts:
-    paths:
-      - public
-  only:
-    - master
+# pages:
+#   stage: deploy
+#   script:
+#     - mkdir .public
+#     - cp -r ./c_lib/coverage/* .public
+#     - ls -l .public
+#     - mv .public public
+#   artifacts:
+#     paths:
+#       - public
+#   only:
+#     - master

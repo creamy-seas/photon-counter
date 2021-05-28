@@ -25,12 +25,8 @@ LDLIBS := $(shell pkg-config --libs libadq) # Digitiser library
 LDLIBS += -lcudart # Cuda runtime (high level functions)
 
 # Folders
-FOLDER_SOURCE:=./src
+FOLDER_SOURCE:=./src ./playground
 FOLDER_BUILD:=./build
-
-# Binaries
-BIN_APP=./bin/run
-BIN_LIB=./bin/ia_1488.so
 
 # Source and object files
 # CPP_SOURCE := ./src/ia_ADQAPI.cpp #example
@@ -40,6 +36,16 @@ CUDA_SOURCE := $(wildcard $(FOLDER_SOURCE)/*.cu)
 CUDA_OBJECTS := $(patsubst $(FOLDER_SOURCE)/%.cu,$(FOLDER_BUILD)/%.o,$(CUDA_SOURCE))
 
 OBJECTS := $(CPP_OBJECTS) $(CUDA_OBJECTS)
+
+SOURCE := $(wildcard $(FSOURCE)/*.cpp)
+lll:
+	@echo $(SOURCE)
+	@echo "===================="
+
+kkk:
+	@make \
+		FSOURCE=./playground \
+		lll
 
 # Auxillary parameters
 #BROWSER := ns
@@ -63,7 +69,6 @@ COVERAGE_FILE:=$(COVERAGE_FOLDER)/coverage.info
 TEST_BIN=./bin/test
 # TEST_RUN=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 cuda-memcheck --tool racecheck
 
-# TEST_SOURCE := $(TEST_FOLDER)/power_gpu_test.cpp $(TEST_FOLDER)/test_runner.cpp #example
 TEST_SOURCE = $(wildcard $(TEST_FOLDER)/*.cpp)
 TEST_OBJECTS = $(patsubst $(TEST_FOLDER)/%.cpp,$(TEST_BUILD_FOLDER)/%.o,$(TEST_SOURCE))
 TEST_OBJECTS += $(patsubst $(FOLDER_SOURCE)/%.cpp,$(TEST_BUILD_FOLDER)/%.o,$(CPP_SOURCE))
@@ -85,11 +90,15 @@ BENCH_BUILD_FOLDER:=./build/bench_build
 
 BENCH_BIN=./bin/bench
 
-.PHONY: clean test bench
+# One off runs ################################################################
+BUILD_FLAGS += -D R_POINTS=254000
+BUILD_FLAGS += -D R_POINTS_PER_CHUNK=1000
+BUILD_FLAGS += -D SP_POINTS=200
+BUILD_FLAGS += -D DEBUG=1
 
-play:
-	$(CXX) $(CXXFLAGS) $(BENCH_FLAGS) $(BENCH_LDLIBS) $(INCS) -o $(BIN_APP) bench.cpp
-	$(BENCH_RUN) $(BIN_APP)
+# PLAY_RUN=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 #cuda-memcheck
+
+.PHONY: clean test bench
 
 ###############################################################################
 #           Same as for test, but with replaced flags and libraries           #
@@ -107,19 +116,30 @@ bench:
 ###############################################################################
 #                                   Library                                   #
 ###############################################################################
+BIN_LIB=./bin/ia_1488.so
+
 # PositionIndependentCode
 # Building of cpp object files
 $(FOLDER_BUILD)/%.o: $(FOLDER_SOURCE)/%.cpp
-		@echo 🐋 [cpp] Building $^ ⟶ $@
-		$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -fPIC -c -o $@ $^
+	@echo 🐋 [cpp] Building $^ ⟶ $@
+	@$(CXX) $(CXXFLAGS) $(BUILD_FLAGS) $(INCS) $(LDLIBS) -fPIC -c -o $@ $^
 
 # Building of cuda object files
 $(FOLDER_BUILD)/%.o: $(FOLDER_SOURCE)/%.cu
 	@echo 🐍 [cu] Building $^ ⟶ $@
-	@nvcc $(CUDA_FLAGS) $(INCS) --compiler-options -fPIC -c -o $@ $^
+	@nvcc $(CUDA_FLAGS) $(BUILD_FLAGS) $(INCS) --compiler-options -fPIC -c -o $@ $^
 
 lib: $(OBJECTS)
-		$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -shared -o $(BIN_LIB) $^
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -shared -o $(BIN_LIB) $^
+
+###############################################################################
+#                     Single run executable (development)                     #
+###############################################################################
+BIN_PLAY=./bin/run
+
+play: $(OBJECTS)
+	@$(CXX) $(CXXFLAGS) $(BUILD_FLAGS) $(INCS) $(LDLIBS) -o $(BIN_PLAY) $^
+	$(PLAY_RUN) $(BIN_PLAY)
 
 ###############################################################################
 #                                     Test                                    #
@@ -161,18 +181,18 @@ pre-test:
 	@echo "⚰  Removed all test .o files before test!"
 
 cov: $(TEST_OBJECTS) | test pre-test
-				@mkdir -p $(COVERAGE_FOLDER)
-				@gcov --branch-probabilities -o $(TEST_BUILD_FOLDER) $^
-				# Generate coverage report
-				@lcov --capture --base-directory . --directory $(TEST_BUILD_FOLDER) --output $(COVERAGE_FILE)
-				# Clean from std libraries and test functions
-				@lcov --remove $(COVERAGE_FILE) "/usr*" --output $(COVERAGE_FILE)
-				@lcov --remove $(COVERAGE_FILE) "*_test.cpp" --output $(COVERAGE_FILE)
-				@lcov --remove $(COVERAGE_FILE) "*test_runner.cpp" --output $(COVERAGE_FILE)
-				@genhtml --output coverage -t "🐋 Test Coverage" $(COVERAGE_FILE)
-				@rm -rf *.log
-				@echo "Launching in browser"
-				@${BROWSER} ${PWD}/coverage/index.html &
+	@mkdir -p $(COVERAGE_FOLDER)
+	@gcov --branch-probabilities -o $(TEST_BUILD_FOLDER) $^
+	# Generate coverage report
+	@lcov --capture --base-directory . --directory $(TEST_BUILD_FOLDER) --output $(COVERAGE_FILE)
+	# Clean from std libraries and test functions
+	@lcov --remove $(COVERAGE_FILE) "/usr*" --output $(COVERAGE_FILE)
+	@lcov --remove $(COVERAGE_FILE) "*_test.cpp" --output $(COVERAGE_FILE)
+	@lcov --remove $(COVERAGE_FILE) "*test_runner.cpp" --output $(COVERAGE_FILE)
+	@genhtml --output coverage -t "🐋 Test Coverage" $(COVERAGE_FILE)
+	@rm -rf *.log
+	@echo "Launching in browser"
+	@${BROWSER} ${PWD}/coverage/index.html &
 
 clean:
 		@echo "🖌 Cleaning build objects"

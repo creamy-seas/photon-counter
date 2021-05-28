@@ -65,7 +65,8 @@
 # May 25 2021: Comparing Digitiser read speed to GPU #
 > 68079aea94f892bbac75a7de04f7b434824ffee0
 
-Theoretically the digitise will work at:
+Theoretically the digitiser will work at (from datasheet):
+- Transfer rate of 790MB/s =
 - 400 (1000ns) points, the repetition frequency is 340kHz, so for 254200 records this is `0.74s`
 - 200 (500ns) points, the repetition frequency is 860kHz, so for 254200 records this is `0.3s`
 

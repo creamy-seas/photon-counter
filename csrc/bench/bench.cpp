@@ -7,6 +7,7 @@
 #include "utils.hpp"
 #include "ia_ADQAPI.hpp" // fetch_digitiser_data
 #include "ADQAPI.h" // DeleteAdqControlUnit
+#include "power_pipeline.hpp"
 
 CELERO_MAIN
 
@@ -37,9 +38,9 @@ public:
             chB_data[i] = digitiser_code();
         }
 
-        data_out = new double*[NO_OF_POWER_KERNEL_OUTPUTS];
+        data_out = new long*[NO_OF_POWER_KERNEL_OUTPUTS];
         for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
-            data_out[i] = new double[SP_POINTS];
+            data_out[i] = new long[SP_POINTS];
 
         // Background
         chA_background = new short[SP_POINTS];
@@ -62,7 +63,7 @@ public:
 
     short* chA_data;
     short* chB_data;
-    double** data_out;
+    long** data_out;
 
     // Background
     short *chA_background;
@@ -131,15 +132,15 @@ public:
         // Create pointer and set up device for multirecord
         adq_cu_ptr = master_setup(NO_BLINK,
                                   INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE,
-                                  TRIGGER_SOFTWARE);
+                                  TRIGGER_EXTERNAL
+                                  // TRIGGER_SOFTWARE
+            );
 
         // Simulate with real number of points that we would typically expect
         number_of_records = 10000;//GetMaxNofRecordsFromNofSamples(adq_cu_ptr, SP_POINTS);
         buff_a = new short[SP_POINTS * number_of_records];
         buff_b = new short[SP_POINTS * number_of_records];
     };
-
-    // fetch_data called between setUp and tearDown
 
     void tearDown() override {
         delete[] buff_a;
@@ -153,7 +154,7 @@ public:
     short *buff_b;
 };
 
-BASELINE_F(POWER, DIGITIZER, DigitiserFixture, 1, 1)
+BASELINE_F(POWER, READING, DigitiserFixture, 1, 1)
 {
     // Prepare multirecord mode
     ADQ_MultiRecordSetup(adq_cu_ptr, 1, number_of_records,  SP_POINTS);
@@ -187,14 +188,16 @@ BASELINE_F(POWER, DIGITIZER, DigitiserFixture, 1, 1)
 //         data_out,
 //         gpu_in, gpu_out, cpu_out, no_streams);
 // }
-BASELINE_F(POWER, GPU_2ST, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+BENCHMARK_F(POWER, GPU_2ST, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
     GPU::power_kernel(
         chA_data_locked, chB_data_locked,
         data_out,
         gpu_in, gpu_out, cpu_out, no_streams);
     dump_arrays_to_file(data_out, 5, SP_POINTS,
                         "./test/test_bin/bench-example.txt",
-                        "#CHA\tCHB\tCHASQ\tCHBSQ\tSQ");
+                        "#CHA\tCHB\tCHASQ\tCHBSQ\tSQ",
+                        (double)1
+        );
 }
 // BENCHMARK_F(POWER, GPU_8ST, PowerKernelGPU8StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
 //     GPU::power_kernel(
@@ -214,6 +217,14 @@ BASELINE_F(POWER, GPU_2ST, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER
 //                         "./test/test_bin/bench-example.txt",
 //                         "#CHA\tCHB\tCHASQ\tCHBSQ\tSQ");
 // }
+
+BENCHMARK_F(POWER, PROCESSING, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+
+    process_digitiser_data(chA_data_locked, chB_data_locked,
+                           data_out,
+                           gpu_in, gpu_out, cpu_out, no_streams,
+                           1, "./test/test_bin/bench_processing-example");
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //                         Float vs double benchmark                         //
