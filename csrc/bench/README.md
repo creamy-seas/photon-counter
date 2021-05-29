@@ -67,8 +67,8 @@
 
 Theoretically the digitiser will work at (from datasheet):
 - Transfer rate of 790MB/s =
-- 400 (1000ns) points, the repetition frequency is 340kHz, so for 254200 records this is `0.74s`
-- 200 (500ns) points, the repetition frequency is 860kHz, so for 254200 records this is `0.3s`
+- 400 (1000ns) points, the repetition frequency is 340kHz, so for 254200 records this is `0.074s`
+- 200 (500ns) points, the repetition frequency is 860kHz, so for 254200 records this is `0.03s`
 
 It seems that the GPU kernel peaks at 2 streams in terms of performance.
 
@@ -79,7 +79,7 @@ It seems that the GPU kernel peaks at 2 streams in terms of performance.
 
 | Group     | Experiment      | Prob. Space | Samples | Iterations | Baseline | us/Iteration  | Iterations/sec | RAM (bytes) |
 |:---------:|:---------------:|:-----------:|:-------:|:----------:|:--------:|:-------------:|:--------------:|:-----------:|
-| DIGITISER | Theoretical     |             |         |            |          | 740000        | 1.35           |             |
+| DIGITISER | Theoretical     |             |         |            |          | 74000         | 13.35          |             |
 | POWER     | 1T_NO_BACK      | Null        | 30      | 1          | 1.00000  | 1927193.00000 | 0.52           | 60559360    |
 | POWER     | 2T_NO_BACK      | Null        | 30      | 1          | 1.31233  | 2529108.00000 | 0.40           | 68952064    |
 | POWER     | 8T_NO_BACK      | Null        | 30      | 1          | 1.40540  | 2708469.00000 | 0.37           | 85737472    |
@@ -96,6 +96,25 @@ It seems that the GPU kernel peaks at 2 streams in terms of performance.
 
 </details>
 
+# May 28 2021: Real power pipeline comparisson #
+> Fill in
+
+See above section from details on digitser. The GPU is still 2 times faster that digitiser readout.
+
+<details>
+<summary>Click this to collapse/fold.</summary>
+
+> `R_POINTS=128000`, `SP_POINTS=400`, `R_POINTS_PER_CHUNK=1000`
+
+| Group     | Experiment  | Prob. Space | Samples | Iterations | Baseline | us/Iteration | Iterations/sec | RAM (bytes) |
+|:---------:|:-----------:|:-----------:|:-------:|:----------:|:--------:|:------------:|:--------------:|:-----------:|
+| DIGITISER | Theoretical |             |         |            |          | 74000        | 13.35          |             |
+| POWER     | READING     | Null        | 30      | 13         | 1.00000  | 74152.00000  | 13.49          | 61505536    |
+| POWER     | GPU_2ST     | Null        | 30      | 28         | 0.47455  | 35188.60714  | 28.42          | 9409593344  |
+| POWER     | PROCESSING  | Null        | 30      | 28         | 0.47465  | 35196.53571  | 28.41          | 9409593344  |
+
+
+</details>
 
 # Float vs double: No difference #
 > 4b2b92bdcc7e9de0fce5234998fde309ac71d137

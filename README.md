@@ -24,10 +24,10 @@
 
 2. Run `ggtags-create-tags` in an c/cpp project. or `gtags`
 
-3. Install `cppunit, gcov, lcov` lib
+3. Install `cppunit, gcov, lcov, latex, dvipsk` lib
 
 ```shell
-sudo apt-get install libcppunit-dev lcov
+sudo apt-get install libcppunit-dev lcov texlive
 ```
 
 4. Install `Celero` for benchmarking
@@ -166,16 +166,11 @@ ldd ./bin/ia_1488.so
 | 🏆 use `check_kernel_parameters` to check the kernel built in C++ | feed `fetch_kernel_parameters` into the python `check_kernel_parameters` |
 
 ## Power pipeline ##
-> In progress
+> Complete
 
-| `sp_digitiser_power.py` (Python) | (C++)                                              |
-|:---------------------------------|----------------------------------------------------|
-| allocation of arrays             | allocation of arrays                               |
-| call in order:                   | 3 threads (read, process, save) in single function |
-| - C++: `fetch_digitiser_data`      |                                                    |
-| - C++: `power_kernel_vXXXX`      |                                                    |
-| - Python: Post processing        |                                                    |
-|                                  | 🏆 just need to make sure that data dumping safe   |
+| `sp_digitiser_power.py` (Python)                 | `power_pipeline.hpp` (C++)                            |
+|:-------------------------------------------------|-------------------------------------------------------|
+| 🏆 Compile + Run + Load latest log file and plot | 🏆 2 threads (read, process) dumping to rotating logs |
 
 ## Correlation ##
 
@@ -194,6 +189,6 @@ ldd ./bin/ia_1488.so
 | Colour | Meaning             |
 |--------|---------------------|
 | BLUE   | Information         |
-| GREEN  | Something compelted |
+| GREEN  | Something completed |
 | YELLOW | Irrelevant/debug    |
 | RED    | Error               |

@@ -29,7 +29,7 @@ INCS += -L./../Celero/build # Celero libraries (benchmarking)
 LDLIBS := $(shell pkg-config --libs libadq) # Digitiser library
 LDLIBS += -lcudart # Cuda runtime (high level functions)
 
-# Source and object files evaluted from the directory with the source files
+# Source and object files evaluted from the BUILD_SOURCE that will need to be supplied
 BUILD_FOLDER := ./build/${BUILD_SOURCE}
 CPP_SOURCE := $(wildcard $(BUILD_SOURCE)/*.cpp)
 CPP_OBJECTS := $(patsubst $(BUILD_SOURCE)/%.cpp,$(BUILD_FOLDER)/%.o,$(CPP_SOURCE))
@@ -38,7 +38,7 @@ CUDA_OBJECTS := $(patsubst $(BUILD_SOURCE)/%.cu,$(BUILD_FOLDER)/%.o,$(CUDA_SOURC
 
 OBJECTS := $(CPP_OBJECTS) $(CUDA_OBJECTS)
 
-.PHONY: clean build test
+.PHONY: clean build test bench
 
 clean:
 	@echo "🗑  Cleaning build objects"
@@ -49,7 +49,7 @@ clean:
 ###############################################################################
 # Generic templates for building.
 # - Run with @make build
-# - pass in BUILD_SOURCE, BUILD_FLAGS, BUILD_LDLIBS, BUILD_BIN
+# - pass in BUILD_SOURCE, BUILD_FLAGS, BUILD_LDLIBS, BUILD_BIN, EXTRA_BIN_FLAGS, EXTRA_CXX_FLAGS
 ###############################################################################
 make_folders:
 	@mkdir -p $(BUILD_FOLDER) ./build ./bin
@@ -63,7 +63,6 @@ build_objects: $(OBJECTS)
 build_core_objects:
 	@make --no-print-directory \
 		BUILD_SOURCE="./src" \
-		BUILD_FLAGS="$(BUILD_FLAGS)" \
 		build_objects
 
 # Building of cpp object files (*)
@@ -80,7 +79,7 @@ $(BUILD_FOLDER)/%.o: $(BUILD_SOURCE)/%.cu | make_folders
 # Collect up all the built files
 compile_binary:
 	@echo "🏗  [***] Building binary file $(BUILD_BIN)"
-	@$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) $(BUILD_LDLIBS) $(EXTRA_CXX_FLAGS)\
+	@$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) $(BUILD_LDLIBS) $(EXTRA_BIN_FLAGS)\
 		-o $(BUILD_BIN) \
 		$(wildcard build/$(BUILD_SOURCE)/*.o) $(wildcard build/src/*.o)
 	@echo "✅ [***] Built binary $(BUILD_BIN)"
@@ -124,7 +123,9 @@ TEST_FLAGS += -D R_POINTS_PER_CHUNK=1
 TEST_FLAGS += -D SP_POINTS=3
 TEST_FLAGS += -D DEBUG=0
 
-EXTRA_TEST_FLAGS := -fprofile-arcs -ftest-coverage -lgcov
+TEST_EXTRA_CXX_FLAGS := -fprofile-arcs -ftest-coverage
+
+TEST_EXTRA_BIN_FLAGS := -lgcov -fprofile-arcs
 
 TEST_LDLIBS := $(shell pkg-config --libs cppunit) # Unittest library
 
@@ -136,29 +137,34 @@ test:
 	@make --no-print-directory \
 		BUILD_SOURCE="$(TEST_SOURCE)" \
 		BUILD_FLAGS="$(TEST_FLAGS)" \
-		EXTRA_CXX_FLAGS="$(EXTRA_TEST_FLAGS)" \
+		EXTRA_CXX_FLAGS="$(TEST_EXTRA_CXX_FLAGS)" \
+		EXTRA_BIN_FLAGS="$(TEST_EXTRA_BIN_FLAGS)" \
 		BUILD_LDLIBS="$(TEST_LDLIBS)" \
 		BUILD_BIN="$(TEST_BIN)" \
 		build
 	$(TEST_RUN) $(TEST_BIN)
 
 # Coverage report from the tests ##############################################
+CORE_BUILD_FOLDER := ./build/src
 TEST_BUILD_FOLDER := ./build/$(TEST_SOURCE)
+
 COVERAGE_FOLDER := ./coverage
 COVERAGE_FILE := $(COVERAGE_FOLDER)/coverage.info
 
-# Run pre-coverage to remove .o files for coverage information.
-# Add it as an order-only prerequisite | pre-coverage
-pre-coverage:
-	@rm -rf $(TEST_BUILD_FOLDER)/*.o
-	@echo "🗑  Removed all test .o files before generating coverage report!"
+# Add it as an order-only prerequisite | coverage-wipe
+# As coverage is done by injecting extra code to keep track of execution
+# we need to delete .o files that already exist to force rebuilding
+# and remove them after coverage.
+coverage-wipe:
+	@rm -rf $(CORE_BUILD_FOLDER)/*.o
+	@echo "🗑  Removed all the .o files before/after coverage report!"
 	@echo
 
 coverage_report:
 	@mkdir -p $(COVERAGE_FOLDER)
-	@gcov --branch-probabilities -o $(TEST_BUILD_FOLDER) $(wildcard $(TEST_BUILD_FOLDER)/*.o)
+	@gcov --branch-probabilities -o $(CORE_BUILD_FOLDER) $(wildcard $(CORE_BUILD_FOLDER)/*.o)
 	# Generate coverage report
-	@lcov --capture --base-directory . --directory $(TEST_BUILD_FOLDER) --output $(COVERAGE_FILE)
+	@lcov --capture --base-directory . --directory $(CORE_BUILD_FOLDER) --output $(COVERAGE_FILE)
 	# Clean from std libraries and test functions
 	@lcov --remove $(COVERAGE_FILE) "/usr*" --output $(COVERAGE_FILE)
 	@lcov --remove $(COVERAGE_FILE) "*_test.cpp" --output $(COVERAGE_FILE)
@@ -167,9 +173,10 @@ coverage_report:
 	@rm -rf *.log
 	@${BROWSER} ${PWD}/coverage/index.html &
 
-cov:
+cov: | coverage-wipe
 	@make --no-print-directory test
 	@make --no-print coverage_report
+	@make --no-print coverage-wipe
 
 ###############################################################################
 #                              Speed benchmarking                             #
@@ -201,6 +208,15 @@ bench:
 ###############################################################################
 #                                   Library                                   #
 ###############################################################################
-# LIB_BIN=./bin/ia_1488.so
-# lib: $(OBJECTS)
-# $(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -shared -o $(LIB_BIN) $^
+LIB_BIN = ./bin/ia_1488.so
+
+LIB_FLAGS += -D R_POINTS=128000 # 129055 for 400 points, 254200 for 200 points
+LIB_FLAGS += -D SP_POINTS=400
+LIB_FLAGS += -D R_POINTS_PER_CHUNK=1000
+
+lib:
+	@make --no-print-directory \
+		BUILD_BIN="$(LIB_BIN)" \
+		BUILD_FLAGS="$(LIB_FLAGS)" \
+		EXTRA_BIN_FLAGS="-shared" \
+		build

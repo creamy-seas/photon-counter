@@ -154,7 +154,7 @@ public:
     short *buff_b;
 };
 
-BASELINE_F(POWER, READING, DigitiserFixture, 1, 1)
+BASELINE_F(POWER, READING, DigitiserFixture, 0, 0)
 {
     // Prepare multirecord mode
     ADQ_MultiRecordSetup(adq_cu_ptr, 1, number_of_records,  SP_POINTS);
