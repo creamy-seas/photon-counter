@@ -1,6 +1,6 @@
 # Auxillary parameters
-#BROWSER := ns
-BROWSER := ck
+BROWSER := ns
+# BROWSER := ck
 PWD := $(shell pwd)
 
 CXX := g++
@@ -55,9 +55,13 @@ make_folders:
 	@mkdir -p $(BUILD_FOLDER) ./build ./bin
 
 # Triggers the building of cpp and cu files (see *)
+# Otherwise dummy recipe
 build_objects: $(OBJECTS)
-	@echo "✅ [***] Built files in $(BUILD_SOURCE)"
+ifdef BUILD_SOURCE
+	@echo "✅ [***] Built files in \"$(BUILD_SOURCE)\""
 	@echo
+endif
+	@:
 
 # Before making binary, always build the core code in the ./src directory
 build_core_objects:
@@ -79,7 +83,12 @@ $(BUILD_FOLDER)/%.o: $(BUILD_SOURCE)/%.cu | make_folders
 # Collect up all the built files
 compile_binary:
 	@echo "🏗  [***] Building binary file $(BUILD_BIN)"
-	@$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) $(BUILD_LDLIBS) $(EXTRA_BIN_FLAGS)\
+	$(CXX) \
+		$(CXXFLAGS) \
+		$(INCS) \
+		$(LDLIBS) \
+		$(BUILD_LDLIBS) \
+		$(EXTRA_BIN_FLAGS) \
 		-o $(BUILD_BIN) \
 		$(wildcard build/$(BUILD_SOURCE)/*.o) $(wildcard build/src/*.o)
 	@echo "✅ [***] Built binary $(BUILD_BIN)"
@@ -103,7 +112,7 @@ PLAY_FLAGS += -D DEBUG=1
 
 PLAY_BIN := ./bin/run
 
-play:
+play: | clean
 	@make --no-print-directory \
 		BUILD_SOURCE="$(PLAY_SOURCE)" \
 		BUILD_FLAGS="$(PLAY_FLAGS)" \
@@ -133,7 +142,7 @@ TEST_BIN := ./bin/test
 
 # TEST_RUN=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 cuda-memcheck --tool racecheck
 
-test:
+test: | clean
 	@make --no-print-directory \
 		BUILD_SOURCE="$(TEST_SOURCE)" \
 		BUILD_FLAGS="$(TEST_FLAGS)" \
@@ -196,7 +205,7 @@ BENCH_BIN := ./bin/bench
 #This is used during runtime to locate Celero. cuda-memcheck can be used to audit the GPU for errors
 BENCH_RUN=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 #cuda-memcheck
 
-bench:
+bench: | clean
 	@make --no-print-directory \
 		BUILD_SOURCE="$(BENCH_SOURCE)" \
 		BUILD_FLAGS="$(BENCH_FLAGS)" \
@@ -208,15 +217,36 @@ bench:
 ###############################################################################
 #                                   Library                                   #
 ###############################################################################
-LIB_BIN = ./bin/ia_1488.so
+# LIB_FLAGS passed in like so:
+# R_POINTS=1000 SP_POINTS=400 R_POINTS_PER_CHUNK=1 make lib
+ifeq (lib, $(firstword $(MAKECMDGOALS)))
+ifndef R_POINTS
+$(error "❌ Need to define R_POINTS for building library")
+endif
+ifndef SP_POINTS
+$(error "❌ Need to define SP_POINTS for building library")
+endif
+ifndef R_POINTS_PER_CHUNK
+$(error "❌ Need to define R_POINTS_PER_CHUNK for building library")
+endif
 
-LIB_FLAGS += -D R_POINTS=128000 # 129055 for 400 points, 254200 for 200 points
-LIB_FLAGS += -D SP_POINTS=400
-LIB_FLAGS += -D R_POINTS_PER_CHUNK=1000
+LIB_FLAGS:=-D SP_POINTS=$(SP_POINTS) -D R_POINTS=$(R_POINTS) -D R_POINTS_PER_CHUNK=$(R_POINTS_PER_CHUNK)
+endif
 
-lib:
-	@make --no-print-directory \
-		BUILD_BIN="$(LIB_BIN)" \
-		BUILD_FLAGS="$(LIB_FLAGS)" \
-		EXTRA_BIN_FLAGS="-shared" \
-		build
+LIB_EXTRA_BIN_FLAGS := "-shared"
+
+LIB_BIN := ./bin/ia_1488.so
+
+# Library is always built from scratch, in order to propagate the -D arguments
+lib: | clean
+	@BUILD_FLAGS="$(LIB_FLAGS)" make --no-print-directory \
+			EXTRA_BIN_FLAGS=$(LIB_EXTRA_BIN_FLAGS) \
+			BUILD_BIN=$(LIB_BIN) \
+			build
+
+###############################################################################
+#                                Documentation                                #
+###############################################################################
+dox:
+	@doxygen
+	@$(BROWSER) html/index.html

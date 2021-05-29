@@ -45,14 +45,12 @@ int odx; ///< Output inDeX for CHA, CHB, CHASQ ...
 void GPU::copy_background_arrays_to_gpu(short *chA_background, short *chB_background) {
 
     int success = 0;
-    cudaMemcpyToSymbol(gpu_chA_background, chA_background,
-                       SP_POINTS*sizeof(short));
+    success += cudaMemcpyToSymbol(gpu_chA_background, chA_background,
+                                  SP_POINTS*sizeof(short));
     success += cudaMemcpyToSymbol(gpu_chB_background, chB_background,
                                   SP_POINTS*sizeof(short));
-    if (success != 0){
-        RED("Cuda success = %i", success);
-        FAIL("Failed to copy background data TO the GPU - check that the arrays have SP_POINTS in them!");
-    }
+    if (success != 0) FAIL(
+        "Failed to copy background data TO the GPU - check that the arrays have SP_POINTS in them!");
 
 }
 
