@@ -21,7 +21,7 @@ int GPU::fetch_power_kernel_blocks() {
     return BLOCKS;
 };
 
-int GPU::check_power_kernel_parameters(){
+int GPU::check_power_kernel_parameters(bool display){
     PYTHON_START;
 
     // Even number required for summation on GPU
@@ -93,19 +93,21 @@ int GPU::check_power_kernel_parameters(){
             + "bytes) bigger than logbal memory on GPU (" + std::to_string(prop.totalGlobalMem) + "bytes)."
             );
 
-    // Pretty print
-    OKBLUE("===========================================");
-    RED("          **POWER KERNEL**");
 
-    OKBLUE("Data Parameters");
-    WHITE("R_POINTS: %i\n", R_POINTS );
-    WHITE("SP_POINTS: %i\n", SP_POINTS );
+    if (display) {
+        OKBLUE("===========================================");
+        RED("          **POWER KERNEL**");
 
-    OKBLUE("Processing Parameters");
-    WHITE("BLOCKS: %i\n", BLOCKS );
-    WHITE("THREADS_PER_BLOCK: %i\n", THREADS_PER_BLOCK );
+        OKBLUE("Data Parameters");
+        WHITE("R_POINTS: %i\n", R_POINTS );
+        WHITE("SP_POINTS: %i\n", SP_POINTS );
 
-    OKBLUE("===========================================");
+        OKBLUE("Processing Parameters");
+        WHITE("BLOCKS: %i\n", BLOCKS );
+        WHITE("THREADS_PER_BLOCK: %i\n", THREADS_PER_BLOCK );
+
+        OKBLUE("===========================================");
+    }
 
     PYTHON_END;
 

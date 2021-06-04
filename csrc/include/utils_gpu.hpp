@@ -6,6 +6,6 @@
 /*
  * Fetch and display parameters of the GPU (already done in python, this is just proof of concept)
  */
-cudaDeviceProp fetch_gpu_parameters();
+cudaDeviceProp fetch_gpu_parameters(bool display=false);
 
 #endif

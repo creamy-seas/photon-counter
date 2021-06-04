@@ -72,15 +72,20 @@ class SpDigitiser:
 
         # 1. Create control unit and attach devices to it
         self.adq_cu_ptr = ctypes.c_void_p(ADQAPI.CreateADQControlUnit())
-        no_of_devices = int(ADQAPI.ADQControlUnit_FindDevices(self.adq_cu_ptr))
-        assert no_of_devices > 0, "Failed to find the SP-DIGITISER"
-
-        # 2. Set parameters
+        
         try:
+            no_of_devices = int(ADQAPI.ADQControlUnit_FindDevices(self.adq_cu_ptr))
+            assert no_of_devices > 0, "Failed to find the SP-DIGITISER"
+
+            # 2. Set parameters
             self.check_parameters()
             self.parameter_setup()
         except KeyError as err:
+            self.__del__()
             raise RuntimeError(f"Missing a parameter: {err}")
+        except Error:
+            self.__del__()
+            raise Error
 
     def __del__(self):
         """Safe deallocation of pointer to disconnect the device"""

@@ -41,7 +41,7 @@ extern "C" {
         /**
          * Validation of kernel parameters before it's invocation.
          */
-        int check_power_kernel_parameters();
+        int check_power_kernel_parameters(bool display=false);
     }
 #ifdef __cplusplus
 }

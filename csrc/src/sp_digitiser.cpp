@@ -23,7 +23,7 @@ void* master_setup(int blink, int clock_source, unsigned int trigger_mode) {
 
     //1. Create an instance of the ADQControlUnit, required to find and setup ADQ devices
     void* adq_cu_ptr = CreateADQControlUnit();
-    ADQControlUnit_EnableErrorTrace(adq_cu_ptr, LOG_LEVEL_INFO, ".");
+    if (!ADQControlUnit_EnableErrorTrace(adq_cu_ptr, LOG_LEVEL_INFO, ".")) FAIL("DIGITISER: Failed to enable error logging.");
 
     //2. Find all ADQ units connect them. Store the address in adq_cu_ptr variable
     int no_of_devices = ADQControlUnit_FindDevices(adq_cu_ptr);
@@ -33,23 +33,23 @@ void* master_setup(int blink, int clock_source, unsigned int trigger_mode) {
 
     // Hard coded /////////////////////////////////////////////////////////
     // Set the data format to 14 bit unpacked, to map 1to1 the collected data memory inefficiently, but quickly
-    ADQ_SetDataFormat(adq_cu_ptr, 1, 0);
+    if (!ADQ_SetDataFormat(adq_cu_ptr, 1, 1)) FAIL("DIGITISER: Failed to set data format.");
 
     // Synthesise 400MHz signal from the 10MHz one
     // (phase locked loop generates a clock @ f*800/divider_value, so in this case its 400MHz. That is the sampling frequency)
-    ADQ_SetPllFreqDivider(adq_cu_ptr, 1, 2);
+    if (!ADQ_SetPllFreqDivider(adq_cu_ptr, 1, 2)) FAIL("DIGITISER: Failed to setup freq divider.");
 
     // Variable
     if (blink == 1) {
         YELLOWBG("Blinking");
-        ADQ_Blink(adq_cu_ptr, 1);
+        if (!ADQ_Blink(adq_cu_ptr, 1)) FAIL("DIGITISER: Failed to blink.");
         OKGREEN("Blinking complete!");
     }
 
     switch (trigger_mode) {
     case TRIGGER_SOFTWARE:
         OKBLUE("Software trigger");
-        ADQ_SetInternalTriggerPeriod(adq_cu_ptr, 1, 100);
+        if (!ADQ_SetInternalTriggerPeriod(adq_cu_ptr, 1, 1)) FAIL("DIGITISER: Failed to set software trigger period.");
         break;
     case TRIGGER_EXTERNAL:
         WARNING("External trigger!");
@@ -59,11 +59,11 @@ void* master_setup(int blink, int clock_source, unsigned int trigger_mode) {
     default :
         FAIL("Please select valid trigger!");
     }
-    ADQ_SetTriggerMode(adq_cu_ptr, 1, trigger_mode);
 
+    if (!ADQ_SetTriggerMode(adq_cu_ptr, 1, trigger_mode)) FAIL("DIGITISER: Failed to set the trigger mode.");
 
     clock_source == INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERENCE ? WARNING("External clock!") : OKBLUE("Internal clock");
-    ADQ_SetClockSource(adq_cu_ptr, 1, clock_source);
+    if (!ADQ_SetClockSource(adq_cu_ptr, 1, clock_source)) FAIL("DIGITISER: Failed set the clock source.");
 
     return adq_cu_ptr;
 }

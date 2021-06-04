@@ -14,6 +14,7 @@ int main(int argc, char *argv[])
 
     void* adq_cu_ptr = master_setup(
         NO_BLINK,
+        // BLINK,
         INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE,
         // TRIGGER_SOFTWARE
         TRIGGER_EXTERNAL
