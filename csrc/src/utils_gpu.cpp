@@ -3,7 +3,7 @@
 #include <string>
 
 #include <cuda_runtime_api.h> //for cudaDeviceProp
-#include "colours.hpp"
+#include "logging.hpp"
 #include "utils_gpu.hpp"
 
 cudaDeviceProp fetch_gpu_parameters(){

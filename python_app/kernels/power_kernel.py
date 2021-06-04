@@ -1,3 +1,8 @@
+"""
+Evaluation of chA² and chB².
+
+C++ code is better - here for legacy reasons and maybe benchmarking.
+"""
 import json
 from typing import List, Callable, Tuple, Optional, Dict
 

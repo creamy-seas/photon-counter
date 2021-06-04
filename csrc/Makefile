@@ -1,3 +1,5 @@
+# Commands: dox cov lib play test bench clean
+
 # Auxillary parameters
 BROWSER := ns
 # BROWSER := ck
@@ -9,6 +11,7 @@ CXX := g++
 # Flags
 CXXFLAGS += -DLINUX
 CXXFLAGS += -std=c++11
+CXXFLAGS += -Wno-write-strings
 # CXXFLAGS += -D_GLIBCXX_USE_CXX11_ABI=0
 # CXXFLAGS += -lpthread
 # CXXFLAGS += -Wall # Enable the 'all' set of warnings
@@ -38,11 +41,17 @@ CUDA_OBJECTS := $(patsubst $(BUILD_SOURCE)/%.cu,$(BUILD_FOLDER)/%.o,$(CUDA_SOURC
 
 OBJECTS := $(CPP_OBJECTS) $(CUDA_OBJECTS)
 
-.PHONY: clean build test bench
+.PHONY: fresh build test bench
+
+fresh:
+	@echo "🗑  Cleaning build objects"
+	@rm -rfv *.out ./build/*/*.o *.gcda *.gcno *.log *.o
+	@echo "✅ [***] Done"
+	@echo
 
 clean:
-	@echo "🗑  Cleaning build objects"
-	@rm -rfv *.out ./build/*/*.o *.gcda *.gcno *.log *.o ./bin/*
+	@echo "🗑  Cleaning project!"
+	@rm -rfv ./bin ./html ./build ./latex ./coverage *.log *.o
 	@echo "✅ [***] Done"
 	@echo
 
@@ -52,7 +61,7 @@ clean:
 # - pass in BUILD_SOURCE, BUILD_FLAGS, BUILD_LDLIBS, BUILD_BIN, EXTRA_BIN_FLAGS, EXTRA_CXX_FLAGS
 ###############################################################################
 make_folders:
-	@mkdir -p $(BUILD_FOLDER) ./build ./bin
+	@mkdir -p $(BUILD_FOLDER) ./build ./bin ./dump
 
 # Triggers the building of cpp and cu files (see *)
 # Otherwise dummy recipe
@@ -83,7 +92,7 @@ $(BUILD_FOLDER)/%.o: $(BUILD_SOURCE)/%.cu | make_folders
 # Collect up all the built files
 compile_binary:
 	@echo "🏗  [***] Building binary file $(BUILD_BIN)"
-	$(CXX) \
+	@$(CXX) \
 		$(CXXFLAGS) \
 		$(INCS) \
 		$(LDLIBS) \
@@ -109,10 +118,12 @@ PLAY_FLAGS := -D R_POINTS=254000
 PLAY_FLAGS += -D R_POINTS_PER_CHUNK=1000
 PLAY_FLAGS += -D SP_POINTS=200
 PLAY_FLAGS += -D DEBUG=1
+# PLAY_FLAGS += -D TESTENV
 
 PLAY_BIN := ./bin/run
 
-play: | clean
+playc: | fresh play
+play:
 	@make --no-print-directory \
 		BUILD_SOURCE="$(PLAY_SOURCE)" \
 		BUILD_FLAGS="$(PLAY_FLAGS)" \
@@ -130,7 +141,7 @@ TEST_FLAGS := -DTESTENV
 TEST_FLAGS += -D R_POINTS=8
 TEST_FLAGS += -D R_POINTS_PER_CHUNK=1
 TEST_FLAGS += -D SP_POINTS=3
-TEST_FLAGS += -D DEBUG=0
+TEST_FLAGS += -D DEBUG=1
 
 TEST_EXTRA_CXX_FLAGS := -fprofile-arcs -ftest-coverage
 
@@ -142,7 +153,8 @@ TEST_BIN := ./bin/test
 
 # TEST_RUN=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 cuda-memcheck --tool racecheck
 
-test: | clean
+testc: | fresh test;
+test:
 	@make --no-print-directory \
 		BUILD_SOURCE="$(TEST_SOURCE)" \
 		BUILD_FLAGS="$(TEST_FLAGS)" \
@@ -205,7 +217,8 @@ BENCH_BIN := ./bin/bench
 #This is used during runtime to locate Celero. cuda-memcheck can be used to audit the GPU for errors
 BENCH_RUN=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 #cuda-memcheck
 
-bench: | clean
+benchc: | fresh bench;
+bench:
 	@make --no-print-directory \
 		BUILD_SOURCE="$(BENCH_SOURCE)" \
 		BUILD_FLAGS="$(BENCH_FLAGS)" \
@@ -217,6 +230,9 @@ bench: | clean
 ###############################################################################
 #                                   Library                                   #
 ###############################################################################
+LIB_FLAGS := -D PYTHON=1
+LIB_FLAGS += -D TESTENV=1
+
 # LIB_FLAGS passed in like so:
 # R_POINTS=1000 SP_POINTS=400 R_POINTS_PER_CHUNK=1 make lib
 ifeq (lib, $(firstword $(MAKECMDGOALS)))
@@ -230,15 +246,16 @@ ifndef R_POINTS_PER_CHUNK
 $(error "❌ Need to define R_POINTS_PER_CHUNK for building library")
 endif
 
-LIB_FLAGS:=-D SP_POINTS=$(SP_POINTS) -D R_POINTS=$(R_POINTS) -D R_POINTS_PER_CHUNK=$(R_POINTS_PER_CHUNK)
+LIB_FLAGS += -D SP_POINTS=$(SP_POINTS) -D R_POINTS=$(R_POINTS) -D R_POINTS_PER_CHUNK=$(R_POINTS_PER_CHUNK)
 endif
 
 LIB_EXTRA_BIN_FLAGS := "-shared"
 
-LIB_BIN := ./bin/ia_1488.so
+LIB_BIN := ./bin/libia.so
 
 # Library is always built from scratch, in order to propagate the -D arguments
-lib: | clean
+lib: | fresh
+	@echo "Using flags: $(LIB_FLAGS)"
 	@BUILD_FLAGS="$(LIB_FLAGS)" make --no-print-directory \
 			EXTRA_BIN_FLAGS=$(LIB_EXTRA_BIN_FLAGS) \
 			BUILD_BIN=$(LIB_BIN) \

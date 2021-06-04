@@ -2,7 +2,7 @@
 #include <sstream> // for string stream
 #include <string> // supporting stream stream
 
-#include "colours.hpp"
+#include "logging.hpp"
 
 #ifndef UTILS_HPP
 #define UTILS_HPP

@@ -1,11 +1,12 @@
 """
-Class is responsible for setting up the digitiser and interacting with it
+Establishing connection and setting up of the SP digitiser ADQ214 for data acquisition.
+
+**Default Offsets**
 channelA_offset = -208
 channelB_offset = -143
 """
 
 import ctypes
-from ctypes import cdll
 from typing import Dict
 
 from python_app.utils.terminal_colour import TerminalColour
@@ -14,19 +15,14 @@ from python_app.utils.terminal_colour import TerminalColour
 #                                 Library load                                #
 ###############################################################################
 try:
-    ADQAPI = cdll.LoadLibrary("libadq.so")
-except Exception as err:
-    raise RuntimeError(f"Failed to load the ADQ library - see below for details: {err}")
-try:
-    ia_ADQAPI = cdll.LoadLibrary("./bin/ia_1488.so")
+    ADQAPI = ctypes.cdll.LoadLibrary("libadq.so")
+    ADQAPI.CreateADQControlUnit.restype = ctypes.c_void_p
+    ADQAPI.ADQ214_GetRevision.restype = ctypes.c_void_p
+    ADQAPI.ADQControlUnit_FindDevices.argtypes = [ctypes.c_void_p]
 except Exception as err:
     raise RuntimeError(
-        f"Failed to load the custom photon-counting library - make sure that it has been built!: {err}"
-    )
-
-ADQAPI.CreateADQControlUnit.restype = ctypes.c_void_p
-ADQAPI.ADQ214_GetRevision.restype = ctypes.c_void_p
-ADQAPI.ADQControlUnit_FindDevices.argtypes = [ctypes.c_void_p]
+        f"Failed to load the ADQ library (for the digitiser) - please install it by following instructions in README.md"
+        + "\n" + "{err}")
 
 ###############################################################################
 #                               Class definition                              #
@@ -50,27 +46,38 @@ class SpDigitiser:
     }
 
     TRIGGER_EXTERNAL = 1
-    TRIGGER_INTERNAL = 0
+    TRIGGER_SOFTWARE = 0
+
+    INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE = 0
+    INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERENCE = 1
+
+    LOW_FREQUENCY_MODE = 0 # external clock range 35-240MHz
+    HIGH_FREQUENCY_MODE = 1 # external clock range 240-550MHz
+
+    PACKED_14_BIT_MODE = 0 # faster
+    UNPACKED_14_BIT_MODE = 1
 
     @classmethod
     def log(cls, message: str):
         print(cls.LOG_TEMPLATE.format(info=str(message)))
 
-    def __init__(self, sp_digitiser_parameters: Dict):
+    def __init__(self, sp_digitiser_parameters: Dict, libia: ctypes.CDLL):
         """
-        record                  is taken at every trigger
-        samples_per_record      number of samples taken for every record
+        @param r_points number of repetition measuements (aka r_points)
+        @param sp_points number of samples taken at every trigger (aka samples_per_record)
         """
+
         self.sp_digitiser_parameters = sp_digitiser_parameters
+        self.libia = libia
 
         # 1. Create control unit and attach devices to it
         self.adq_cu_ptr = ctypes.c_void_p(ADQAPI.CreateADQControlUnit())
         no_of_devices = int(ADQAPI.ADQControlUnit_FindDevices(self.adq_cu_ptr))
         assert no_of_devices > 0, "Failed to find the SP-DIGITISER"
 
-        # 2. Set parameters ###################################################
+        # 2. Set parameters
         try:
-            self.parameter_preprocessing()
+            self.check_parameters()
             self.parameter_setup()
         except KeyError as err:
             raise RuntimeError(f"Missing a parameter: {err}")
@@ -78,78 +85,75 @@ class SpDigitiser:
     def __del__(self):
         """Safe deallocation of pointer to disconnect the device"""
         ADQAPI.DeleteADQControlUnit(self.adq_cu_ptr)
-        self.log("🕱 Destructor activated")
+        self.log("🕱 Disconnected from digitiser.")
 
-    def get_max_samples_per_record(self, number_of_records: int) -> int:
-        return ia_ADQAPI.GetMaxNofSamplesFromNofRecords(
-            self.adq_cu_ptr, number_of_records
+    def get_max_samples_per_record(self, r_points: int) -> int:
+        return self.libia.GetMaxNofSamplesFromNofRecords(
+            self.adq_cu_ptr, r_points
         )
 
-    def get_max_number_of_records(self, samples_per_record: int) -> int:
-        return ia_ADQAPI.GetMaxNofRecordsFromNofSamples(
-            self.adq_cu_ptr, samples_per_record
+    def get_max_number_of_records(self, sp_points: int) -> int:
+        return self.libia.GetMaxNofRecordsFromNofSamples(
+            self.adq_cu_ptr, sp_points
         )
 
-    def parameter_preprocessing(self):
-        samples_per_record = self.sp_digitiser_parameters["samples_per_record"]
-        number_of_records = self.sp_digitiser_parameters["number_of_records"]
+    def check_parameters(self):
+        sp_points = self.sp_digitiser_parameters["sp_points"]
+        r_points = self.sp_digitiser_parameters["r_points"]
 
-        max_samples = self.get_max_samples_per_record(number_of_records)
-        max_records = self.get_max_number_of_records(samples_per_record)
+        max_samples = self.get_max_samples_per_record(r_points)
+        max_records = self.get_max_number_of_records(sp_points)
 
-        # Verify samples ######################################################
-        self.log(
-            f"""
-                Max Samples for (number_of_records={number_of_records}): {max_samples}
-                Max Records for (samples_per_record={samples_per_record}): {max_records}"""
+        # Verify samples
+        self.log("\n" +
+            f"Max Samples for (r_points={r_points}): {max_samples}" +
+            "\n" +
+            f"Max Records for (sp_points={sp_points}): {max_records}"
         )
 
-        if samples_per_record > max_samples or number_of_records > max_records:
+        if sp_points > max_samples or r_points > max_records:
             raise RuntimeError(
-                "Invalid parameters for number_of_records/samples_per_record to collect:"
+                "Invalid parameters for r_points/sp_points to digitiser readout."
             )
 
-        # Derive trigger frequency ############################################
+        # Derive trigger frequency
         for (
             _spr,
             _trigger_frequency,
         ) in self.SAMPLES_PER_RECORD_TO_TRIGGER_FREQUENCY_KHZ:
-            if samples_per_record > _spr:
+            if sp_points > _spr:
                 trigger_frequency = _trigger_frequency
 
         self.log(f"Trigger frequency: {trigger_frequency}kHz")
         self.sp_digitiser_parameters["trigger_frequency"] = trigger_frequency
 
     def parameter_setup(self):
-        # a - delay after trigger #############################################
+        # a - delay after trigger
         ADQAPI.ADQ214_SetTriggerHoldOffSamples(
             self.adq_cu_ptr, 1, self.sp_digitiser_parameters["delay"]
         )
 
-        # b - internal clock source with external 10MHz refference ############
-        INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERECNCE = 1
+        # b - if exetrnal clock source, connect it to the front panel
         ADQAPI.ADQ214_SetClockSource(
-            self.adq_cu_ptr, 1, INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERECNCE
+            self.adq_cu_ptr, 1, self.sp_digitiser_parameters["clock_source"]
         )
 
-        # c - range of the external refference ################################
-        LOW_FREQUENCY_MODE = 0
-        HIGH_FREQUENCY_MODE = 1
-        ADQAPI.ADQ214_SetClockFrequencyMode(self.adq_cu_ptr, 1, HIGH_FREQUENCY_MODE)
+        # c - range of the external clock refference
+        ADQAPI.ADQ214_SetClockFrequencyMode(self.adq_cu_ptr, 1, self.sp_digitiser_parameters["frequency_mode"])
 
-        # d - Synthesise 400MHz sampling signal from the f_clock=10MHz ########
+        # d - Synthesise 400MHz sampling signal from the f_clock=10MHz
         # (phase locked loop samples at f_clock*80/divider_value, so in this case its 400MHz. That is the sampling frequency)
         ADQAPI.ADQ214_SetPllFreqDivider(self.adq_cu_ptr, 1, 2)
 
-        # e - Set the trigger type ############################################
+        # e - Set the trigger type
         ADQAPI.ADQ214_SetTriggerMode(
             self.adq_cu_ptr, 1, self.sp_digitiser_parameters["trigger_type"]
         )
 
-        # f - Set the data format to 14 bit unpacked, to map 1to1 the collected data memory inefficiently, but quickly #
-        ADQAPI.ADQ214_SetDataFormat(self.adq_cu_ptr, 1, 1)
+        # f - Set the data format to 14 bit unpacked, to map 1to1 the collected data memory inefficiently, but quickly
+        ADQAPI.ADQ214_SetDataFormat(self.adq_cu_ptr, 1, self.PACKED_14_BIT_MODE)
 
-        # g - Offset found by taking measurements of the 2 channels #
+        # g - Offset found by taking measurements of the 2 channels
         ADQAPI.ADQ214_SetGainAndOffset(
             self.adq_cu_ptr,
             1,
@@ -177,8 +181,8 @@ class SpDigitiser:
         ADQAPI.ADQ214_MultiRecordSetup(
             self.adq_cu_ptr,
             1,
-            self.sp_digitiser_parameters["number_of_records"],
-            self.sp_digitiser_parameters["samples_per_record"],
+            self.sp_digitiser_parameters["r_points"],
+            self.sp_digitiser_parameters["sp_points"],
         )
 
     def blink(self):

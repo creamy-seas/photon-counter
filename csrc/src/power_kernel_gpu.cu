@@ -28,7 +28,7 @@
  * In order to get the memory location on the gpu
  */
 
-#include "colours.hpp"
+#include "logging.hpp"
 #include "power_kernel.hpp"
 
 // Background signal copied once to GPU
@@ -207,7 +207,7 @@ template<typename T> int GPU::power_kernel(
         for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
             odx = GPU::outputs_from_gpu[i];
             success += cudaMemsetAsync(gpu_out[s][odx], 0, SP_POINTS*sizeof(long), stream_list[s]);
-            if (success != 0) FAIL("Power Kernel: Failed to reset arrays on GPU:\nError code %i.", success);
+            if (success != 0) FAIL("Power Kernel: Failed to reset arrays on GPU");
         }
     }
 

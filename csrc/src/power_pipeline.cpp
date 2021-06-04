@@ -3,9 +3,9 @@
 #include <thread> // for std::thread
 #include <limits.h> // For LONG_MAX
 
-#include "colours.hpp"
+#include "logging.hpp"
 #include "utils.hpp"
-#include "ia_ADQAPI.hpp"
+#include "sp_digitiser.hpp"
 #include "power_pipeline.hpp"
 #include "power_kernel.hpp"
 
@@ -48,7 +48,9 @@ void process_digitiser_data(short *chA_data, short *chB_data,
         (double)normalisation);
 };
 
-void run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, std::string base_filename){
+int run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, char* base_filename){
+
+    PYTHON_START;
 
     // Casting to largest data type of comparisson
     if ((unsigned long long)no_repetitions * MAX_DIGITISER_CODE * R_POINTS
@@ -68,8 +70,8 @@ void run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, std:
     // There will be 2 copies of chA_data and chB_data.
     // One thread can be reading into one pair (chA, chB),
     // Other thread can be processing the other pair (chA, chB)
-    short** chA_data = new short*[NO_THREADS];
-    short** chB_data = new short*[NO_THREADS];
+    short** chA_data = new short*[NO_THREADS]();
+    short** chB_data = new short*[NO_THREADS]();
     GPU::allocate_memory(&chA_data[1], &chB_data[1], 0, 0, 0, NO_GPU_STREAMS);
 
     // Single copy of these, since only the processing thread will use them
@@ -120,4 +122,7 @@ void run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, std:
     for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
         delete[] data_out[i];
     delete[] data_out;
+
+    PYTHON_END;
+    return 0;
 };

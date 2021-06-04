@@ -32,6 +32,21 @@
 #define CHBSQ_MASK (1 << CHBSQ)
 #define SQ_MASK (1 << SQ)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+    namespace GPU {
+        int fetch_power_kernel_blocks();
+        int fetch_power_kernel_threads();
+        /**
+         * Validation of kernel parameters before it's invocation.
+         */
+        int check_power_kernel_parameters();
+    }
+#ifdef __cplusplus
+}
+#endif
+
 namespace CPU {
 
     /**
@@ -52,23 +67,6 @@ namespace CPU {
 }
 
 namespace GPU {
-    /**
-     * Communication of kernel parameters, for inspection and validation in python.
-     */
-    struct PowerKernelParameters {
-        int r_points; int np_points; int blocks; int threads_per_block;
-
-        PowerKernelParameters(int r_points, int np_points, int blocks, int threads_per_block);
-
-        void print();
-    };
-    /**
-     * As the GPU kernel will be compiled a single time, this will return the variables
-     * that should be used when calling it.
-     *
-     * @returns PowerKernelParameters struct, with details on the compiled kernel parmeters.
-     */
-    PowerKernelParameters fetch_kernel_parameters();
 
     const int outputs_from_gpu[4] = {CHA, CHB, CHASQ, CHBSQ}; ///< Convenience array for iteration through the different computations running on GPU.
     const int no_outputs_from_gpu = 4; ///< GPU will be computing this number of results.
@@ -119,7 +117,7 @@ namespace GPU {
      * each of `SP_POINTS` in length as the repetitions are averaged.
      *
      * **Important**
-     * - GPU kernels is compiled with fixed array sizes - use GPU::fetch_kernel_parameters to ensure that correct array sizes are passed into it.
+     * - GPU kernels is compiled with fixed array sizes - use GPU::check_power_kernel_parameters to validate it.
      * - The actual data is processes in chunks of size `R_POINTS_PER_CHUNK` each. Depending on whether data is accumulated (`long **data_out`)
      *   or normalised (`double **data_out`) normalisation may need to take place outside the function.
      *

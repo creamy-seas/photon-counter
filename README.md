@@ -1,3 +1,5 @@
+> Python 3.8
+
 # Project setup #
 
 1. Create `.dir-locals.el` listing location of standard libraries and header files.
@@ -89,10 +91,10 @@ extern "C" {
 import ctypes
 from ctypes import cdll
 
-ia_ADQAPI = cdll.LoadLibrary("./bin/ia_1488.so")
-ia_ADQAPI.example_gpu_func.restype = ctypes.c_float
+libia = cdll.LoadLibrary("./bin/libia.so")
+libia.example_gpu_func.restype = ctypes.c_float
 
-print(ia_ADQAPI.example_gpu_func(10,2))
+print(libia.example_gpu_func(10,2))
 ```
 
 # Cuda notes #
@@ -130,6 +132,8 @@ nm ./bin/ia_1488.so
 ldd ./bin/ia_1488.so
 ```
 
+- Libraries are normally in `/usr/lib` and the header files in `/usr/include`.
+
 # Build #
 - `gcc 4.8.5`
 
@@ -141,7 +145,7 @@ ldd ./bin/ia_1488.so
 ## SP-Digitiser Setup ##
 > Complete
 
-| `sp_digitizer.py` (Python) | `ia_ADQAPI.cpp` (C++)                 |
+| `sp_digitizer.py` (Python) | `libia.cpp` (C++)                 |
 |:---------------------------|---------------------------------------|
 | 🏆 extensive setup         | essential setup only for tests        |
 |                            | 🏆 `fetch_digitiser_data` to fetch data |
@@ -163,7 +167,7 @@ ldd ./bin/ia_1488.so
 | `power_kernel.py` (Python)                                        | `power_kernel.hpp` (C++)                                                 |
 |:------------------------------------------------------------------|--------------------------------------------------------------------------|
 | "Out-of-the-box" `kernel` with little customisability             | 🏆 `kernel` that can be used in parallel processes                       |
-| 🏆 use `check_kernel_parameters` to check the kernel built in C++ | feed `fetch_kernel_parameters` into the python `check_kernel_parameters` |
+| 🏆 use `check_kernel_parameters` to check the kernel built in C++ | feed `check_power_kernel_parameters` into the python `check_kernel_parameters` |
 
 ## Power pipeline ##
 > Complete

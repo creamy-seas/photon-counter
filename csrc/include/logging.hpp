@@ -6,9 +6,16 @@
  */
 #include <stdio.h>
 #include <stdexcept>
+#include <iostream>
+#include <string> // for std::string
 
 #ifndef _COLOURS_
 #define _COLOURS_
+
+/**
+ * logging error to a file when library is built for python
+ */
+void append_to_log_file(std::string);
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -27,12 +34,22 @@
 #define OKBLUE(str, ...) PRINT_COLOR("\033[94m\033[1m", str, ##__VA_ARGS__)
 #define OKGREEN(str, ...) PRINT_COLOR("\033[92m\033[1m", str, ##__VA_ARGS__)
 #define WARNING(str, ...) PRINT_COLOR("\033[93m\033[1m", str, ##__VA_ARGS__)
-#define FAIL(str, ...) {                   \
-        printf("\033[91m\033[1m");               \
-        printf(str, ##__VA_ARGS__);              \
-        printf("%s\n", ENDC);                    \
-        throw std::runtime_error(str);           \
+
+// For Python logging will be done to a file, since python cannot handle exceptions
+#ifdef PYTHON
+#define PYTHON_START try {
+#define PYTHON_END } catch(...) { return 1;}
+#else
+#define PYTHON_START
+#define PYTHON_END
+#endif
+#define LOG_FILE "libia.log"
+#define FAIL(str) {                                             \
+        append_to_log_file(str);                                \
+        std::cout << "\033[91m\033[1m" << str << ENDC << "\n";  \
+        throw std::runtime_error(str);                          \
     }
+
 
 #define UNDERLINE(str, ...) PRINT_COLOR("\033[4m", str, ##__VA_ARGS__)
 #define FLASH(str, ...) PRINT_COLOR("\033[5m", str, ##__VA_ARGS__)

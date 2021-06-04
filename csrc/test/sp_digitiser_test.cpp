@@ -1,18 +1,18 @@
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "ia_ADQAPI.hpp"
+#include "sp_digitiser.hpp"
 #include "ADQAPI.h"
 
-class ia_ADQAPITest : public CppUnit::TestFixture {
+class sp_digitiserTest : public CppUnit::TestFixture {
 
-        // Macro for generating suite
-        CPPUNIT_TEST_SUITE( ia_ADQAPITest );
+    // Macro for generating suite
+    CPPUNIT_TEST_SUITE( sp_digitiserTest );
 
-        // Population with tests
-        // CPPUNIT_TEST_EXCEPTION( test_fail, CppUnit::Exception );
-        CPPUNIT_TEST( test_GetMaxNofRecordsFromNofSamples );
-        CPPUNIT_TEST( test_GetMaxNofSamplesFromNofRecords );
-        CPPUNIT_TEST( test_fetch_channel_data );
+    // Population with tests
+    // CPPUNIT_TEST_EXCEPTION( test_fail, CppUnit::Exception );
+    CPPUNIT_TEST( test_GetMaxNofRecordsFromNofSamples );
+    CPPUNIT_TEST( test_GetMaxNofSamplesFromNofRecords );
+    CPPUNIT_TEST( test_fetch_channel_data );
     // CPPUNIT_TEST( test_setup_with_blink );
 
     CPPUNIT_TEST_SUITE_END();
@@ -96,4 +96,4 @@ public:
 };
 
 // Add suite to Factory Register which will be retrieved later on
-CPPUNIT_TEST_SUITE_REGISTRATION( ia_ADQAPITest );
+CPPUNIT_TEST_SUITE_REGISTRATION( sp_digitiserTest );

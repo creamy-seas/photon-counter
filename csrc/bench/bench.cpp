@@ -5,7 +5,7 @@
 #include "power_kernel.hpp"
 
 #include "utils.hpp"
-#include "ia_ADQAPI.hpp" // fetch_digitiser_data
+#include "sp_digitiser.hpp" // fetch_digitiser_data
 #include "ADQAPI.h" // DeleteAdqControlUnit
 #include "power_pipeline.hpp"
 
@@ -86,7 +86,7 @@ public:
         no_streams = get_number_of_streams();
 
         // Validate kernel
-        GPU::fetch_kernel_parameters();
+        GPU::check_power_kernel_parameters();
 
         // Copy background data to GPU
         GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
@@ -194,7 +194,7 @@ BENCHMARK_F(POWER, GPU_2ST, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PE
         data_out,
         gpu_in, gpu_out, cpu_out, no_streams);
     dump_arrays_to_file(data_out, 5, SP_POINTS,
-                        "./test/test_bin/bench-example.txt",
+                        "./dump/bench-example.txt",
                         "#CHA\tCHB\tCHASQ\tCHBSQ\tSQ",
                         (double)1
         );
@@ -214,7 +214,7 @@ BENCHMARK_F(POWER, GPU_2ST, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PE
 
 // BENCHMARK_F(POWER, FILE_WRITTING, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
 //     dump_arrays_to_file(data_out, 5, SP_POINTS,
-//                         "./test/test_bin/bench-example.txt",
+//                         "./dump/bench-example.txt",
 //                         "#CHA\tCHB\tCHASQ\tCHBSQ\tSQ");
 // }
 
@@ -223,7 +223,7 @@ BENCHMARK_F(POWER, PROCESSING, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS
     process_digitiser_data(chA_data_locked, chB_data_locked,
                            data_out,
                            gpu_in, gpu_out, cpu_out, no_streams,
-                           1, "./test/test_bin/bench_processing-example");
+                           1, "./dump/bench_processing-example");
 }
 
 ///////////////////////////////////////////////////////////////////////////////

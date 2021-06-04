@@ -19,7 +19,7 @@ class PowerKernelGpuUtilsTest : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE( PowerKernelGpuUtilsTest );
 
     // Population with tests
-    CPPUNIT_TEST( test_fetch_kernel_parameters );
+    CPPUNIT_TEST( test_check_power_kernel_parameters );
     CPPUNIT_TEST( test_allocate_memory );
     CPPUNIT_TEST( test_allocate_memory_bad_no_streams );
 
@@ -32,11 +32,10 @@ public:
     long ***gpu_out;
     long ***cpu_out;
 
-    void test_fetch_kernel_parameters(){
-        GPU::PowerKernelParameters kp = GPU::fetch_kernel_parameters();
-        // Parameters for test set in Makefile
-        CPPUNIT_ASSERT_EQUAL(8, kp.r_points);
-        CPPUNIT_ASSERT_EQUAL(3, kp.np_points);
+    void test_check_power_kernel_parameters(){
+        GPU::check_power_kernel_parameters();
+        CPPUNIT_ASSERT_EQUAL(GPU::fetch_power_kernel_blocks(), 3);
+        CPPUNIT_ASSERT_EQUAL(GPU::fetch_power_kernel_threads(), 1);
     }
 
     void test_allocate_memory_bad_no_streams(){

@@ -2,8 +2,8 @@
 #include <stdio.h>
 
 // Project Libraries
-#include "colours.hpp"
-#include "ia_ADQAPI.hpp"
+#include "logging.hpp"
+#include "sp_digitiser.hpp"
 
 #define INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERECNCE
 
@@ -19,7 +19,6 @@ int GetMaxNofRecordsFromNofSamples(void* adq_cu_ptr, int no_of_samples){
     return max_number_of_records;
 }
 
-// Connect to the ADQ unit and setup 400MHz data acquisition
 void* master_setup(int blink, int clock_source, unsigned int trigger_mode) {
 
     //1. Create an instance of the ADQControlUnit, required to find and setup ADQ devices
@@ -34,7 +33,7 @@ void* master_setup(int blink, int clock_source, unsigned int trigger_mode) {
 
     // Hard coded /////////////////////////////////////////////////////////
     // Set the data format to 14 bit unpacked, to map 1to1 the collected data memory inefficiently, but quickly
-    ADQ_SetDataFormat(adq_cu_ptr, 1, 1);
+    ADQ_SetDataFormat(adq_cu_ptr, 1, 0);
 
     // Synthesise 400MHz signal from the 10MHz one
     // (phase locked loop generates a clock @ f*800/divider_value, so in this case its 400MHz. That is the sampling frequency)
@@ -42,10 +41,10 @@ void* master_setup(int blink, int clock_source, unsigned int trigger_mode) {
 
     // Variable
     if (blink == 1) {
-                YELLOWBG("Blinking");
-                ADQ_Blink(adq_cu_ptr, 1);
-                OKGREEN("Blinking complete!");
-        }
+        YELLOWBG("Blinking");
+        ADQ_Blink(adq_cu_ptr, 1);
+        OKGREEN("Blinking complete!");
+    }
 
     switch (trigger_mode) {
     case TRIGGER_SOFTWARE:
@@ -63,15 +62,12 @@ void* master_setup(int blink, int clock_source, unsigned int trigger_mode) {
     ADQ_SetTriggerMode(adq_cu_ptr, 1, trigger_mode);
 
 
-    clock_source ==  INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERENCE ? WARNING("External clock!") : OKBLUE("Internal clock");
+    clock_source == INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERENCE ? WARNING("External clock!") : OKBLUE("Internal clock");
     ADQ_SetClockSource(adq_cu_ptr, 1, clock_source);
 
     return adq_cu_ptr;
 }
 
-/*
- * Fetch data from the digitiser. Ensure that multirecord has been setup before this function is run!
- */
 void fetch_digitiser_data(
         void* adq_cu_ptr,
         short* buff_a, short* buff_b,

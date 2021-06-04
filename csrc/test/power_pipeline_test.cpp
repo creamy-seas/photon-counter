@@ -4,7 +4,7 @@
 #include <limits.h> // For LONG_MAX
 
 #include "power_pipeline.hpp"
-#include "ia_ADQAPI.hpp"
+#include "sp_digitiser.hpp"
 #include "ADQAPI.h" // For MultiRecordSetup
 
 class PowerPipelineTest : public CppUnit::TestFixture {
@@ -35,7 +35,7 @@ public:
     void test_power_pipeline() {
         ADQ214_MultiRecordSetup(adq_cu_ptr, 1, R_POINTS, SP_POINTS);
 
-        run_power_measurements(adq_cu_ptr, 10, "./test/test_bin/power-pipeline-example.txt");
+        run_power_measurements(adq_cu_ptr, 10, "./dump/power-pipeline-example.txt");
 
         ADQ214_MultiRecordClose(adq_cu_ptr, 1);
     };
@@ -47,7 +47,7 @@ public:
             "Should give warning message that LONG arrays will overflow",
             run_power_measurements(adq_cu_ptr,
                                    LONG_MAX,
-                                   "./test/test_bin/power-pipeline-example.txt"),
+                                   "./dump/power-pipeline-example.txt"),
             std::runtime_error);
 
         ADQ214_MultiRecordClose(adq_cu_ptr, 1);

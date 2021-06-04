@@ -1,6 +1,6 @@
 // #include <iostream>
 // #include "playground.hpp"
-// #include "colours.hpp"
+// #include "logging.hpp"
 
 // __global__ void example_gpu_func_kernel(int a, int b, float *c){
 //         *c = (float)(a * a + b * b);

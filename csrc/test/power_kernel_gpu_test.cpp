@@ -3,7 +3,7 @@
 
 #include "power_kernel.hpp"
 #include "utils.hpp"
-#include "colours.hpp"
+#include "logging.hpp"
 
 #ifdef TESTENV
 // #define R_POINTS 8 defined in Makefile
@@ -139,7 +139,7 @@ public:
         int no_streams = 2;
 
         // Check kernel
-        GPU::fetch_kernel_parameters();
+        GPU::check_power_kernel_parameters();
 
         // Copy over background data
         GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
@@ -183,7 +183,7 @@ public:
         int no_streams = 1;
 
         // Check kernel
-        GPU::fetch_kernel_parameters();
+        GPU::check_power_kernel_parameters();
 
         // Copy over background data
         GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
@@ -223,7 +223,7 @@ public:
         int no_chunks;
 
         // Check kernel
-        GPU::fetch_kernel_parameters();
+        GPU::check_power_kernel_parameters();
 
         // Copy over background data
         GPU::copy_background_arrays_to_gpu(chA_background, chB_background);

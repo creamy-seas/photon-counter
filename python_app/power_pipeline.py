@@ -1,10 +1,13 @@
 """
-Methods for performing power measurements
+Launching of power measurements:
+1. Compling cpp library that evaluates measurements on GPU
+2. Setup of digitiser
+3. Running of measurements
+4. Real time update of graph
 """
 from typing import Dict
 
 from python_app.sp_digitiser import SpDigitiser
-
 
 class SpDigitiserPower(SpDigitiser):
     def __init__(

@@ -72,7 +72,7 @@ public:
                 arr_to_dump[0] = new short[4]{1,2,3,4};
                 arr_to_dump[1] = new short[4]{3,4,5,6};
 
-                dump_arrays_to_file(arr_to_dump, 2, 4, "./test/test_bin/dump-example.txt", "#Series 1\tSeries 2", 1);
+                dump_arrays_to_file(arr_to_dump, 2, 4, "./dump/dump-example.txt", "#Series 1\tSeries 2", 1);
         }
 
         void test_load_arrays_from_file__fail(){
@@ -110,7 +110,7 @@ public:
                 dump_arrays_to_file(arr_to_dump,
                                     3,
                                     4,
-                                    "./test/test_bin/dump-example.txt", "#Series 1\tSeries 2\tSeries 3",
+                                    "./dump/dump-example.txt", "#Series 1\tSeries 2\tSeries 3",
                                     1);
 
                 double** arr_to_load = new double*[3];
@@ -118,7 +118,7 @@ public:
                 arr_to_load[1] = new double[4];
                 arr_to_load[2] = new double[4];
                 load_arrays_from_file(arr_to_load,
-                                      "./test/test_bin/dump-example.txt",
+                                      "./dump/dump-example.txt",
                                       3, 4);
 
                 for (int x(0); x < 3; x++) {
@@ -134,5 +134,4 @@ public:
                 delete[] arr_to_load;
         }
 };
-
 CPPUNIT_TEST_SUITE_REGISTRATION( UtilsTest );

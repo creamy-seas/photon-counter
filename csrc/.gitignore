@@ -1,8 +1,6 @@
-*.gcda
-*.gcno
-*.gcov
 bin
 build
 coverage
 html
 latex
+dump
