@@ -28,18 +28,17 @@ void* master_setup(int blink, int clock_source, unsigned int trigger_mode) {
     //2. Find all ADQ units connect them. Store the address in adq_cu_ptr variable
     int no_of_devices = ADQControlUnit_FindDevices(adq_cu_ptr);
     if(no_of_devices == 0) {
-        FAIL("No devices found! Make sure all programs refferencing devices are closed and that the box is switched on.");
+        FAIL("No devices found! Make sure all programs refferencing devices are closed and that the box is switched on. When rebooting, turn the pc on after the digitiser.");
     }
 
     // Hard coded /////////////////////////////////////////////////////////
     // Set the data format to 14 bit unpacked, to map 1to1 the collected data memory inefficiently, but quickly
-    if (!ADQ_SetDataFormat(adq_cu_ptr, 1, 1)) FAIL("DIGITISER: Failed to set data format.");
+    if (!ADQ_SetDataFormat(adq_cu_ptr, 1, ADQ214_DATA_FORMAT_PACKED_14BIT)) FAIL("DIGITISER: Failed to set data format.");
 
     // Synthesise 400MHz signal from the 10MHz one
     // (phase locked loop generates a clock @ f*800/divider_value, so in this case its 400MHz. That is the sampling frequency)
     if (!ADQ_SetPllFreqDivider(adq_cu_ptr, 1, 2)) FAIL("DIGITISER: Failed to setup freq divider.");
 
-    // Variable
     if (blink == 1) {
         YELLOWBG("Blinking");
         if (!ADQ_Blink(adq_cu_ptr, 1)) FAIL("DIGITISER: Failed to blink.");
@@ -101,6 +100,7 @@ void fetch_digitiser_data(
                     samples_per_record, // number of samples
                     0x00 // transfer mode - default
                 );
+
         ADQ_DisarmTrigger(adq_cu_ptr, 1);
 
         OKGREEN("Completed read from digitiser");

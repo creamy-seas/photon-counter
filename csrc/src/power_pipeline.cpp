@@ -2,6 +2,7 @@
 #include <string> // for std::to_string
 #include <thread> // for std::thread
 #include <limits.h> // For LONG_MAX
+#include "ADQAPI.h" // For MultiRecordSetup and MultiRecordClose
 
 #include "logging.hpp"
 #include "utils.hpp"
@@ -51,6 +52,8 @@ void process_digitiser_data(short *chA_data, short *chB_data,
 int run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, char* base_filename){
 
     PYTHON_START;
+
+    // ADQ214_MultiRecordSetup(adq_cu_ptr, 1, R_POINTS, SP_POINTS);
 
     // Casting to largest data type of comparisson
     if ((unsigned long long)no_repetitions * MAX_DIGITISER_CODE * R_POINTS
@@ -102,8 +105,8 @@ int run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, char*
                                      gpu_in, gpu_out, cpu_out,
                                      NO_GPU_STREAMS,
                                      r, base_filename);
-        thread_list[dth].join();
-        thread_list[pth].join();
+        thread_list[0].join();
+        thread_list[1].join();
     }
     dth ^= 1; pth ^= 1;
     // Closing accumulation

@@ -3,8 +3,37 @@
 #include "ADQAPI.h" // For MultiRecordSetup
 #include "power_kernel.hpp"
 
-int main(int argc, char *argv[])
+#include "logging.hpp" // TODO: remove
+#include <iostream> // TODO: remove
+
+void test_connection() {
+    void* adq_cu_ptr = CreateADQControlUnit();
+    ADQInfoListEntry* retList = new ADQInfoListEntry[2];
+    unsigned int len = 2;
+
+    ADQControlUnit_ListDevices(adq_cu_ptr, &retList, &len);
+    std::cout << retList[0].AddressField1 << "\n";
+    std::cout << retList[0].AddressField2 << "\n";
+    std::cout << retList[0].DeviceInterfaceOpened << "\n";
+    std::cout << retList[0].DeviceSetupCompleted << "\n";
+    std::cout << retList[0].DevFile << "\n";
+
+    std::cout << "Opening Device: " << ADQControlUnit_OpenDeviceInterface(adq_cu_ptr, 0) << "\n";
+    std::cout << "Setup Device:" << ADQControlUnit_SetupDevice(adq_cu_ptr, 0) << "\n";
+
+    ADQControlUnit_ListDevices(adq_cu_ptr, &retList, &len);
+    std::cout << retList[0].AddressField1 << "\n";
+    std::cout << retList[0].AddressField2 << "\n";
+    std::cout << retList[0].DeviceInterfaceOpened << "\n";
+    std::cout << retList[0].DeviceSetupCompleted << "\n";
+    std::cout << retList[0].DevFile << "\n";
+
+    DeleteADQControlUnit(adq_cu_ptr);
+}
+
+int main()
 {
+    // test_connection();
 
     GPU::check_power_kernel_parameters();
 
@@ -14,10 +43,12 @@ int main(int argc, char *argv[])
 
     void* adq_cu_ptr = master_setup(
         NO_BLINK,
-        // BLINK,
         INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE,
-        // TRIGGER_SOFTWARE
+#ifdef TESTENV
+        TRIGGER_SOFTWARE
+#else
         TRIGGER_EXTERNAL
+#endif
         );
 
     ADQ214_MultiRecordSetup(adq_cu_ptr, 1, R_POINTS, SP_POINTS);
@@ -29,4 +60,6 @@ int main(int argc, char *argv[])
     ADQ214_MultiRecordClose(adq_cu_ptr, 1);
 
     DeleteADQControlUnit(adq_cu_ptr);
+
+    // test_connection();
 }

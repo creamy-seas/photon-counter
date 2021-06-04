@@ -79,7 +79,7 @@ build_core_objects:
 		build_objects
 
 # Building of cpp object files (*)
-# PositionIndependentCode
+# PositionIndependentCode so that it can be compiled into shared library
 $(BUILD_FOLDER)/%.o: $(BUILD_SOURCE)/%.cpp | make_folders
 	@echo 🍕 [cpp] Building $^ ⟶ $@
 	@$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) $(BUILD_FLAGS) $(EXTRA_CXX_FLAGS) -fPIC -c -o $@ $^
@@ -231,7 +231,7 @@ bench:
 #                                   Library                                   #
 ###############################################################################
 LIB_FLAGS := -D PYTHON=1
-LIB_FLAGS += -D TESTENV=1
+# LIB_FLAGS += -D TESTENV=1
 
 # LIB_FLAGS passed in like so:
 # R_POINTS=1000 SP_POINTS=400 R_POINTS_PER_CHUNK=1 make lib
@@ -256,6 +256,7 @@ LIB_BIN := ./bin/libia.so
 # Library is always built from scratch, in order to propagate the -D arguments
 lib: | fresh
 	@echo "Using flags: $(LIB_FLAGS)"
+	@echo
 	@BUILD_FLAGS="$(LIB_FLAGS)" make --no-print-directory \
 			EXTRA_BIN_FLAGS=$(LIB_EXTRA_BIN_FLAGS) \
 			BUILD_BIN=$(LIB_BIN) \
