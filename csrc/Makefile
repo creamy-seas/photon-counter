@@ -92,6 +92,8 @@ $(BUILD_FOLDER)/%.o: $(BUILD_SOURCE)/%.cu | make_folders
 # Collect up all the built files
 compile_binary:
 	@echo "🏗  [***] Building binary file $(BUILD_BIN)"
+	@echo "Using flags: $(BUILD_FLAGS)"
+	@echo
 	@$(CXX) \
 		$(CXXFLAGS) \
 		$(INCS) \
