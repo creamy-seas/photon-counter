@@ -49,12 +49,13 @@ void process_digitiser_data(short *chA_data, short *chB_data,
         (double)normalisation);
 };
 
-int run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, char* base_filename){
+int run_power_measurements(void* adq_cu_ptr,
+                           short* chA_background, short* chB_background,
+                           unsigned long no_repetitions, char* base_filename){
 
     PYTHON_START;
 
-    // ADQ214_MultiRecordSetup(adq_cu_ptr, 1, R_POINTS, SP_POINTS);
-
+    // Check valid amount of repetitions is used to prevent overflow
     // Casting to largest data type of comparisson
     if ((unsigned long long)no_repetitions * MAX_DIGITISER_CODE * R_POINTS
         >
@@ -77,14 +78,20 @@ int run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, char*
     short** chB_data = new short*[NO_THREADS]();
     GPU::allocate_memory(&chA_data[1], &chB_data[1], 0, 0, 0, NO_GPU_STREAMS);
 
-    // Single copy of these, since only the processing thread will use them
+    // Single copy of there auxillary GPU address arrays, since only the processing thread will use them.
     short ***gpu_in; long ***gpu_out; long ***cpu_out;
     GPU::allocate_memory(&chA_data[0], &chB_data[0], &gpu_in, &gpu_out, &cpu_out, NO_GPU_STREAMS);
     long** data_out = new long*[NO_OF_POWER_KERNEL_OUTPUTS];
     for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
         data_out[i] = new long[SP_POINTS]();
 
-    // 2. Launch 2 parrallel threads, alternating between fetching from digitiser and processing on GPU.
+    // 2. Prepare for multirecord mode
+    ADQ214_MultiRecordSetup(adq_cu_ptr, 1, R_POINTS, SP_POINTS);
+
+    // 3. Copy background data onto GPU
+    GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
+
+    // 4. Launch 2 parrallel threads, alternating between fetching from digitiser and processing on GPU.
     std::thread thread_list[NO_THREADS];
     int dth(0), pth(1); // flip-floppers between 0 and 1. DigitizerTHread and ProcessingTHread
 
@@ -109,7 +116,7 @@ int run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, char*
         thread_list[1].join();
     }
     dth ^= 1; pth ^= 1;
-    // Closing accumulation
+    // Final processing of digitiser data
     process_digitiser_data(
         chA_data[pth], chB_data[pth],
         data_out,
@@ -125,6 +132,9 @@ int run_power_measurements(void* adq_cu_ptr, unsigned long no_repetitions, char*
     for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
         delete[] data_out[i];
     delete[] data_out;
+
+    // Resetting device
+    ADQ214_MultiRecordClose(adq_cu_ptr, 1);
 
     PYTHON_END;
     return 0;

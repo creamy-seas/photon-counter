@@ -21,12 +21,16 @@ class PowerPipelineTest : public CppUnit::TestFixture {
 
 public:
     void* adq_cu_ptr;
+    short *chA_background, *chB_background;
 
     void setUp(){
         adq_cu_ptr = master_setup(
             NO_BLINK,
             INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE,
             TRIGGER_SOFTWARE);
+
+        chA_background = new short[SP_POINTS]();
+        chB_background = new short[SP_POINTS]();
     }
     void tearDown(){
         DeleteADQControlUnit(adq_cu_ptr);
@@ -35,7 +39,9 @@ public:
     void test_power_pipeline() {
         ADQ214_MultiRecordSetup(adq_cu_ptr, 1, R_POINTS, SP_POINTS);
 
-        run_power_measurements(adq_cu_ptr, 10, "./dump/power-pipeline-example.txt");
+        run_power_measurements(adq_cu_ptr,
+                               chA_background, chB_background,
+                               10, "./dump/power-pipeline-example.txt");
 
         ADQ214_MultiRecordClose(adq_cu_ptr, 1);
     };
@@ -46,6 +52,7 @@ public:
         CPPUNIT_ASSERT_THROW_MESSAGE(
             "Should give warning message that LONG arrays will overflow",
             run_power_measurements(adq_cu_ptr,
+                                   chA_background, chB_background,
                                    LONG_MAX,
                                    "./dump/power-pipeline-example.txt"),
             std::runtime_error);

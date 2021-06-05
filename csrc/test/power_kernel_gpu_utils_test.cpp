@@ -34,6 +34,7 @@ public:
 
     void test_check_power_kernel_parameters(){
         GPU::check_power_kernel_parameters();
+        GPU::check_power_kernel_parameters(true);
         CPPUNIT_ASSERT_EQUAL(GPU::fetch_power_kernel_blocks(), 3);
         CPPUNIT_ASSERT_EQUAL(GPU::fetch_power_kernel_threads(), 1);
     }

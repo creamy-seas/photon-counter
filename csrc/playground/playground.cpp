@@ -37,10 +37,7 @@ int main()
 
     GPU::check_power_kernel_parameters();
 
-    short* chA_background = new short[SP_POINTS]();
-    short* chB_background = new short[SP_POINTS]();
-    GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
-
+    // Genertic setup of digitiser
     void* adq_cu_ptr = master_setup(
         NO_BLINK,
         INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE,
@@ -51,13 +48,17 @@ int main()
 #endif
         );
 
-    ADQ214_MultiRecordSetup(adq_cu_ptr, 1, R_POINTS, SP_POINTS);
+    // Setting of background data
+    short* chA_background = new short[SP_POINTS]();
+    for (int i(0); i < SP_POINTS; i++) {
+        chA_background[i] = 52;
+    }
+    short* chB_background = new short[SP_POINTS]();
 
     run_power_measurements(adq_cu_ptr,
-                           4,
+                           chA_background, chB_background,
+                           10,
                            "./dump/power-pipeline-example");
-
-    ADQ214_MultiRecordClose(adq_cu_ptr, 1);
 
     DeleteADQControlUnit(adq_cu_ptr);
 

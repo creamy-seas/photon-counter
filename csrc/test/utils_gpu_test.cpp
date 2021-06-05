@@ -22,7 +22,8 @@ public:
         }
 
         void test_fetch_gpu_parameters(){
-                fetch_gpu_parameters();
+            fetch_gpu_parameters();
+            fetch_gpu_parameters(true);
         };
 };
 CPPUNIT_TEST_SUITE_REGISTRATION( UtilsGpuTest );

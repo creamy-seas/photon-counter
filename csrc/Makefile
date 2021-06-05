@@ -1,4 +1,4 @@
-# Commands: dox cov lib play test bench clean
+# Commands: clean dox cov lib play playc test testc bench benchc
 
 # Auxillary parameters
 BROWSER := ns
