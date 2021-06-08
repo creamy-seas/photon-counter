@@ -15,11 +15,11 @@ class LoggingTest : public CppUnit::TestFixture {
 
 public:
     void test_log_error_to_file(){
-        int no_repetitions = 0;
+        int no_runs = 0;
         int max_code = 14;
 
         append_to_log_file("No repetitions ("
-                           + std::to_string(no_repetitions)
+                           + std::to_string(no_runs)
                            + ") x 14bit Code ("
                            + std::to_string(max_code)
                            + ") x R_POINTS(number of records per point="

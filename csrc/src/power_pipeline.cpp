@@ -27,42 +27,42 @@ const int NO_GPU_STREAMS = 2; ///< Benchmarking showed that 2 streams should be 
  *
  * @param chA_data, chB_data data from the digitiser. Must be of length `SP_POINTS * R_POINTS`.
  * @param data_out cumulative array which will be incremented with the power kernel outputs
- * @param repetition cumulative data is normalised by the number runs completed. This also specifies the unique log rotate command
+ * @param run cumulative data is normalised by the number runs completed. This also specifies the unique log rotate command
  * @param base_filename Used to ctonar data is dumped so that Python can plot it.
  */
 void process_digitiser_data(short *chA_data, short *chB_data,
                             long **data_out,
                             short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams,
-                            unsigned long repetition, std::string base_filename){
+                            unsigned long run, std::string base_filename){
     int normalisation = GPU::power_kernel(
         chA_data, chB_data,
         data_out,
         gpu_in, gpu_out, cpu_out, no_streams);
 
-    normalisation *= repetition * R_POINTS_PER_CHUNK;
+    normalisation *= run * R_POINTS_PER_CHUNK;
 
     dump_arrays_to_file(
         data_out, NO_OF_POWER_KERNEL_OUTPUTS,
         SP_POINTS,
-        base_filename + std::to_string(repetition % LOG_ROTATE) + ".txt",
-        "CHA\tCHB\tCHASQ\tCHBSQ\tSQ",
+        base_filename + std::to_string(run % LOG_ROTATE) + ".csv",
+        "# Run " + std::to_string(run) +  "\n# CHA\tCHB\tCHASQ\tCHBSQ\tSQ",
         (double)normalisation);
 };
 
 int run_power_measurements(void* adq_cu_ptr,
                            // short* chA_background, short* chB_background,
-                           unsigned long no_repetitions, char* base_filename){
+                           unsigned long no_runs, char* base_filename){
     append_to_log_file("Begin0");
 
     PYTHON_START;
 
     // Check valid amount of repetitions is used to prevent overflow
     // Casting to largest data type of comparisson
-    if ((unsigned long long)no_repetitions * MAX_DIGITISER_CODE * R_POINTS
+    if ((unsigned long long)no_runs * MAX_DIGITISER_CODE * R_POINTS
         >
         (unsigned long long)LONG_MAX)
-        throw std::runtime_error("No repetitions ("
-                                 + std::to_string(no_repetitions)
+        throw std::runtime_error("No runs ("
+                                 + std::to_string(no_runs)
                                  + ") x 14bit Code ("
                                  + std::to_string(MAX_DIGITISER_CODE)
                                  + ") x R_POINTS(number of records per point="
@@ -107,7 +107,7 @@ int run_power_measurements(void* adq_cu_ptr,
 
     // Initial read into digitiser
     fetch_digitiser_data(adq_cu_ptr, chA_data[dth], chB_data[dth], SP_POINTS, R_POINTS);
-    for (unsigned long r(1); r < no_repetitions; r++) {
+    for (unsigned long r(1); r < no_runs; r++) {
         // XOR to switch 0 <-> 1
         dth ^= 1; pth ^= 1;
 
@@ -132,7 +132,7 @@ int run_power_measurements(void* adq_cu_ptr,
         data_out,
         gpu_in, gpu_out, cpu_out,
         NO_GPU_STREAMS,
-        no_repetitions, base_filename);
+        no_runs, base_filename);
 
     // Deallocation of memory
     GPU::free_memory(chA_data[0], chB_data[0], gpu_in, gpu_out, cpu_out, NO_GPU_STREAMS);

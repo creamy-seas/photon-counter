@@ -219,7 +219,7 @@ public:
             data_out_cumulative[i] = new long[3]();
 
         int no_streams = 4;
-        int no_repetitions = 10;
+        int no_runs = 10;
         int no_chunks;
 
         // Check kernel
@@ -237,7 +237,7 @@ public:
 
         // Run power kernel multiple times
 
-        for (int i(0); i < no_repetitions; i++)
+        for (int i(0); i < no_runs; i++)
             no_chunks = GPU::power_kernel(chA_data_locked, chB_data_locked,
                                           data_out_cumulative,
                                           gpu_in, gpu_out, cpu_out, no_streams);
@@ -249,11 +249,11 @@ public:
         // Compare
         for (int i(0); i < 1; i++) {
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Failed chA",
-                                                 expected_A_out[i] * no_chunks * no_repetitions, data_out_cumulative[CHA][i], 0.00001);
+                                                 expected_A_out[i] * no_chunks * no_runs, data_out_cumulative[CHA][i], 0.00001);
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Failed chB",
-                                                 expected_B_out[i] * no_chunks * no_repetitions, data_out_cumulative[CHB][i], 0.00001);
+                                                 expected_B_out[i] * no_chunks * no_runs, data_out_cumulative[CHB][i], 0.00001);
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Failed sq",
-                                                 expected_sq_out[i] * no_chunks * no_repetitions, data_out_cumulative[SQ][i], 0.00001);
+                                                 expected_sq_out[i] * no_chunks * no_runs, data_out_cumulative[SQ][i], 0.00001);
         }
     }
 

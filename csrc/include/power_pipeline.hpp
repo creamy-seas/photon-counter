@@ -21,13 +21,13 @@ extern "C" {
      *
      * @param adq_cu_ptr Allocated pointer for communication with digitizer.
      * @param chA_background, chB_background of length SP_POINTS each. These will be subtracted from the channels before processing begins.
-     * @param no_repetitions Number of times to repeat the measurements.
+     * @param no_runs Number of times to repeat the measurements.
      * @param base_filename File to which to dump the results, using log-rotation format `base_filename_X.txt`
      * @returns 0 for success.
      */
     int run_power_measurements(void* adq_cu_ptr,
                                // short *chA_background, short *chB_background,
-                               unsigned long no_repetitions, char* base_filename);
+                               unsigned long no_runs, char* base_filename);
 #ifdef __cplusplus
 }
 #endif
