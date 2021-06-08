@@ -1,4 +1,4 @@
-# Commands: clean dox cov lib play playc test testc bench benchc
+# Commands: clean dox cov libia libd play playc test testc bench benchc
 
 # Auxillary parameters
 BROWSER := ns
@@ -230,14 +230,25 @@ bench:
 	$(BENCH_RUN) $(BENCH_BIN)
 
 ###############################################################################
+#         Library for the digitiser - only a few function are exported        #
+###############################################################################
+LIBADQ_BIN := ./bin/ADQAPIia.so
+LIBADQ_SOURCE := ./src/sp_digitiser.cpp ./src/logging.cpp
+
+libadq: | make_folders
+	@echo "📡  [***] Building digitiser library $(LIBADQ_BIN)"
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDLIBS) -fPIC -shared -o $(LIBADQ_BIN) $(LIBADQ_SOURCE)
+	@echo "📡  [***] Done"
+
+###############################################################################
 #                                   Library                                   #
 ###############################################################################
-LIB_FLAGS := -D PYTHON=1
-# LIB_FLAGS += -D TESTENV=1
+LIBIA_FLAGS := -D PYTHON=1
+# LIBIA_FLAGS += -D TESTENV=1
 
-# LIB_FLAGS passed in like so:
-# R_POINTS=1000 SP_POINTS=400 R_POINTS_PER_CHUNK=1 make lib
-ifeq (lib, $(firstword $(MAKECMDGOALS)))
+# LIBIA_FLAGS passed in like so:
+# R_POINTS=1000 SP_POINTS=400 R_POINTS_PER_CHUNK=1 make libia
+ifeq (libia, $(firstword $(MAKECMDGOALS)))
 ifndef R_POINTS
 $(error "❌ Need to define R_POINTS for building library")
 endif
@@ -248,20 +259,20 @@ ifndef R_POINTS_PER_CHUNK
 $(error "❌ Need to define R_POINTS_PER_CHUNK for building library")
 endif
 
-LIB_FLAGS += -D SP_POINTS=$(SP_POINTS) -D R_POINTS=$(R_POINTS) -D R_POINTS_PER_CHUNK=$(R_POINTS_PER_CHUNK)
+LIBIA_FLAGS += -D SP_POINTS=$(SP_POINTS) -D R_POINTS=$(R_POINTS) -D R_POINTS_PER_CHUNK=$(R_POINTS_PER_CHUNK)
 endif
 
-LIB_EXTRA_BIN_FLAGS := "-shared"
+LIBIA_EXTRA_BIN_FLAGS := "-shared"
 
-LIB_BIN := ./bin/libia.so
+LIBIA_BIN := ./bin/libia.so
 
 # Library is always built from scratch, in order to propagate the -D arguments
-lib: | fresh
-	@echo "Using flags: $(LIB_FLAGS)"
+libia: | fresh
+	@echo "Using flags: $(LIBIA_FLAGS)"
 	@echo
-	@BUILD_FLAGS="$(LIB_FLAGS)" make --no-print-directory \
-			EXTRA_BIN_FLAGS=$(LIB_EXTRA_BIN_FLAGS) \
-			BUILD_BIN=$(LIB_BIN) \
+	@BUILD_FLAGS="$(LIBIA_FLAGS)" make --no-print-directory \
+			EXTRA_BIN_FLAGS=$(LIBIA_EXTRA_BIN_FLAGS) \
+			BUILD_BIN=$(LIBIA_BIN) \
 			build
 
 ###############################################################################

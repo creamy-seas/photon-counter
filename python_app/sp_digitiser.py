@@ -10,6 +10,7 @@ import ctypes
 from typing import Dict
 
 from python_app.utils.terminal_colour import TerminalColour
+import python_app.utils.library_manager as library_manager
 
 ###############################################################################
 #                                 Library load                                #
@@ -23,6 +24,13 @@ except Exception as err:
     raise RuntimeError(
         f"Failed to load the ADQ library (for the digitiser) - please install it by following instructions in README.md"
         + "\n" + "{err}")
+
+try:
+    ADQAPIia = ctypes.cdll.LoadLibrary("./csrc/bin/ADQAPIia.so")
+except OSError as err:
+    print("Rebuilding digitiser library")
+    library_manager.build_library({}, "libadq")
+    ADQAPIia = ctypes.cdll.LoadLibrary("./csrc/bin/ADQAPIia.so")
 
 ###############################################################################
 #                               Class definition                              #
@@ -61,25 +69,23 @@ class SpDigitiser:
     def log(cls, message: str):
         print(cls.LOG_TEMPLATE.format(info=str(message)))
 
-    def __init__(self, sp_digitiser_parameters: Dict, libia: ctypes.CDLL):
+    def __init__(self, sp_digitiser_parameters: Dict=None):
         """
         @param r_points number of repetition measuements (aka r_points)
         @param sp_points number of samples taken at every trigger (aka samples_per_record)
         """
-
         self.sp_digitiser_parameters = sp_digitiser_parameters
-        self.libia = libia
 
         # 1. Create control unit and attach devices to it
         self.adq_cu_ptr = ctypes.c_void_p(ADQAPI.CreateADQControlUnit())
-        
         try:
             no_of_devices = int(ADQAPI.ADQControlUnit_FindDevices(self.adq_cu_ptr))
             assert no_of_devices > 0, "No devices found! Make sure all programs refferencing devices are closed and that the box is switched on. When rebooting, turn the pc on after the digitiser."
 
-            # 2. Set parameters
-            self.check_parameters()
-            self.parameter_setup()
+            # 2. Set parameters if supplied
+            if self.sp_digitiser_parameters:
+                self.check_parameters()
+                self.parameter_setup()
         except KeyError as err:
             self.__del__()
             raise RuntimeError(f"Missing a parameter: {err}")
@@ -88,17 +94,17 @@ class SpDigitiser:
             raise err
 
     def __del__(self):
-        """Safe deallocation of pointer to disconnect the device"""
+        """Safe disconnection from the device"""
         ADQAPI.DeleteADQControlUnit(self.adq_cu_ptr)
         self.log("🕱 Disconnected from digitiser.")
 
-    def get_max_samples_per_record(self, r_points: int) -> int:
-        return self.libia.GetMaxNofSamplesFromNofRecords(
+    def get_max_noSamples_from_noRecords(self, r_points: int) -> int:
+        return ADQAPIia.GetMaxNofSamplesFromNofRecords(
             self.adq_cu_ptr, r_points
         )
 
-    def get_max_number_of_records(self, sp_points: int) -> int:
-        return self.libia.GetMaxNofRecordsFromNofSamples(
+    def get_max_noRecords_from_noSamples(self, sp_points: int) -> int:
+        return ADQAPIia.GetMaxNofRecordsFromNofSamples(
             self.adq_cu_ptr, sp_points
         )
 
@@ -106,8 +112,8 @@ class SpDigitiser:
         sp_points = self.sp_digitiser_parameters["sp_points"]
         r_points = self.sp_digitiser_parameters["r_points"]
 
-        max_samples = self.get_max_samples_per_record(r_points)
-        max_records = self.get_max_number_of_records(sp_points)
+        max_samples = self.get_max_noSamples_from_noRecords(r_points)
+        max_records = self.get_max_noRecords_from_noSamples(sp_points)
 
         # Verify samples
 #         self.log("\n" +

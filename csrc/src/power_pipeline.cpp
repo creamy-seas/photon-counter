@@ -50,8 +50,9 @@ void process_digitiser_data(short *chA_data, short *chB_data,
 };
 
 int run_power_measurements(void* adq_cu_ptr,
-                           short* chA_background, short* chB_background,
+                           // short* chA_background, short* chB_background,
                            unsigned long no_repetitions, char* base_filename){
+    append_to_log_file("Begin0");
 
     PYTHON_START;
 
@@ -70,6 +71,8 @@ int run_power_measurements(void* adq_cu_ptr,
                                  + std::to_string(LONG_MAX)
                                  + ")");
 
+    append_to_log_file("1");
+
     // 1. Allocation of memory
     // There will be 2 copies of chA_data and chB_data.
     // One thread can be reading into one pair (chA, chB),
@@ -85,11 +88,18 @@ int run_power_measurements(void* adq_cu_ptr,
     for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
         data_out[i] = new long[SP_POINTS]();
 
+    append_to_log_file("2");
+
     // 2. Prepare for multirecord mode
     ADQ214_MultiRecordSetup(adq_cu_ptr, 1, R_POINTS, SP_POINTS);
 
     // 3. Copy background data onto GPU
+    short* chA_background = new short[SP_POINTS]();
+    short* chB_background = new short[SP_POINTS]();
+
     GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
+
+    append_to_log_file("3");
 
     // 4. Launch 2 parrallel threads, alternating between fetching from digitiser and processing on GPU.
     std::thread thread_list[NO_THREADS];

@@ -56,7 +56,7 @@ int main()
     short* chB_background = new short[SP_POINTS]();
 
     run_power_measurements(adq_cu_ptr,
-                           chA_background, chB_background,
+                           // chA_background, chB_background,
                            10,
                            "./dump/power-pipeline-example");
 
