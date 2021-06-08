@@ -23,7 +23,9 @@ try:
 except Exception as err:
     raise RuntimeError(
         f"Failed to load the ADQ library (for the digitiser) - please install it by following instructions in README.md"
-        + "\n" + "{err}")
+        + "\n"
+        + "{err}"
+    )
 
 try:
     ADQAPIia = ctypes.cdll.LoadLibrary("./csrc/bin/ADQAPIia.so")
@@ -59,17 +61,17 @@ class SpDigitiser:
     INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE = 0
     INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERENCE = 1
 
-    LOW_FREQUENCY_MODE = 0 # external clock range 35-240MHz
-    HIGH_FREQUENCY_MODE = 1 # external clock range 240-550MHz
+    LOW_FREQUENCY_MODE = 0  # external clock range 35-240MHz
+    HIGH_FREQUENCY_MODE = 1  # external clock range 240-550MHz
 
-    PACKED_14_BIT_MODE = 0 # faster
+    PACKED_14_BIT_MODE = 0  # faster
     UNPACKED_14_BIT_MODE = 1
 
     @classmethod
     def log(cls, message: str):
         print(cls.LOG_TEMPLATE.format(info=str(message)))
 
-    def __init__(self, sp_digitiser_parameters: Dict=None):
+    def __init__(self, sp_digitiser_parameters: Dict = None):
         """
         @param r_points number of repetition measuements (aka r_points)
         @param sp_points number of samples taken at every trigger (aka samples_per_record)
@@ -80,7 +82,9 @@ class SpDigitiser:
         self.adq_cu_ptr = ctypes.c_void_p(ADQAPI.CreateADQControlUnit())
         try:
             no_of_devices = int(ADQAPI.ADQControlUnit_FindDevices(self.adq_cu_ptr))
-            assert no_of_devices > 0, "No devices found! Make sure all programs refferencing devices are closed and that the box is switched on. When rebooting, turn the pc on after the digitiser."
+            assert (
+                no_of_devices > 0
+            ), "No devices found! Make sure all programs refferencing devices are closed and that the box is switched on. When rebooting, turn the pc on after the digitiser."
 
             # 2. Set parameters if supplied
             if self.sp_digitiser_parameters:
@@ -99,14 +103,10 @@ class SpDigitiser:
         self.log("🕱 Disconnected from digitiser.")
 
     def get_max_noSamples_from_noRecords(self, r_points: int) -> int:
-        return ADQAPIia.GetMaxNofSamplesFromNofRecords(
-            self.adq_cu_ptr, r_points
-        )
+        return ADQAPIia.GetMaxNofSamplesFromNofRecords(self.adq_cu_ptr, r_points)
 
     def get_max_noRecords_from_noSamples(self, sp_points: int) -> int:
-        return ADQAPIia.GetMaxNofRecordsFromNofSamples(
-            self.adq_cu_ptr, sp_points
-        )
+        return ADQAPIia.GetMaxNofRecordsFromNofSamples(self.adq_cu_ptr, sp_points)
 
     def check_parameters(self):
         sp_points = self.sp_digitiser_parameters["sp_points"]
@@ -116,11 +116,11 @@ class SpDigitiser:
         max_records = self.get_max_noRecords_from_noSamples(sp_points)
 
         # Verify samples
-#         self.log("\n" +
-#             f"Max Samples for (r_points={r_points}): {max_samples}" +
-#             "\n" +
-#             f"Max Records for (sp_points={sp_points}): {max_records}"
-#         )
+        #         self.log("\n" +
+        #             f"Max Samples for (r_points={r_points}): {max_samples}" +
+        #             "\n" +
+        #             f"Max Records for (sp_points={sp_points}): {max_records}"
+        #         )
         if sp_points > max_samples or r_points > max_records:
             raise RuntimeError(
                 "Invalid parameters for r_points/sp_points to digitiser readout."
@@ -147,6 +147,8 @@ class SpDigitiser:
         assert ADQAPI.ADQ214_SetClockSource(
             self.adq_cu_ptr, 1, self.sp_digitiser_parameters["clock_source"]
         )
+        if self.sp_digitiser_parameters["clock_source"]:
+            self.log(f"{TerminalColour.WARNING}External clock source used!")
 
         # c - range of the external clock refference
         assert ADQAPI.ADQ214_SetClockFrequencyMode(
@@ -161,6 +163,8 @@ class SpDigitiser:
         assert ADQAPI.ADQ214_SetTriggerMode(
             self.adq_cu_ptr, 1, self.sp_digitiser_parameters["trigger_type"]
         )
+        if self.sp_digitiser_parameters["trigger_type"]:
+            self.log(f"{TerminalColour.WARNING}External trigger used!")
 
         # f - Set the data format to 14 bit unpacked, to map 1to1 the collected data memory inefficiently, but quickly
         assert ADQAPI.ADQ214_SetDataFormat(self.adq_cu_ptr, 1, self.PACKED_14_BIT_MODE)
@@ -187,14 +191,6 @@ class SpDigitiser:
                 / self.sp_digitiser_parameters["channelB_gain"]
                 / 4
             ),
-        )
-
-        # h - setup multirecord mode ##########################################
-        assert ADQAPI.ADQ214_MultiRecordSetup(
-            self.adq_cu_ptr,
-            1,
-            self.sp_digitiser_parameters["r_points"],
-            self.sp_digitiser_parameters["sp_points"],
         )
 
     def blink(self):
