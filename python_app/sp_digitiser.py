@@ -134,7 +134,7 @@ class SpDigitiser:
             if sp_points > _spr:
                 trigger_frequency = _trigger_frequency
 
-        self.log(f"Trigger frequency: {trigger_frequency}kHz")
+        self.log(f"Max Trigger frequency: {trigger_frequency}kHz")
         self.sp_digitiser_parameters["trigger_frequency"] = trigger_frequency
 
     def parameter_setup(self):
@@ -175,22 +175,14 @@ class SpDigitiser:
             1,
             1,
             int(self.sp_digitiser_parameters["channelA_gain"] * 1024),
-            int(
-                -self.sp_digitiser_parameters["channelA_offset"]
-                / self.sp_digitiser_parameters["channelA_gain"]
-                / 4
-            ),
+            self.sp_digitiser_parameters["channelA_offset"],
         )
         assert ADQAPI.ADQ214_SetGainAndOffset(
             self.adq_cu_ptr,
             1,
             2,
             int(self.sp_digitiser_parameters["channelB_gain"] * 1024),
-            int(
-                -self.sp_digitiser_parameters["channelB_offset"]
-                / self.sp_digitiser_parameters["channelB_gain"]
-                / 4
-            ),
+            self.sp_digitiser_parameters["channelB_offset"],
         )
 
     def blink(self):

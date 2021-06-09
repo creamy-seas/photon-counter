@@ -37,8 +37,8 @@ class PowerPipeline:
     )
     LOG_TEMPLATE = f"{HEADING:<31}{{info}}"
 
-    # Constant - almost no reason to change them
-    R_POINTS_PER_CHUNK = 1000  # How each batch of data on the digitiser is further split up for processing on GPU.
+    # Constant - almost no reason to change them since they are optimised for benchmarking
+    R_POINTS_PER_GPU_CHUNK = 1024  # How each batch of data on the digitiser is further split up for processing on GPU.
     NO_STREAMS = 2
     NS_PER_POINT = 2.5
 
@@ -62,7 +62,27 @@ class PowerPipeline:
             time_in_ns, self.SP_POINTS
         )
 
-    def execute_run(self, digitiser_parameters: dict, run_name: str):
+    def execute_run(
+        self,
+        digitiser_parameters: dict,
+        run_name: str,
+        chA_background: np.array = None,
+        chB_background: np.array = None,
+    ):
+
+        # Check that background arrays are of the correct type
+        if chA_background is not None:
+            assert (
+                chA_background.dtype == np.short
+            ), "chA_background must be of type np.short"
+        else:
+            chA_background = np.zeros(self.SP_POINTS, dtype=np.short)
+        if chB_background is not None:
+            assert (
+                chB_background.dtype == np.short
+            ), "chB_background must be of type np.short"
+        else:
+            chB_background = np.zeros(self.SP_POINTS, dtype=np.short)
 
         # Prepare digitiser
         spd = SpDigitiser(
@@ -83,8 +103,9 @@ class PowerPipeline:
             name="Power Kernel Runner",
             args=(
                 spd.adq_cu_ptr,
+                chA_background.ctypes.data,
+                chB_background.ctypes.data,
                 self.NO_RUNS,
-                #           chA_background.ctypes.data, chB_background.ctypes.data,
                 ctypes.create_string_buffer(
                     f"{self.FILE_FOLDER}/{run_name}".encode("utf-8"), size=40
                 ),
@@ -155,9 +176,9 @@ class PowerPipeline:
         R_POINTS = (
             math.floor(
                 SpDigitiser(None).get_max_noRecords_from_noSamples(SP_POINTS)
-                / (cls.NO_STREAMS * cls.R_POINTS_PER_CHUNK)
+                / (cls.NO_STREAMS * cls.R_POINTS_PER_GPU_CHUNK)
             )
-            * cls.R_POINTS_PER_CHUNK
+            * cls.R_POINTS_PER_GPU_CHUNK
             * cls.NO_STREAMS
         )
 
@@ -179,7 +200,7 @@ class PowerPipeline:
 
         library_manager.build_library(
             {
-                "R_POINTS_PER_CHUNK": str(cls.R_POINTS_PER_CHUNK),
+                "R_POINTS_PER_GPU_CHUNK": str(cls.R_POINTS_PER_GPU_CHUNK),
                 "SP_POINTS": str(SP_POINTS),
                 "R_POINTS": str(R_POINTS),
             }
