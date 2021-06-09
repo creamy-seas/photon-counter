@@ -51,13 +51,13 @@ int main()
     // Setting of background data
     short* chA_background = new short[SP_POINTS]();
     for (int i(0); i < SP_POINTS; i++) {
-        chA_background[i] = 52;
+        chA_background[i] = 0;
     }
     short* chB_background = new short[SP_POINTS]();
 
     run_power_measurements(adq_cu_ptr,
-                           // chA_background, chB_background,
-                           10,
+                           chA_background, chB_background,
+                           2,
                            "./dump/power-pipeline-example");
 
     DeleteADQControlUnit(adq_cu_ptr);

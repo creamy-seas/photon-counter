@@ -128,10 +128,6 @@ __global__ void power_kernel_runner(short *chA_data, short *chB_data,
         reduction_sum(chA_cumulative_array, chB_cumulative_array,
                       chAsq_cumulative_array, chBsq_cumulative_array,
                       R_POINTS_PER_CHUNK);
-        // chA_out[sp_coordinate] += 1;//chA_cumulative_array[0];
-        // chB_out[sp_coordinate] += 10;//chB_cumulative_array[0];
-        // chAsq_out[sp_coordinate] += 100;//chAsq_cumulative_array[0];
-        // chBsq_out[sp_coordinate] += 1000;//chBsq_cumulative_array[0];
         chA_out[sp_coordinate] += chA_cumulative_array[0];
         chB_out[sp_coordinate] += chB_cumulative_array[0];
         chAsq_out[sp_coordinate] += chAsq_cumulative_array[0];
@@ -145,7 +141,7 @@ __global__ void power_kernel_runner(short *chA_data, short *chB_data,
 /**
  * Data from `cpu_out` is appended to `data_out`.
  */
-void accumulate(long** data_out, long ***cpu_out, int no_streams, int no_chunks){
+void accumulate(long** data_out, long ***cpu_out, int no_streams){
     int odx;
 
     for (int sp(0); sp < SP_POINTS; sp++) {
@@ -161,7 +157,7 @@ void accumulate(long** data_out, long ***cpu_out, int no_streams, int no_chunks)
 /**
  * Data from `cpu_out` is appended to `data_out` **and normalised**.
  */
-void accumulate(double** data_out, long ***cpu_out, int no_streams, int no_chunks){
+void accumulate(double** data_out, long ***cpu_out, int no_streams){
     int odx;
 
     for (int sp(0); sp < SP_POINTS; sp++) {
@@ -169,13 +165,13 @@ void accumulate(double** data_out, long ***cpu_out, int no_streams, int no_chunk
             odx = GPU::outputs_from_gpu[i];
             for (int s(0); s < no_streams; s++)
                 data_out[odx][sp] += (double)cpu_out[s][odx][sp];
-            data_out[odx][sp] /= no_chunks;
+            data_out[odx][sp] /= R_POINTS;
         }
         data_out[SQ][sp] = data_out[CHASQ][sp] + data_out[CHBSQ][sp];
     }
 }
 
-template<typename T> int GPU::power_kernel(
+template<typename T> void GPU::power_kernel(
     short *chA_data, short *chB_data,
     T **data_out,
     short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams){
@@ -187,7 +183,6 @@ template<typename T> int GPU::power_kernel(
      * steam0       stream1     stream0      stream1
      * a1a2a3a4.... b1b2b3b4... c1c2c3c4.... d1d2d3d4...
      *
-     * - Each chunk has length SP_POINTS
      * - There are R_POINTS/R_POINTS_PER_CHUNK total no_chunks to iterate through, split evenly between the streams
      */
 
@@ -263,18 +258,17 @@ template<typename T> int GPU::power_kernel(
     // Sum up totals from the different streams:
     // - If data_out is of type double**, normalise by the number of chunks for a ready result.
     // - If data_out is of type long**, only accumulate the data to normalise later on.
-    accumulate(data_out, cpu_out, no_streams, no_chunks);
+    accumulate(data_out, cpu_out, no_streams);
 
     /** Ensure that free_memory is called ==> */
-    return no_chunks;
 }
 
-template int GPU::power_kernel<double>(
+template void GPU::power_kernel<double>(
     short *chA_data, short *chB_data,
     double **data_out,
     short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams); ///< When data_out is passed in as `double**` it is infered that data should be normalised as this is a single run.
 
-template int GPU::power_kernel<long>(
+template void GPU::power_kernel<long>(
     short *chA_data, short *chB_data,
     long **data_out,
     short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams); ///< When data_out is paseed in as `long**` it is infered that data should be accumulated, as there will be further repititions.

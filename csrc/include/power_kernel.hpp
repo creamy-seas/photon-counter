@@ -126,23 +126,10 @@ namespace GPU {
      * @tparam T specifies whether data_out should be accumulated (long, for repetitive invocations) or normalised (double, for a single run)
      * @param gpui, gpu_out, cpu_out auxillary arrays allocated using `allocate_memory` function.
      * @param no_streams to launch on GPU. Benchmarking indicates that 2 is the optimal choice.
-     * @param accumulate if true, dataa will be accumulated in `data_out` with no normalisation. This will allow stacking
+     * @param accumulate if true, data will be accumulated in `data_out` with no normalisation. Idea is to normalise it after many repetitive runs.
      *
-     * @returns int number of chunks to be used when normalising the accumulated `long **data_out`.
-     *
-     *     long** data_out = new long*[NO_OF_POWER_KERNEL_OUTPUTS];
-     *     for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
-     *         data_out[i] = new long[SP_POINTS]();
-     *
-     *     int no_chunks;
-     *     for (int r(0); r < total_repetitions; r++)
-     *         no_chunks = GPU::power_kernel(chA_data, chB_data, data_out, gpu_in, gpu_out, cpu_out, no_streams);
-     *     for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++){
-     *         for (int sp(0); sp < SP_POINTS; sp++)
-     *             data_out[i][sp] /= (chunks * total_repetitions)
-     *     }
      */
-    template <typename T> int power_kernel(
+    template <typename T> void power_kernel(
         short *chA_data, short *chB_data,
         T **data_out,
         // Auxillary memory allocation

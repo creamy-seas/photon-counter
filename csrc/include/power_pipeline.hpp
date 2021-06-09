@@ -26,7 +26,7 @@ extern "C" {
      * @returns 0 for success.
      */
     int run_power_measurements(void* adq_cu_ptr,
-                               // short *chA_background, short *chB_background,
+                               short *chA_background, short *chB_background,
                                unsigned long no_runs, char* base_filename);
 #ifdef __cplusplus
 }
