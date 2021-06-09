@@ -54,6 +54,8 @@ int run_power_measurements(void* adq_cu_ptr,
 
     PYTHON_START;
 
+    GPU::check_power_kernel_parameters(false);
+
     // Check valid amount of repetitions is used to prevent overflow
     // Casting to largest data type of comparisson
     if ((unsigned long long)no_runs * MAX_DIGITISER_CODE * R_POINTS

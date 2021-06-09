@@ -48,23 +48,23 @@ extern "C" {
      */
     int GetMaxNofRecordsFromNofSamples(void* adq_cu_ptr, int no_of_samples);
 
+    /**
+     * Reading and transfering data from digitiser. Ensure that `MultiRecordSetup` has been called.
+     *
+     * @param adq_cu_ptr Allocated pointer for communication with digitizer
+     * @param buff_a, buff_b Allocataed memeory where data will be read into
+     * @param samples_per_record, number_of_records
+     */
+    void fetch_digitiser_data(
+        void* adq_cu_ptr,
+        short* buff_a, short* buff_b,
+        unsigned int samples_per_record,
+        unsigned int number_of_records
+        );
+
 #ifdef __cplusplus
 }
 #endif
-
-/**
- * Reading and transfering data from digitiser. Ensure that `MultiRecordSetup` has been called.
- *
- * @param adq_cu_ptr Allocated pointer for communication with digitizer
- * @param buff_a, buff_b Allocataed memeory where data will be read into
- * @param samples_per_record, number_of_records
- */
-void fetch_digitiser_data(
-    void* adq_cu_ptr,
-    short* buff_a, short* buff_b,
-    unsigned int samples_per_record,
-    unsigned int number_of_records
-    );
 
 /**
  * Only use for development in c++

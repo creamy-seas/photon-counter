@@ -148,7 +148,9 @@ class SpDigitiser:
             self.adq_cu_ptr, 1, self.sp_digitiser_parameters["clock_source"]
         )
         if self.sp_digitiser_parameters["clock_source"]:
-            self.log(f"{TerminalColour.WARNING}External clock source used!")
+            self.log(
+                f"{TerminalColour.WARNING}External clock source used!{TerminalColour.ENDC}"
+            )
 
         # c - range of the external clock refference
         assert ADQAPI.ADQ214_SetClockFrequencyMode(
@@ -164,7 +166,9 @@ class SpDigitiser:
             self.adq_cu_ptr, 1, self.sp_digitiser_parameters["trigger_type"]
         )
         if self.sp_digitiser_parameters["trigger_type"]:
-            self.log(f"{TerminalColour.WARNING}External trigger used!")
+            self.log(
+                f"{TerminalColour.WARNING}External trigger used!{TerminalColour.ENDC}"
+            )
 
         # f - Set the data format to 14 bit unpacked, to map 1to1 the collected data memory inefficiently, but quickly
         assert ADQAPI.ADQ214_SetDataFormat(self.adq_cu_ptr, 1, self.PACKED_14_BIT_MODE)

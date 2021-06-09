@@ -42,6 +42,15 @@ class PowerPipeline:
     NO_STREAMS = 2
     NS_PER_POINT = 2.5
 
+    INIT_ARGUMENTS_OPTION_1 = {"time_in_ns", "averages"}
+    INIT_ARGUMENTS_OPTION_2 = {
+        "NO_RUNS",
+        "SP_POINTS",
+        "R_POINTS",
+        "R_POINTS_PER_GPU_CHUNK",
+    }
+
+    LOG_LOCATION = "./libia.log"
     LIBRARY_LOCATION = "./csrc/bin/libia.so"
     FILE_FOLDER = "./dump"
 
@@ -49,17 +58,41 @@ class PowerPipeline:
     def log(cls, message: str):
         print(cls.LOG_TEMPLATE.format(info=str(message)))
 
-    def __init__(self, time_in_ns: int, averages: int):
+    def __init__(self, **kwargs):
         os.makedirs(self.FILE_FOLDER, exist_ok=True)
 
-        (self.SP_POINTS, self.R_POINTS, self.NO_RUNS) = self.derive_parameters(
-            time_in_ns, averages
+        if self.INIT_ARGUMENTS_OPTION_1.issubset(set(kwargs)):
+            (self.SP_POINTS, self.R_POINTS, self.NO_RUNS) = self.derive_parameters(
+                kwargs["time_in_ns"], kwargs["averages"]
+            )
+        elif self.INIT_ARGUMENTS_OPTION_2.issubset(set(kwargs)):
+            self.NO_RUNS = kwargs["NO_RUNS"]
+            self.SP_POINTS = kwargs["SP_POINTS"]
+            self.R_POINTS = kwargs["R_POINTS"]
+            self.R_POINTS_PER_GPU_CHUNK = kwargs["R_POINTS_PER_GPU_CHUNK"]
+        else:
+            raise RuntimeError(
+                f"Must supply either {self.INIT_ARGUMENTS_OPTION_1} or {self.INIT_ARGUMENTS_OPTION_2}"
+            )
+
+        self.log(
+            "Building kernel with:\n"
+            + f"R_POINTS={self.R_POINTS}"
+            + "\t\t"
+            + f"R_POINTS_PER_GPU_CHUNK={self.R_POINTS_PER_GPU_CHUNK}"
+            + "\n"
+            + f"SP_POINTS={self.SP_POINTS}"
+            + "\n"
+            + f"RUNS={self.NO_RUNS}"
+            + "\n"
         )
 
-        self.libia = self.build_library(self.SP_POINTS, self.R_POINTS)
+        self.libia = self.build_library(
+            self.SP_POINTS, self.R_POINTS, self.R_POINTS_PER_GPU_CHUNK
+        )
 
         (self.fig, self.ax, self.plot_dict) = self.prepare_plot(
-            time_in_ns, self.SP_POINTS
+            self.SP_POINTS * self.NS_PER_POINT, self.SP_POINTS
         )
 
     def execute_run(
@@ -69,6 +102,8 @@ class PowerPipeline:
         chA_background: np.array = None,
         chB_background: np.array = None,
     ):
+        if os.path.exists(self.LOG_LOCATION):
+            os.remove(self.LOG_LOCATION)
 
         # Check that background arrays are of the correct type
         if chA_background is not None:
@@ -134,7 +169,7 @@ class PowerPipeline:
                 if run_number != plotted_run:
                     plotted_run = run_number
                     data = np.transpose(np.loadtxt(filename))
-                    for ch in ["CHA", "CHB", "CHASQ", "CHBSQ"]:
+                    for ch in ["CHA", "CHB", "CHASQ", "CHBSQ", "SQ"]:
                         self.plot_dict[ch]["plot"].set_ydata(
                             data[self.plot_dict[ch]["idx"]]
                         )
@@ -147,6 +182,8 @@ class PowerPipeline:
 
             if not cpp_thread.is_alive():
                 observer.join(0)
+                # Report on any log errors
+                library_manager.try_to_read_log_file()
                 break
 
         result_file = f"{self.FILE_FOLDER}/{run_name}.csv"
@@ -185,22 +222,18 @@ class PowerPipeline:
         # Mutliple runs will be required to accumulate all data
         NO_RUNS = math.ceil(averages / R_POINTS)
 
-        cls.log(
-            "Building kernel with:\n"
-            + f"R_POINTS={R_POINTS}"
-            + "\n"
-            + f"SP_POINTS={SP_POINTS}"
-        )
         cls.log(f"Performing {NO_RUNS} runs (to acquire {averages} averages)")
 
         return (SP_POINTS, R_POINTS, NO_RUNS)
 
     @classmethod
-    def build_library(cls, SP_POINTS: int, R_POINTS: int) -> ctypes.CDLL:
+    def build_library(
+        cls, SP_POINTS: int, R_POINTS: int, R_POINTS_PER_GPU_CHUNK: int
+    ) -> ctypes.CDLL:
 
         library_manager.build_library(
             {
-                "R_POINTS_PER_GPU_CHUNK": str(cls.R_POINTS_PER_GPU_CHUNK),
+                "R_POINTS_PER_GPU_CHUNK": str(R_POINTS_PER_GPU_CHUNK),
                 "SP_POINTS": str(SP_POINTS),
                 "R_POINTS": str(R_POINTS),
             }
@@ -227,11 +260,12 @@ class PowerPipeline:
             "CHASQ": {"idx": 2, "ax": 1, "color": "red", "label": "ChA$^2$"},
             "CHB": {"idx": 1, "ax": 2, "color": "blue", "label": "ChB"},
             "CHBSQ": {"idx": 3, "ax": 3, "color": "blue", "label": "ChB$^2$"},
+            "SQ": {"idx": 4, "ax": 4, "color": "black", "label": "ChA$^2$ + ChB$^2$"},
         }
 
         # Prepare plot
-        fig, ax = plt.subplots(4, 1, figsize=(8, 8), sharex=True)
-        for ch in ["CHA", "CHB", "CHASQ", "CHBSQ"]:
+        fig, ax = plt.subplots(5, 1, figsize=(8, 8), sharex=True)
+        for ch in ["CHA", "CHB", "CHASQ", "CHBSQ", "SQ"]:
             i = plot_dict[ch]["ax"]
 
             # Plot line that will be constantly updateed
