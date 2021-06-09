@@ -9,13 +9,13 @@
 #error "Need to specify SP_POINTS (sampler per record) for power measurements"
 #endif
 
-#ifndef R_POINTS_PER_CHUNK
-#error "Need to specify R_POINTS_PER_CHUNK (how to chunk the repetitions to stay within memory limits of GPU) for power measurements"
+#ifndef R_POINTS_PER_GPU_CHUNK
+#define R_POINTS_PER_GPU_CHUNK 1000 ///< The GPU cannot allocate enough shared memory to process all the data. Therefore the total number of repetitions is broken up into chunks.
 #endif
 
 // Derived parameters
 #define BLOCKS SP_POINTS ///< Each `SP_POINT` will be processed by a separate GPU block.
-#define THREADS_PER_BLOCK (R_POINTS_PER_CHUNK > 1024) ? 1024 : R_POINTS_PER_CHUNK ///< Allocationg up to 1024 GPU threads for dealing with repetitions. If there are more repeitions than this, threads will be reused.
+#define THREADS_PER_BLOCK (R_POINTS_PER_GPU_CHUNK > 1024) ? 1024 : R_POINTS_PER_GPU_CHUNK ///< Allocationg up to 1024 GPU threads for dealing with repetitions. If there are more repetitions than this, threads will be reused.
 
 // Verbose Indexes used for accessing array elements in a human-readable way e.g. array[CHASQ]
 #define NO_OF_POWER_KERNEL_OUTPUTS 5
@@ -118,7 +118,7 @@ namespace GPU {
      *
      * **Important**
      * - GPU kernels is compiled with fixed array sizes - use GPU::check_power_kernel_parameters to validate it.
-     * - The actual data is processes in chunks of size `R_POINTS_PER_CHUNK` each. Depending on whether data is accumulated (`long **data_out`)
+     * - The actual data is processes in chunks of size `R_POINTS_PER_GPU_CHUNK` each. Depending on whether data is accumulated (`long **data_out`)
      *   or normalised (`double **data_out`) normalisation may need to take place outside the function.
      *
      * @param chA_data, chB_data raw data from the digitiser

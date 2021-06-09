@@ -14,7 +14,7 @@ extern "C" {
      * - Evaluate CHA, CHB, CHASQ, CHBSQ, SQ and dumping to file
      *
      * Ensure that:
-     * - The GPU kernel has been built with defined `SP_POINTS`, `R_POINTS` and `R_POINTS_PER_CHUNK`.
+     * - The GPU kernel has been built with defined `SP_POINTS`, `R_POINTS` and `R_POINTS_PER_GPU_CHUNK`.
      * - Background data has been copied over to the GPU
      * - `MultiRecordSetup` has been run to prepare the digitizer for measurements.
      * - `MultiRecordClose` is run after the function to reset digitiser.

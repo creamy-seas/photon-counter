@@ -57,7 +57,7 @@ int main()
 
     run_power_measurements(adq_cu_ptr,
                            chA_background, chB_background,
-                           2,
+                           10,
                            "./dump/power-pipeline-example");
 
     DeleteADQControlUnit(adq_cu_ptr);

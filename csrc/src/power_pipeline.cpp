@@ -59,15 +59,15 @@ int run_power_measurements(void* adq_cu_ptr,
     if ((unsigned long long)no_runs * MAX_DIGITISER_CODE * R_POINTS
         >
         (unsigned long long)LONG_MAX)
-        throw std::runtime_error("No runs ("
-                                 + std::to_string(no_runs)
-                                 + ") x 14bit Code ("
-                                 + std::to_string(MAX_DIGITISER_CODE)
-                                 + ") x R_POINTS(number of records per point="
-                                 + std::to_string(R_POINTS)
-                                 + ") can overflow the cumulative arrays of type LONG ("
-                                 + std::to_string(LONG_MAX)
-                                 + ")");
+        FAIL("No runs ("
+             + std::to_string(no_runs)
+             + ") x 14bit Code ("
+             + std::to_string(MAX_DIGITISER_CODE)
+             + ") x R_POINTS(number of records per point="
+             + std::to_string(R_POINTS)
+             + ") can overflow the cumulative arrays of type LONG ("
+             + std::to_string(LONG_MAX)
+             + ")");
 
     // 1. Allocation of memory
     // There will be 2 copies of chA_data and chB_data.

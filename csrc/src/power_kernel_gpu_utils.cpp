@@ -24,22 +24,22 @@ int GPU::fetch_power_kernel_blocks() {
 int GPU::check_power_kernel_parameters(bool display){
     PYTHON_START;
 
-    // Even number required for summation on GPU
-    if (R_POINTS % 2 != 0)
-        throw std::runtime_error(
-            "R_POINTS="
-            + std::to_string(R_POINTS)
-            + " needs to be a even number.");
+    // For reduction summation on GPU, this needs to be a power of 2
+    if ((R_POINTS_PER_GPU_CHUNK & (R_POINTS_PER_GPU_CHUNK - 1)) != 0)
+        FAIL(
+            "R_POINTS_PER_GPU_CHUNK="
+            + std::to_string(R_POINTS_PER_GPU_CHUNK)
+            + " needs to be a power of 2 (in order to perform efficient reduction summation on GPU).");
 
-    // Check that "chunking" falls within the limits of shared memory on GPU
+    // Check that "chunking" is small enogh to not exceeed the shared memory available on GPU
     cudaDeviceProp prop = fetch_gpu_parameters();
-    const int shared_memory_required = (R_POINTS_PER_CHUNK
+    const int shared_memory_required = (R_POINTS_PER_GPU_CHUNK
                                         * sizeof(long)
                                         * GPU::no_outputs_from_gpu);
     if (prop.sharedMemPerBlock < shared_memory_required)
-        throw std::runtime_error(
-            "Power Kernel: Not enough shared memory on GPU.\n\tR_POINTS_PER_CHUNK ("
-            + std::to_string(R_POINTS_PER_CHUNK)
+        FAIL(
+            "Power Kernel: Not enough shared memory on GPU.\n\tR_POINTS_PER_GPU_CHUNK ("
+            + std::to_string(R_POINTS_PER_GPU_CHUNK)
             + ") x LONG (8) x arrays used in GPU ("
             + std::to_string(GPU::no_outputs_from_gpu)
             + ") = "
@@ -48,45 +48,45 @@ int GPU::check_power_kernel_parameters(bool display){
             + std::to_string(prop.sharedMemPerBlock)
             + " bytes availabel per GPU block.");
 
-    // Check that chunking of R_POINTS is valid
-    if (R_POINTS < R_POINTS_PER_CHUNK)
-        throw std::runtime_error(
+    // Check that chunking of R_POINTS for processing on the gpu is valid
+    if (R_POINTS < R_POINTS_PER_GPU_CHUNK)
+        FAIL(
             "R_POINTS ("
             + std::to_string(R_POINTS)
-            + ") < R_POINTS_PER_CHUNK ("
-            + std::to_string(R_POINTS_PER_CHUNK)
-            + "): Chunking is bigger than amount of repititions on digitiser."
+            + ") < R_POINTS_PER_GPU_CHUNK ("
+            + std::to_string(R_POINTS_PER_GPU_CHUNK)
+            + "): Chunking (for processing on gpu) is bigger than amount of repititions on digitiser. You will probably want to adjust R_POINTS"
             );
-    if ((R_POINTS - (R_POINTS / R_POINTS_PER_CHUNK) * R_POINTS_PER_CHUNK) != 0)
-        throw std::runtime_error(
-            "R_POINTS_PER_CHUNK ("
-            + std::to_string(R_POINTS_PER_CHUNK)
+    if ((R_POINTS - (R_POINTS / R_POINTS_PER_GPU_CHUNK) * R_POINTS_PER_GPU_CHUNK) != 0)
+        FAIL(
+            "R_POINTS_PER_GPU_CHUNK ("
+            + std::to_string(R_POINTS_PER_GPU_CHUNK)
             + ") does not fit fully into R_POINTS ("
             + std::to_string(R_POINTS)
             + ").");
-    if ((R_POINTS / R_POINTS_PER_CHUNK % 2) != 0)
-        throw std::runtime_error(
-            "R_POINTS_PER_CHUNK ("
-            + std::to_string(R_POINTS_PER_CHUNK)
+    if ((R_POINTS / R_POINTS_PER_GPU_CHUNK % 2) != 0)
+        FAIL(
+            "R_POINTS_PER_GPU_CHUNK ("
+            + std::to_string(R_POINTS_PER_GPU_CHUNK)
             + ") does not chunk R_POINTS ("
             + std::to_string(R_POINTS)
-            + ") evenly across the 2 streams.");
+            + ") evenly across the 2 parallel streams that will run on GPU.");
 
     // Ensure that the cumulative arrays will not overflow.
     if ((MAX_DIGITISER_CODE * MAX_NUMBER_OF_RECORDS > LONG_MAX) ||
         (MAX_DIGITISER_CODE * MAX_DIGITISER_CODE * MAX_NUMBER_OF_RECORDS > LONG_MAX) ||
         (2 * MAX_DIGITISER_CODE * MAX_DIGITISER_CODE * MAX_NUMBER_OF_RECORDS > LONG_MAX))
-        throw std::runtime_error(
+        FAIL(
             "Cumulative arrays will not be able to hold all the intermediate processing data for power measurements");
 
     // Check that global memory is not exceeded
     long gpu_global_memory_allocation = (
-        SP_POINTS * R_POINTS_PER_CHUNK * sizeof(short) // chA
-        + SP_POINTS * R_POINTS_PER_CHUNK * sizeof(short) // chB
+        SP_POINTS * R_POINTS_PER_GPU_CHUNK * sizeof(short) // chA
+        + SP_POINTS * R_POINTS_PER_GPU_CHUNK * sizeof(short) // chB
         + SP_POINTS * sizeof(long) * GPU::no_outputs_from_gpu // output
         );
     if (gpu_global_memory_allocation > (long)prop.totalGlobalMem)
-        throw std::runtime_error(
+        FAIL(
             "Input arrays for chA and chB of type" + std::string("(short) and ")
             + std::to_string(GPU::no_outputs_from_gpu) + "x output arrays of type (long)"
             + "allocated in the gpu (" + std::to_string(gpu_global_memory_allocation)
@@ -120,14 +120,14 @@ void GPU::allocate_memory(
     /** There is a lot of derefenecing in this function, since the arrays ara passed in by address & */
 
     OKBLUE("Power Kernel: Allocating memory on GPU and CPU.");
-    int chunks = R_POINTS / R_POINTS_PER_CHUNK;
-        if (chunks - (chunks / no_streams) * no_streams != 0)
-            throw std::runtime_error(
-                "Power Kernel: no_streams ("
-                + std::to_string(no_streams)
-                + ") does no fit fully into R_POINTS/R_POINTS_PER_CHUNK ("
-                + std::to_string(R_POINTS) + "/" + std::to_string(R_POINTS_PER_CHUNK)
-                + ") = " + std::to_string(chunks));
+    int chunks = R_POINTS / R_POINTS_PER_GPU_CHUNK;
+    if (chunks - (chunks / no_streams) * no_streams != 0)
+        FAIL(
+            "Power Kernel: no_streams ("
+            + std::to_string(no_streams)
+            + ") does no fit fully into R_POINTS/R_POINTS_PER_GPU_CHUNK ("
+            + std::to_string(R_POINTS) + "/" + std::to_string(R_POINTS_PER_GPU_CHUNK)
+            + ") = " + std::to_string(chunks));
 
         int success = 0; int odx;
 
@@ -143,7 +143,7 @@ void GPU::allocate_memory(
         if (success != 0) FAIL("Power Kernel: Failed to allocate locked input memory on CPU.");
 
 
-        // Input data is fed in chunks of R_POINTS_PER_CHUNK * SP_POINTS
+        // Input data is fed in chunks of R_POINTS_PER_GPU_CHUNK * SP_POINTS
         // (gpu_in is passed in by address, so dereference first, and assign it to a new 2D array of stream x channels)
         if (gpu_in != 0) {
             (*gpu_in) = new short**[no_streams];
@@ -153,8 +153,8 @@ void GPU::allocate_memory(
 
                 // (chA and chB will store the address (short*) of the memory allocated on GPU)
                 // (- they need to be passed in by address & in order for cudaMalloc to update their values)
-                success += cudaMalloc((void**)&(*gpu_in)[s][CHA], SP_POINTS * R_POINTS_PER_CHUNK * sizeof(short));
-                success += cudaMalloc((void**)&(*gpu_in)[s][CHB], SP_POINTS * R_POINTS_PER_CHUNK * sizeof(short));
+                success += cudaMalloc((void**)&(*gpu_in)[s][CHA], SP_POINTS * R_POINTS_PER_GPU_CHUNK * sizeof(short));
+                success += cudaMalloc((void**)&(*gpu_in)[s][CHB], SP_POINTS * R_POINTS_PER_GPU_CHUNK * sizeof(short));
             }
         }
         if (success != 0) FAIL("Power Kernel: Failed to allocate input memory on GPU.");

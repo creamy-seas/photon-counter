@@ -116,10 +116,11 @@ build:
 ###############################################################################
 PLAY_SOURCE := ./playground
 
-PLAY_FLAGS := -D R_POINTS=254000
-PLAY_FLAGS += -D R_POINTS_PER_CHUNK=2
-PLAY_FLAGS += -D SP_POINTS=20
-PLAY_FLAGS += -D DEBUG=1
+# PLAY_FLAGS := -D R_POINTS=254000
+PLAY_FLAGS := -D R_POINTS=2048
+PLAY_FLAGS += -D R_POINTS_PER_GPU_CHUNK=1024
+PLAY_FLAGS += -D SP_POINTS=10
+# PLAY_FLAGS += -D DEBUG=1
 # PLAY_FLAGS += -D TESTENV
 
 PLAY_BIN := ./bin/run
@@ -141,7 +142,7 @@ TEST_SOURCE := ./test
 
 TEST_FLAGS := -DTESTENV
 TEST_FLAGS += -D R_POINTS=8
-TEST_FLAGS += -D R_POINTS_PER_CHUNK=2
+TEST_FLAGS += -D R_POINTS_PER_GPU_CHUNK=2
 TEST_FLAGS += -D SP_POINTS=3
 TEST_FLAGS += -D DEBUG=1
 
@@ -209,7 +210,7 @@ BENCH_SOURCE := ./bench
 BENCH_FLAGS := -DTESTENV
 BENCH_FLAGS += -D R_POINTS=128000 # 129055 for 400 points, 254200 for 200 points
 BENCH_FLAGS += -D SP_POINTS=400
-BENCH_FLAGS += -D R_POINTS_PER_CHUNK=1000
+BENCH_FLAGS += -D R_POINTS_PER_GPU_CHUNK=1000
 BENCH_FLAGS += -D DEBUG=0
 
 BENCH_LDLIBS := -lcelero # Bechmarking library
@@ -247,7 +248,7 @@ LIBIA_FLAGS := -D PYTHON=1
 # LIBIA_FLAGS += -D TESTENV=1
 
 # LIBIA_FLAGS passed in like so:
-# R_POINTS=1000 SP_POINTS=400 R_POINTS_PER_CHUNK=1 make libia
+# R_POINTS=1000 SP_POINTS=400 R_POINTS_PER_GPU_CHUNK=1 make libia
 ifeq (libia, $(firstword $(MAKECMDGOALS)))
 ifndef R_POINTS
 $(error "❌ Need to define R_POINTS for building library")
@@ -255,11 +256,11 @@ endif
 ifndef SP_POINTS
 $(error "❌ Need to define SP_POINTS for building library")
 endif
-ifndef R_POINTS_PER_CHUNK
-$(error "❌ Need to define R_POINTS_PER_CHUNK for building library")
+ifndef R_POINTS_PER_GPU_CHUNK
+$(error "❌ Need to define R_POINTS_PER_GPU_CHUNK for building library")
 endif
 
-LIBIA_FLAGS += -D SP_POINTS=$(SP_POINTS) -D R_POINTS=$(R_POINTS) -D R_POINTS_PER_CHUNK=$(R_POINTS_PER_CHUNK)
+LIBIA_FLAGS += -D SP_POINTS=$(SP_POINTS) -D R_POINTS=$(R_POINTS) -D R_POINTS_PER_GPU_CHUNK=$(R_POINTS_PER_GPU_CHUNK)
 endif
 
 LIBIA_EXTRA_BIN_FLAGS := "-shared"

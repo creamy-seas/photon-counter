@@ -45,7 +45,7 @@
 <details>
 <summary>Click this to collapse/fold.</summary>
 
-> `R_POINTS=1000`, `SP_POINTS=400`, `R_POINTS_PER_CHUNK=500`
+> `R_POINTS=1000`, `SP_POINTS=400`, `R_POINTS_PER_GPU_CHUNK=500`
 
 | Group | Experiment      | Prob. Space | Samples | Iterations | Baseline | us/Iteration | Iterations/sec | RAM (bytes) |
 |:-----:|:---------------:|:-----------:|:-------:|:----------:|:--------:|:------------:|:--------------:|:-----------:|
@@ -75,7 +75,7 @@ It seems that the GPU kernel peaks at 2 streams in terms of performance.
 <details>
 <summary>Click this to collapse/fold.</summary>
 
-> `R_POINTS=128000`, `SP_POINTS=400`, `R_POINTS_PER_CHUNK=1000`
+> `R_POINTS=128000`, `SP_POINTS=400`, `R_POINTS_PER_GPU_CHUNK=1000`
 
 | Group     | Experiment      | Prob. Space | Samples | Iterations | Baseline | us/Iteration  | Iterations/sec | RAM (bytes) |
 |:---------:|:---------------:|:-----------:|:-------:|:----------:|:--------:|:-------------:|:--------------:|:-----------:|
@@ -104,7 +104,7 @@ See above section from details on digitser. The GPU is still 2 times faster that
 <details>
 <summary>Click this to collapse/fold.</summary>
 
-> `R_POINTS=128000`, `SP_POINTS=400`, `R_POINTS_PER_CHUNK=1000`
+> `R_POINTS=128000`, `SP_POINTS=400`, `R_POINTS_PER_GPU_CHUNK=1000`
 
 | Group     | Experiment  | Prob. Space | Samples | Iterations | Baseline | us/Iteration | Iterations/sec | RAM (bytes) |
 |:---------:|:-----------:|:-----------:|:-------:|:----------:|:--------:|:------------:|:--------------:|:-----------:|

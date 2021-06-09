@@ -37,7 +37,7 @@ public:
         GPU::check_power_kernel_parameters(true);
         CPPUNIT_ASSERT_EQUAL(GPU::fetch_power_kernel_blocks(), 3);
         CPPUNIT_ASSERT_EQUAL_MESSAGE(
-            "R_POINTS_PER_CHUNK=2 specified in Makefile!",
+            "R_POINTS_PER_GPU_CHUNK=2 specified in Makefile!",
             GPU::fetch_power_kernel_threads(), 2);
     }
 
