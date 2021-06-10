@@ -101,9 +101,15 @@ class PowerPipeline:
         run_name: str,
         chA_background: np.array = None,
         chB_background: np.array = None,
+        NO_RUNS: int=None,
     ):
         if os.path.exists(self.LOG_LOCATION):
             os.remove(self.LOG_LOCATION)
+
+        if (NO_RUNS):
+            self.log(f"Overriding number of runs {self.NO_RUNS} -> {NO_RUNS}")
+        else:
+            NO_RUNS = self.NO_RUNS
 
         # Check that background arrays are of the correct type
         if chA_background is not None:
@@ -140,7 +146,7 @@ class PowerPipeline:
                 spd.adq_cu_ptr,
                 chA_background.ctypes.data,
                 chB_background.ctypes.data,
-                self.NO_RUNS,
+                NO_RUNS,
                 ctypes.create_string_buffer(
                     f"{self.FILE_FOLDER}/{run_name}".encode("utf-8"), size=40
                 ),
@@ -149,41 +155,43 @@ class PowerPipeline:
         cpp_thread.start()
         self.log("Measurements started")
 
-        progress_bar = ProgBar(self.NO_RUNS, bar_char="█")
+        progress_bar = ProgBar(NO_RUNS, bar_char="█")
         plotted_run = 0
         while True:
             time.sleep(1)
+            try:
+                if plot_trigger.update:
 
-            if plot_trigger.update:
+                    # 1. Get hold of the lock
+                    with plot_trigger.lock:
+                        plot_trigger.update = False
+                        filename = plot_trigger.filename
 
-                # 1. Get hold of the lock
-                with plot_trigger.lock:
-                    plot_trigger.update = False
-                    filename = plot_trigger.filename
+                    # 2. Read run number
+                    with open(plot_trigger.filename, "r") as fin:
+                        run_number = re.search("\d+", fin.readline()).group()
 
-                # 2. Read run number
-                with open(plot_trigger.filename, "r") as fin:
-                    run_number = re.search("\d+", fin.readline()).group()
+                    # 3. If this is a new run (sometimes a trigger occurs mid-file) update plots
+                    if run_number != plotted_run:
+                        plotted_run = run_number
+                        data = np.transpose(np.loadtxt(filename))
+                        for ch in ["CHA", "CHB", "CHASQ", "CHBSQ", "SQ"]:
+                            self.plot_dict[ch]["plot"].set_ydata(
+                                data[self.plot_dict[ch]["idx"]]
+                            )
+                            self.ax[self.plot_dict[ch]["ax"]].relim()
+                            self.ax[self.plot_dict[ch]["ax"]].autoscale_view()
 
-                # 3. If this is a new run (sometimes a trigger occurs mid-file) update plots
-                if run_number != plotted_run:
-                    plotted_run = run_number
-                    data = np.transpose(np.loadtxt(filename))
-                    for ch in ["CHA", "CHB", "CHASQ", "CHBSQ", "SQ"]:
-                        self.plot_dict[ch]["plot"].set_ydata(
-                            data[self.plot_dict[ch]["idx"]]
-                        )
-                        self.ax[self.plot_dict[ch]["ax"]].relim()
-                        self.ax[self.plot_dict[ch]["ax"]].autoscale_view()
+                        self.fig.suptitle(f"Run {plotted_run}/{NO_RUNS}")
+                        self.fig.canvas.draw()
+                        progress_bar.update()
 
-                    self.fig.suptitle(f"Run {plotted_run}/{self.NO_RUNS}")
-                    self.fig.canvas.draw()
-                    progress_bar.update()
-
-            if not cpp_thread.is_alive():
-                observer.join(0)
-                # Report on any log errors
-                library_manager.try_to_read_log_file()
+                if not cpp_thread.is_alive():
+                    observer.join(0)
+                    # Report on any log errors
+                    library_manager.try_to_read_log_file()
+                    break
+            except KeyboardInterrupt:
                 break
 
         result_file = f"{self.FILE_FOLDER}/{run_name}.csv"

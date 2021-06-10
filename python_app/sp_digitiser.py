@@ -62,7 +62,7 @@ class SpDigitiser:
     INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERENCE = 1
 
     LOW_FREQUENCY_MODE = 0  # external clock range 35-240MHz
-    HIGH_FREQUENCY_MODE = 1  # external clock range 240-550MHz
+    HIGH_FREQUENCY_MODE = 1  # external clock range 240-550MHz, default
 
     PACKED_14_BIT_MODE = 0  # faster
     UNPACKED_14_BIT_MODE = 1
@@ -143,7 +143,7 @@ class SpDigitiser:
             self.adq_cu_ptr, 1, self.sp_digitiser_parameters["delay"]
         )
 
-        # b - if exetrnal clock source, connect it to the front panel
+        # b - if exetrnal refference is used
         assert ADQAPI.ADQ214_SetClockSource(
             self.adq_cu_ptr, 1, self.sp_digitiser_parameters["clock_source"]
         )
@@ -152,9 +152,9 @@ class SpDigitiser:
                 f"{TerminalColour.WARNING}External clock source used!{TerminalColour.ENDC}"
             )
 
-        # c - range of the external clock refference
+        # c - range of the external clock refference is always best to use default
         assert ADQAPI.ADQ214_SetClockFrequencyMode(
-            self.adq_cu_ptr, 1, self.sp_digitiser_parameters["frequency_mode"]
+            self.adq_cu_ptr, 1, self.HIGH_FREQUENCY_MODE
         )
 
         # d - Synthesise 400MHz sampling signal from the f_clock=10MHz
@@ -174,6 +174,8 @@ class SpDigitiser:
         assert ADQAPI.ADQ214_SetDataFormat(self.adq_cu_ptr, 1, self.PACKED_14_BIT_MODE)
 
         # g - Offset found by taking measurements of the 2 channels
+        # chA: 53
+        # chB: 38
         assert ADQAPI.ADQ214_SetGainAndOffset(
             self.adq_cu_ptr,
             1,
