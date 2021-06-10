@@ -84,7 +84,11 @@ class SpDigitiser:
             no_of_devices = int(ADQAPI.ADQControlUnit_FindDevices(self.adq_cu_ptr))
             assert (
                 no_of_devices > 0
-            ), "No devices found! Make sure all programs refferencing devices are closed and that the box is switched on. When rebooting, turn the pc on after the digitiser."
+            ), (
+                "No devices found! Make sure all programs refferencing devices are closed and that the box is switched on. When rebooting, turn the pc on after the digitiser."
+                + "\n"
+                + "The PXIe/PXI chassis is an extension of the computers' busses, your chassis needs to be on before the computer is on."
+            )
 
             # 2. Set parameters if supplied
             if self.sp_digitiser_parameters:

@@ -52,14 +52,17 @@ class PowerPipeline:
 
     LOG_LOCATION = "./libia.log"
     LIBRARY_LOCATION = "./csrc/bin/libia.so"
-    FILE_FOLDER = "./dump"
+    DUMP_FOLDER = "./dump"
+    STORE_FOLDER = "./store"
 
     @classmethod
     def log(cls, message: str):
         print(cls.LOG_TEMPLATE.format(info=str(message)))
 
-    def __init__(self, **kwargs):
-        os.makedirs(self.FILE_FOLDER, exist_ok=True)
+    def __init__(self, ipython: bool, recompile: bool=True, **kwargs):
+        self.ipython = ipython
+
+        os.makedirs(self.DUMP_FOLDER, exist_ok=True)
 
         if self.INIT_ARGUMENTS_OPTION_1.issubset(set(kwargs)):
             (self.SP_POINTS, self.R_POINTS, self.NO_RUNS) = self.derive_parameters(
@@ -88,7 +91,8 @@ class PowerPipeline:
         )
 
         self.libia = self.build_library(
-            self.SP_POINTS, self.R_POINTS, self.R_POINTS_PER_GPU_CHUNK
+            self.SP_POINTS, self.R_POINTS, self.R_POINTS_PER_GPU_CHUNK,
+            recompile=recompile
         )
 
         (self.fig, self.ax, self.plot_dict) = self.prepare_plot(
@@ -148,7 +152,7 @@ class PowerPipeline:
                 chB_background.ctypes.data,
                 NO_RUNS,
                 ctypes.create_string_buffer(
-                    f"{self.FILE_FOLDER}/{run_name}".encode("utf-8"), size=40
+                    f"{self.DUMP_FOLDER}/{run_name}".encode("utf-8"), size=40
                 ),
             ),
         )
@@ -159,42 +163,44 @@ class PowerPipeline:
         plotted_run = 0
         while True:
             time.sleep(1)
-            try:
-                if plot_trigger.update:
+            if plot_trigger.update:
 
-                    # 1. Get hold of the lock
-                    with plot_trigger.lock:
-                        plot_trigger.update = False
-                        filename = plot_trigger.filename
+                # 1. Get hold of the lock
+                with plot_trigger.lock:
+                    plot_trigger.update = False
+                    filename = plot_trigger.filename
 
-                    # 2. Read run number
-                    with open(plot_trigger.filename, "r") as fin:
-                        run_number = re.search("\d+", fin.readline()).group()
+                # 2. Read run number
+                with open(plot_trigger.filename, "r") as fin:
+                    run_number = re.search("\d+", fin.readline()).group()
 
-                    # 3. If this is a new run (sometimes a trigger occurs mid-file) update plots
-                    if run_number != plotted_run:
-                        plotted_run = run_number
-                        data = np.transpose(np.loadtxt(filename))
-                        for ch in ["CHA", "CHB", "CHASQ", "CHBSQ", "SQ"]:
-                            self.plot_dict[ch]["plot"].set_ydata(
-                                data[self.plot_dict[ch]["idx"]]
-                            )
-                            self.ax[self.plot_dict[ch]["ax"]].relim()
-                            self.ax[self.plot_dict[ch]["ax"]].autoscale_view()
+                # 3. If this is a new run (sometimes a trigger occurs mid-file) update plots
+                if run_number != plotted_run:
+                    plotted_run = run_number
+                    data = np.transpose(np.loadtxt(filename))
+                    for ch in ["CHA", "CHB", "CHASQ", "CHBSQ", "SQ"]:
+                        self.plot_dict[ch]["plot"].set_ydata(
+                            data[self.plot_dict[ch]["idx"]]
+                        )
+                        self.ax[self.plot_dict[ch]["ax"]].relim()
+                        self.ax[self.plot_dict[ch]["ax"]].autoscale_view()
 
-                        self.fig.suptitle(f"Run {plotted_run}/{NO_RUNS}")
+                    self.fig.suptitle(f"Run {plotted_run}/{NO_RUNS}")
+                    if self.ipython:
                         self.fig.canvas.draw()
-                        progress_bar.update()
+                    else:
+                        plt.pause(0.1)
+                        plt.draw()  # non-blocking drawing
 
-                if not cpp_thread.is_alive():
-                    observer.join(0)
-                    # Report on any log errors
-                    library_manager.try_to_read_log_file()
-                    break
-            except KeyboardInterrupt:
+                    progress_bar.update()
+
+            if not cpp_thread.is_alive():
+                observer.join(0)
+                # Report on any log errors
+                library_manager.try_to_read_log_file()
                 break
 
-        result_file = f"{self.FILE_FOLDER}/{run_name}.csv"
+        result_file = f"{self.STORE_FOLDER}/{run_name}.csv"
         shutil.copyfile(filename, result_file)
         self.log(f"Measurements done -> data dumped to {result_file}")
 
@@ -206,7 +212,7 @@ class PowerPipeline:
         """
         observer = Observer()
         plot_trigger = PlotTrigger()
-        observer.schedule(plot_trigger, cls.FILE_FOLDER)
+        observer.schedule(plot_trigger, cls.DUMP_FOLDER)
         observer.start()
 
         return (observer, plot_trigger)
@@ -236,16 +242,17 @@ class PowerPipeline:
 
     @classmethod
     def build_library(
-        cls, SP_POINTS: int, R_POINTS: int, R_POINTS_PER_GPU_CHUNK: int
+            cls, SP_POINTS: int, R_POINTS: int, R_POINTS_PER_GPU_CHUNK: int, recompile: bool
     ) -> ctypes.CDLL:
 
-        library_manager.build_library(
-            {
-                "R_POINTS_PER_GPU_CHUNK": str(R_POINTS_PER_GPU_CHUNK),
-                "SP_POINTS": str(SP_POINTS),
-                "R_POINTS": str(R_POINTS),
-            }
-        )
+        if recompile:
+            library_manager.build_library(
+                {
+                    "R_POINTS_PER_GPU_CHUNK": str(R_POINTS_PER_GPU_CHUNK),
+                    "SP_POINTS": str(SP_POINTS),
+                    "R_POINTS": str(R_POINTS),
+                }
+            )
 
         libia = ctypes.cdll.LoadLibrary(cls.LIBRARY_LOCATION)
 

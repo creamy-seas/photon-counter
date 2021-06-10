@@ -45,6 +45,7 @@ void process_digitiser_data(short *chA_data, short *chB_data,
         base_filename + std::to_string(run % LOG_ROTATE) + ".csv",
         "# Run " + std::to_string(run) +  "\n# CHA\tCHB\tCHASQ\tCHBSQ\tSQ",
         (double)run * R_POINTS
+        // (int)1
         );
 };
 

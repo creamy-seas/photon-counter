@@ -1,43 +1,49 @@
-import numpy as np
-from matplotlib import pyplot as plt
-from watchdog.events import FileSystemEventHandler, FileSystemEvent
-from watchdog.observers import Observer
-import time
-import globby
+import matplotlib.pyplot as plt
+from python_app.sp_digitiser import SpDigitiser
+from python_app.power_pipeline import PowerPipeline
+from python_app.utils import file_ops
 
-SP_POINTS = 200
+RUN_NAME = "repetition-02MHz_width-3000ns"
 
-plt.ion()
-fig, ax = plt.subplots(1)
-plot, = ax.plot([0]*SP_POINTS)
-plt.draw()  # non-blocking drawing
-plt.pause(.001)  # This line is essential, without it the plot won't be shown
+TIME_IN_NS = 5000
+AVERAGES = 1_000_00
 
-event_handler = FileSystemEventHandler()
-def my_dispatch(event: FileSystemEvent):
-    if not event.is_directory:
-        print(".")
-        globby.update=True
-        globby.filename=event.src_path
-event_handler.on_modified = my_dispatch
-observer = Observer()
-observer.schedule(event_handler, "./csrc/dump")
-observer.start()
+R_POINTS = 2048
+SP_POINTS = 2000
+R_POINTS_PER_GPU_CHUNK = 64
+NO_RUNS = 10
 
-try:
-    while True:
-        time.sleep(1)
-        if globby.update:
-            globby.update = False
-            arr = np.transpose(np.loadtxt(globby.filename, skiprows=1))
-            plot.set_ydata(arr[1])
-            ax.relim()
-            ax.autoscale_view()
-            ax.set_title(globby.filename)
-            plt.draw()  # non-blocking drawing
-            plt.pause(.001)  # This line is essential, without it the plot won't be shown
-            
-except KeyboardInterrupt:
-    observer.stop()
-observer.join()
+chA_background=None; chB_background=None
+# (chA_background, chB_background) = file_ops.load_chA_chB_arrays("./dump/ttt.csv")
 
+# Setup
+pp = PowerPipeline(
+    ipython=False,
+    recompile=False,
+    #time_in_ns=TIME_IN_NS, averages=AVERAGES
+    R_POINTS=R_POINTS, SP_POINTS=SP_POINTS, R_POINTS_PER_GPU_CHUNK=R_POINTS_PER_GPU_CHUNK, NO_RUNS=NO_RUNS
+)
+plt.draw()  # Non-blocking drawing
+plt.pause(.001)
+
+# Execution
+pp.execute_run(
+    #NO_RUNS=10,
+    NO_RUNS=None,
+    digitiser_parameters={
+        "delay": 0,
+        "trigger_type": SpDigitiser.TRIGGER_EXTERNAL,
+        #     "trigger_type": SpDigitiser.TRIGGER_SOFTWARE,
+        "channelA_gain": 1,
+        "channelB_gain": 1,
+        "channelA_offset": 53,
+        "channelB_offset": 38,
+#         "clock_source": SpDigitiser.INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE,
+        "clock_source": SpDigitiser.INTERNAL_CLOCK_SOURCE_EXTERNAL_10MHZ_REFFERENCE
+    },
+    run_name=RUN_NAME,
+    chA_background=chA_background, chB_background=chB_background
+)
+
+plt.savefig(f"./{pp.STORE_FOLDER}/{RUN_NAME}.pdf")
+plt.show()
