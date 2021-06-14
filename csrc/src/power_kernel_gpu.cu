@@ -133,6 +133,10 @@ __global__ void power_kernel_runner(short *chA_data, short *chB_data,
         chB_out[sp_coordinate] += chB_cumulative_array[0];
         chAsq_out[sp_coordinate] += chAsq_cumulative_array[0];
         chBsq_out[sp_coordinate] += chBsq_cumulative_array[0];
+        // chA_out[sp_coordinate] += 1;
+        // chB_out[sp_coordinate] += 1;
+        // chAsq_out[sp_coordinate] += 1;
+        // chBsq_out[sp_coordinate] += 1;
 
         // Shift by number of allocated blocks along main-axis
         sp_coordinate += gridDim.x;

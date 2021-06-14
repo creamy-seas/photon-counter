@@ -15,7 +15,7 @@ class G1KernelCpuTest : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE_END();
 private:
     const static int N = 101;
-    const int tau_points = 100;
+    const int tau_points = 50;
 
     short* chA_data;
     short* chB_data;
@@ -103,10 +103,12 @@ public:
     }
 
     void test_direct_biased_normalisation(){
-        G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, 50, true);
+        int no_threads = 1;
 
-        for (int t(0); t < tau_points; t++) {
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_g1_unbiased_normalisation[t], data_out[CHAG1][t], 0.001);
+        G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, true, no_threads);
+
+        for (int tau(0); tau < tau_points; tau++) {
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(expected_g1_unbiased_normalisation[tau], data_out[CHAG1][tau], 0.001);
         }
     }
 };
