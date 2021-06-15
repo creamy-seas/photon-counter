@@ -14,7 +14,7 @@ void g1_kernel_runner(double **data_out, double **wip_data, int N,
                       int tau_min, int tau_max
     ){
     double chA_cumulative(0), chB_cumulative(0), sq_cumulative(0);
-    int normalisation;
+    double normalisation;
 
     for (int tau(tau_min); tau < tau_max; tau++) {
         for (int i(0); i < N - tau; i++) {
@@ -22,11 +22,11 @@ void g1_kernel_runner(double **data_out, double **wip_data, int N,
             chB_cumulative += wip_data[CHBG1][i] * wip_data[CHBG1][i + tau];
             sq_cumulative += wip_data[SQG1][i] * wip_data[SQG1][i + tau];
         }
-        normalisation = normalised_with_less_bias ? N - tau : N;
+        normalisation = normalised_with_less_bias ? (double)N - (double)tau : (double)N;
 
-        data_out[CHAG1][tau] = chA_cumulative / variance_list[CHAG1] / (normalisation);
-        data_out[CHBG1][tau] = chB_cumulative / variance_list[CHBG1] / (normalisation);
-        data_out[SQG1][tau] = sq_cumulative / variance_list[SQG1] / (normalisation);
+        data_out[CHAG1][tau] = chA_cumulative / variance_list[CHAG1] / normalisation;
+        data_out[CHBG1][tau] = chB_cumulative / variance_list[CHBG1] / normalisation;
+        data_out[SQG1][tau] = sq_cumulative / variance_list[SQG1] / normalisation;
 
         chA_cumulative = 0;
         chB_cumulative = 0;
@@ -57,7 +57,7 @@ void G1::CPU::DIRECT::g1_kernel(
 
     for (int i(0); i < number_of_threads - 1; i++) {
         t[i] = std::thread(g1_kernel_runner,
-                           wip_data, G1_DIGITISER_POINTS,
+                           data_out, wip_data, G1_DIGITISER_POINTS,
                            variance_list,
                            normalise_with_less_bias,
                            i * increment, (i + 1) * increment);
