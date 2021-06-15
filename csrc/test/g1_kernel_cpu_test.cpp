@@ -14,6 +14,8 @@ class G1KernelCpuTest : public CppUnit::TestFixture {
     CPPUNIT_TEST( test_direct_unbiased_normalisation);
     CPPUNIT_TEST( test_direct_unbiased_normalisation_2_threads );
     CPPUNIT_TEST( test_direct_biased_normalisation );
+    // CPPUNIT_TEST( test_fftw );
+    CPPUNIT_TEST( test_g1_prepare_fftw_plan );
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -53,9 +55,8 @@ public:
         }
 
         data_out = new double*[G1::no_outputs];
-        for (int i(0); i < G1::no_outputs; i++) {
+        for (int i(0); i < G1::no_outputs; i++)
             data_out[i] = new double[tau_points]();
-        }
     }
     void tearDown(){
         delete[] chA_data;
@@ -64,6 +65,12 @@ public:
         for (int i(0); i < G1::no_outputs; i++)
             delete[] data_out[i];
         delete[] data_out;
+    }
+    void beforeEach(){
+        for (int i(0); i < G1::no_outputs; i++) {
+            for (int t; t < tau_points; t)
+                data_out[i][t] = 0;
+        }
     }
 
     void test_direct_unbiased_normalisation(){
@@ -97,6 +104,22 @@ public:
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
                                                  expected_g1_biased_normalisation[tau], data_out[CHAG1][tau], 0.001);
         }
+    }
+
+    void test_fftw(){
+
+        // G1::CPU::FFTW::g1_kernel(chA_data, chB_data, data_out);
+
+        for (int tau(0); tau < tau_points; tau++) {
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
+                                                 expected_g1_biased_normalisation[tau], data_out[CHAG1][tau], 0.001);
+        }
+    }
+
+    void test_g1_prepare_fftw_plan(){
+        int time_limit = 10;
+        int no_threads = 8;
+        G1::CPU::FFTW::g1_prepare_fftw_plan("./dump/example-fftw-plan", time_limit, no_threads);
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION( G1KernelCpuTest );

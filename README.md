@@ -40,6 +40,16 @@ mkdir build && cd build && cmake ..
 make
 ```
 
+5. Install [`fftw3`](http://fftw.org/) for efficient computation of correlation functions.
+```shell
+wget http://fftw.org/fftw-3.3.9.tar.gz
+tar -xvf fftw-3.3.9.tar.gz
+# Read the README
+./configure --enable-shared --enable-threads
+make
+sudo make install
+```
+
 # Test coverage
 
 ```shell
@@ -145,9 +155,9 @@ ldd ./bin/ia_1488.so
 ## SP-Digitiser Setup ##
 > Complete
 
-| `sp_digitizer.py` (Python) | `libia.cpp` (C++)                 |
-|:---------------------------|---------------------------------------|
-| 🏆 extensive setup         | essential setup only for tests        |
+| `sp_digitizer.py` (Python) | `libia.cpp` (C++)                       |
+|:---------------------------|-----------------------------------------|
+| 🏆 extensive setup         | essential setup only for tests          |
 |                            | 🏆 `fetch_digitiser_data` to fetch data |
 
 ## GPU Utils ##
@@ -164,9 +174,9 @@ ldd ./bin/ia_1488.so
 > Complete
 - [ ] Safety checks to ensure that correct allocation is made
 
-| `power_kernel.py` (Python)                                        | `power_kernel.hpp` (C++)                                                 |
-|:------------------------------------------------------------------|--------------------------------------------------------------------------|
-| "Out-of-the-box" `kernel` with little customisability             | 🏆 `kernel` that can be used in parallel processes                       |
+| `power_kernel.py` (Python)                                        | `power_kernel.hpp` (C++)                                                       |
+|:------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| "Out-of-the-box" `kernel` with little customisability             | 🏆 `kernel` that can be used in parallel processes                             |
 | 🏆 use `check_kernel_parameters` to check the kernel built in C++ | feed `check_power_kernel_parameters` into the python `check_kernel_parameters` |
 
 ## Power pipeline ##

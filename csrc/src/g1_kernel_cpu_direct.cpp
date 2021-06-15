@@ -3,8 +3,6 @@
 
 #include "g1_kernel.hpp"
 
-const int number_of_threads = 2;
-
 /**
  * Evaluation is run from `tau_min` to `tau_max`. Array are multiplied by themselves at staggered offsets.
  */
@@ -52,25 +50,25 @@ void G1::CPU::DIRECT::g1_kernel(
     G1::CPU::preprocessor(chA_data, chB_data, G1_DIGITISER_POINTS, mean_list, variance_list, wip_data);
 
     // Launch mutltiple threads for different tau section
-    std::thread* t = new std::thread[number_of_threads];
-    int increment = floor((tau_points) / number_of_threads);
+    std::thread* t = new std::thread[no_threads];
+    int increment = floor((tau_points) / no_threads);
 
-    for (int i(0); i < number_of_threads - 1; i++) {
+    for (int i(0); i < no_threads - 1; i++) {
         t[i] = std::thread(g1_kernel_runner,
                            data_out, wip_data, G1_DIGITISER_POINTS,
                            variance_list,
                            normalise_with_less_bias,
                            i * increment, (i + 1) * increment);
     }
-    t[number_of_threads - 1] = std::thread(g1_kernel_runner,
-                                           data_out, wip_data, G1_DIGITISER_POINTS,
+    t[no_threads - 1] = std::thread(g1_kernel_runner,
+                                    data_out, wip_data, G1_DIGITISER_POINTS,
                                            variance_list,
                                            normalise_with_less_bias,
-                                           increment * (number_of_threads - 1),
-                                           tau_points);
+                                           increment * (no_threads - 1),
+                                    tau_points);
 
     //collect the multiple threads together
-    for (int i(0); i < number_of_threads; i++)
+    for (int i(0); i < no_threads; i++)
         t[i].join();
     delete[] t;
 }

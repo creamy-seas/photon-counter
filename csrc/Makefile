@@ -31,6 +31,7 @@ INCS += -L./../Celero/build # Celero libraries (benchmarking)
 # Libraries
 LDLIBS := $(shell pkg-config --libs libadq) # Digitiser library
 LDLIBS += -lcudart # Cuda runtime (high level functions)
+LDLIBS += -lfftw3 -lfftw3_threads
 
 # Source and object files evaluted from the BUILD_SOURCE that will need to be supplied
 BUILD_FOLDER := ./build/${BUILD_SOURCE}

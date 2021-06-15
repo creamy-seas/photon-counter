@@ -1,3 +1,4 @@
+#include "logging.hpp"
 #include "g1_kernel.hpp"
 
 int G1::GPU::DIRECT::fetch_g1_kernel_blocks(){
@@ -9,7 +10,15 @@ int G1::GPU::DIRECT::fetch_g1_kernel_threads(){
 }
 
 int G1::GPU::DIRECT::check_g1_kernel_parameters(bool display){
-    return 1;
+    PYTHON_START;
+
+    if (G1_DIGITISER_POINTS % 2)
+        FAIL(
+            "For FFTW g1 evaluation G1_DIGITISER_POINTS=" +
+            std::to_string(G1_DIGITISER_POINTS)
+            + "must be an even number");
+
+    PYTHON_END;
 }
 
 void G1::CPU::preprocessor(short *chA_data, short *chB_data,
