@@ -25,8 +25,7 @@ void G1::CPU::preprocessor(short *chA_data, short *chB_data,
                            int N,
                            double *mean_list,
                            double *variance_list,
-                           double **normalised_data)
-{
+                           double **normalised_data) {
     double chA_mean(0), chB_mean(0), sq_mean(0);
     for (int i = 0; i < N; i++) {
         chA_mean += chA_data[i];

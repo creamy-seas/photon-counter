@@ -1,6 +1,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Exception.h>
 #include <string>
+#include <fftw3.h> // for all fttw related items
 
 #include "g1_kernel.hpp"
 
@@ -15,7 +16,7 @@ class G1KernelCpuTest : public CppUnit::TestFixture {
     CPPUNIT_TEST( test_direct_unbiased_normalisation_2_threads );
     CPPUNIT_TEST( test_direct_biased_normalisation );
     // CPPUNIT_TEST( test_fftw );
-    CPPUNIT_TEST( test_g1_prepare_fftw_plan );
+    CPPUNIT_TEST( test_fftw );
 
     CPPUNIT_TEST_SUITE_END();
 private:
@@ -45,7 +46,7 @@ private:
     double expected_g1_unbiased_normalisation[N] = {1.0, 0.27876550448577714, 0.16239755522451263, -0.11683289230489952, -0.4187530135790226, -0.34191238390506545, -0.4952915489597995, -0.16143122286617909, 0.001354024940519039, 0.2794137414940771, 0.34507394459166024, 0.4461006320775517, 0.21107834010490809, 0.01770712668226936, -0.17150371082588595, -0.467984962475905, -0.2056953112202304, -0.3822995414361214, 0.08956532197636022, 0.208117218460234, 0.2990377659252397, 0.3809396566332483, 0.12155644705703274, 0.03971735270378734, -0.2787205445344625, -0.3108548823444019, -0.45909288631624257, -0.27101619966358054, -0.08606711318752513, 0.1428191219730393, 0.43152355777957346, 0.33173116009300313, 0.35435723185171664, 0.06589862467932392, -0.024268345096708714, -0.43745306635110137, -0.47512024599142166, -0.3077328125662636, -0.14567690903962188, 0.03951016790586047, 0.13270457349536596, 0.5097961157515193, 0.33259280718920864, 0.33941515775769426, 0.0862897535237944, -0.29970958017285676, -0.25663978380534774, -0.4624772526246765, -0.118684982561026, 0.03529295733926573, 0.14400900061988184, 0.34031905406077123, 0.3252088619498773, 0.24366553943179373, 0.02601374936687681, -0.24025645557369985, -0.3176060510636867, -0.30523692948568804, -0.3100076038547322, 0.06523978071541478, 0.24746456107031817, 0.3406887172115206, 0.5943186508454902, 0.3306649261275283, 0.09302266489253225, -0.21300293157013994, -0.5604870423614874, -0.45926088888320327, -0.39449807387506913, -0.37545338206729556, 0.12212795325998603, 0.4334995171504485, 0.4698302449027589, 0.4286668632495322, 0.1390041160075634, 0.08826374460336942, -0.23958225781883186, -0.6012591683601592, -0.4799082461348291, -0.24371321331812218, 0.0025676389291271135, 0.3640374750971249, 0.36797702365985163, 0.2710035908358379, 0.05337199689762322, -0.23299208150988146, -0.02416059509480987, -0.16871546914656946, -0.2618057993011886, 0.03582182709890543, -0.12148592899449882, 0.18092808796873114, 0.35675968382836615, -0.08096138302743232, 0.12756627240178017, -0.05620780628950875, -0.1755640924762469, 0.22054628304635793, -0.0009083383295948861, 0.3127137484250816, 0.3816743142506185};
 
 public:
-    void setUp(){
+    void setUp() {
         chA_data = new short[N];
         chB_data = new short[N];
 
@@ -58,7 +59,7 @@ public:
         for (int i(0); i < G1::no_outputs; i++)
             data_out[i] = new double[tau_points]();
     }
-    void tearDown(){
+    void tearDown() {
         delete[] chA_data;
         delete[] chB_data;
 
@@ -66,14 +67,14 @@ public:
             delete[] data_out[i];
         delete[] data_out;
     }
-    void beforeEach(){
+    void beforeEach() {
         for (int i(0); i < G1::no_outputs; i++) {
             for (int t; t < tau_points; t)
                 data_out[i][t] = 0;
         }
     }
 
-    void test_direct_unbiased_normalisation(){
+    void test_direct_unbiased_normalisation() {
         int no_threads = 1;
 
         G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, true, no_threads);
@@ -84,7 +85,7 @@ public:
         }
     }
 
-    void test_direct_unbiased_normalisation_2_threads(){
+    void test_direct_unbiased_normalisation_2_threads() {
         int no_threads = 2;
 
         G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, true, no_threads);
@@ -95,7 +96,7 @@ public:
         }
     }
 
-    void test_direct_biased_normalisation(){
+    void test_direct_biased_normalisation() {
         int no_threads = 1;
 
         G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
@@ -108,18 +109,29 @@ public:
 
     void test_fftw(){
 
-        // G1::CPU::FFTW::g1_kernel(chA_data, chB_data, data_out);
-
-        for (int tau(0); tau < tau_points; tau++) {
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
-                                                 expected_g1_biased_normalisation[tau], data_out[CHAG1][tau], 0.001);
-        }
-    }
-
-    void test_g1_prepare_fftw_plan(){
-        int time_limit = 10;
+        // Generate plans
+        int time_limit = 1;
         int no_threads = 8;
-        G1::CPU::FFTW::g1_prepare_fftw_plan("./dump/example-fftw-plan", time_limit, no_threads);
+        G1::CPU::FFTW::g1_prepare_fftw_plan("./dump/test-fftw-plan", time_limit, no_threads);
+
+        // Pre-kernel setup
+        double **data_out = new double*[G1::no_outputs]; fftw_complex *aux_array;
+        fftw_plan *plans_forward = new fftw_plan[G1::no_outputs]; fftw_plan *plans_backward = new fftw_plan[G1::no_outputs];
+
+        G1::CPU::FFTW::g1_allocate_memory(data_out, aux_array, "./dump/test-fftw-plan", plans_forward, plans_backward);
+
+        G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
+                                 data_out, aux_array,
+                                 plans_forward, plans_backward);
+
+        for (int tau(0); tau < 20; tau++) {
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
+                                                 expected_g1_biased_normalisation[tau],
+                                                 data_out[CHAG1][tau], 0.05);
+        }
+
+        // Post kernel
+        G1::CPU::FFTW::g1_free_memory(data_out, plans_forward, plans_backward);
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION( G1KernelCpuTest );
