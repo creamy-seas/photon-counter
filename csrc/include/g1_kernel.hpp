@@ -5,7 +5,7 @@
 #include <string>
 
 #ifndef G1_DIGITISER_POINTS
-#define G1_DIGITISER_POINTS 289262 ///< A single readout is requested from digitiser.
+#define G1_DIGITISER_POINTS 262144 ///< A single readout is requested from digitiser. Powers of 2 are executed especially fast
 #endif
 
 // Verbose Indexes used for accessing array elements in a human-readable way e.g. array[CHASQ]
@@ -97,12 +97,17 @@ namespace G1 {
              * @param data_out array that will store the eventual CHAG1, CHBG1 and SQG1 values
              * @param aux_array used for intermediate computations. FFTW Plans are created between data_out[idx] <-> aux_array (thus aux_array is reused for multiple transforms).
              * @param plan_name base name of the wisdom files made using g1_prepare_fftw_plan. These optimised files are used as a baseline for generating plans specific to the allocated arrays
-             * @param plans_forward, plans_backward arrays to store the optimised plans
+             * @param plans_forward, plans_backward arrays to store the optimised plans.
+             *
+             * Pass in the ADDRESSES of the pointers that will store these arrays e.g.
+             *
+             *     fftw_plan *plans_forward, *plans_backward;
+             *     g1_allocate_memory(&data_out, &aux_array, plan_name, &plans_forward, &plans_backward);
              */
-            void g1_allocate_memory(double **data_out, fftw_complex *aux_array,
+            void g1_allocate_memory(double ***data_out, fftw_complex **aux_array,
                                     std::string plan_name,
-                                    fftw_plan *plans_forward, fftw_plan *plans_backward);
-            void g1_free_memory(double **data_out,
+                                    fftw_plan **plans_forward, fftw_plan **plans_backward);
+            void g1_free_memory(double **data_out, fftw_complex *aux_array,
                                 fftw_plan *plans_forward, fftw_plan *plans_backward);
 
             /**

@@ -8,6 +8,7 @@
 #include "sp_digitiser.hpp" // fetch_digitiser_data
 #include "ADQAPI.h" // DeleteAdqControlUnit
 #include "power_pipeline.hpp"
+#include "g1_kernel.hpp"
 
 CELERO_MAIN
 
@@ -24,6 +25,51 @@ short digitiser_code() {
     return ((float)std::rand() / RAND_MAX - 0.5) * digitiser_code_range;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//                              Digitiser                                    //
+///////////////////////////////////////////////////////////////////////////////
+class DigitiserFixture : public celero::TestFixture {
+public:
+    void setUp(__attribute__ ((unused)) const celero::TestFixture::ExperimentValue& x) override {
+
+        // Create pointer and set up device for multirecord
+        adq_cu_ptr = master_setup(NO_BLINK,
+                                  INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE,
+                                  TRIGGER_EXTERNAL
+                                  // TRIGGER_SOFTWARE
+            );
+
+        // Simulate with real number of points that we would typically expect
+        number_of_records = 10000;//GetMaxNofRecordsFromNofSamples(adq_cu_ptr, SP_POINTS);
+        buff_a = new short[SP_POINTS * number_of_records];
+        buff_b = new short[SP_POINTS * number_of_records];
+    };
+
+    void tearDown() override {
+        delete[] buff_a;
+        delete[] buff_b;
+        DeleteADQControlUnit(adq_cu_ptr);
+    };
+
+    void* adq_cu_ptr;
+    unsigned int number_of_records;
+    short *buff_a;
+    short *buff_b;
+};
+
+// BASELINE_F(POWER, READING, DigitiserFixture, 0, 0)
+// {
+//     // Prepare multirecord mode
+//     ADQ_MultiRecordSetup(adq_cu_ptr, 1, number_of_records,  SP_POINTS);
+//     fetch_digitiser_data(adq_cu_ptr,
+//                          buff_a, buff_b,
+//                          SP_POINTS, number_of_records);
+//     ADQ_MultiRecordClose(adq_cu_ptr, 1);
+// }
+
+///////////////////////////////////////////////////////////////////////////////
+//                                Power Kernel                               //
+///////////////////////////////////////////////////////////////////////////////
 class PowerKernelFixture : public celero::TestFixture {
 public:
     void setUp(__attribute__ ((unused)) const celero::TestFixture::ExperimentValue& x) override {
@@ -93,7 +139,7 @@ public:
 
         // Allocate memory
         POWER::GPU::allocate_memory(&chA_data_locked, &chB_data_locked,
-                             &gpu_in, &gpu_out, &cpu_out, no_streams);
+                                    &gpu_in, &gpu_out, &cpu_out, no_streams);
         // Copy over test input data to the locked memory
         for (int i(0); i < SP_POINTS; i++) {
             chA_data_locked[i] = chA_data[i];
@@ -104,7 +150,7 @@ public:
     void tearDown() override {
         PowerKernelFixture::tearDown();
         POWER::GPU::free_memory(chA_data_locked, chB_data_locked,
-                         gpu_in, gpu_out, cpu_out, no_streams);
+                                gpu_in, gpu_out, cpu_out, no_streams);
     };
 };
 
@@ -124,45 +170,6 @@ class PowerKernelGPU16StreamFixture : public PowerKernelGPUBaseFixture {
 public:
     int get_number_of_streams() {return 16;}
 };
-
-class DigitiserFixture : public celero::TestFixture {
-public:
-    void setUp(__attribute__ ((unused)) const celero::TestFixture::ExperimentValue& x) override {
-
-        // Create pointer and set up device for multirecord
-        adq_cu_ptr = master_setup(NO_BLINK,
-                                  INTERNAL_CLOCK_SOURCE_INTERNAL_10MHZ_REFFERENCE,
-                                  TRIGGER_EXTERNAL
-                                  // TRIGGER_SOFTWARE
-            );
-
-        // Simulate with real number of points that we would typically expect
-        number_of_records = 10000;//GetMaxNofRecordsFromNofSamples(adq_cu_ptr, SP_POINTS);
-        buff_a = new short[SP_POINTS * number_of_records];
-        buff_b = new short[SP_POINTS * number_of_records];
-    };
-
-    void tearDown() override {
-        delete[] buff_a;
-        delete[] buff_b;
-        DeleteADQControlUnit(adq_cu_ptr);
-    };
-
-    void* adq_cu_ptr;
-    unsigned int number_of_records;
-    short *buff_a;
-    short *buff_b;
-};
-
-BASELINE_F(POWER, READING, DigitiserFixture, 0, 0)
-{
-    // Prepare multirecord mode
-    ADQ_MultiRecordSetup(adq_cu_ptr, 1, number_of_records,  SP_POINTS);
-    fetch_digitiser_data(adq_cu_ptr,
-                       buff_a, buff_b,
-                       SP_POINTS, number_of_records);
-    ADQ_MultiRecordClose(adq_cu_ptr, 1);
-}
 
 // BENCHMARK_F(POWER, 1T_BACK, PowerKernelFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
 //     POWER::CPU::power_kernel(
@@ -188,17 +195,17 @@ BASELINE_F(POWER, READING, DigitiserFixture, 0, 0)
 //         data_out,
 //         gpu_in, gpu_out, cpu_out, no_streams);
 // }
-BENCHMARK_F(POWER, GPU_2ST, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
-    POWER::GPU::power_kernel(
-        chA_data_locked, chB_data_locked,
-        data_out,
-        gpu_in, gpu_out, cpu_out, no_streams);
-    dump_arrays_to_file(data_out, 5, SP_POINTS,
-                        "./dump/bench-example.txt",
-                        "#CHA\tCHB\tCHASQ\tCHBSQ\tSQ",
-                        (double)1
-        );
-}
+// BENCHMARK_F(POWER, GPU_2ST, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+//     POWER::GPU::power_kernel(
+//         chA_data_locked, chB_data_locked,
+//         data_out,
+//         gpu_in, gpu_out, cpu_out, no_streams);
+//     dump_arrays_to_file(data_out, 5, SP_POINTS,
+//                         "./dump/bench-example.txt",
+//                         "#CHA\tCHB\tCHASQ\tCHBSQ\tSQ",
+//                         (double)1
+//         );
+// }
 // BENCHMARK_F(POWER, GPU_8ST, PowerKernelGPU8StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
 //     POWER::GPU::power_kernel(
 //         chA_data_locked, chB_data_locked,
@@ -211,20 +218,17 @@ BENCHMARK_F(POWER, GPU_2ST, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PE
 //         data_out,
 //         gpu_in, gpu_out, cpu_out, no_streams);
 // }
-
 // BENCHMARK_F(POWER, FILE_WRITTING, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
 //     dump_arrays_to_file(data_out, 5, SP_POINTS,
 //                         "./dump/bench-example.txt",
 //                         "#CHA\tCHB\tCHASQ\tCHBSQ\tSQ");
 // }
-
-BENCHMARK_F(POWER, PROCESSING, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
-
-    process_digitiser_data(chA_data_locked, chB_data_locked,
-                           data_out,
-                           gpu_in, gpu_out, cpu_out, no_streams,
-                           1, "./dump/bench_processing-example");
-}
+// BENCHMARK_F(POWER, PROCESSING, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
+//     process_digitiser_data(chA_data_locked, chB_data_locked,
+//                            data_out,
+//                            gpu_in, gpu_out, cpu_out, no_streams,
+//                            1, "./dump/bench_processing-example");
+// }
 
 ///////////////////////////////////////////////////////////////////////////////
 //                         Float vs double benchmark                         //
@@ -274,3 +278,135 @@ BENCHMARK_F(POWER, PROCESSING, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS
 //     for (int i(0); i < points; i++)
 //         double_array[i] = double_array[i] * double_array[i];
 // }
+
+///////////////////////////////////////////////////////////////////////////////
+//                                G1 Benchmark                               //
+///////////////////////////////////////////////////////////////////////////////
+class G1Kernel_CPU_DIRECT : public celero::TestFixture {
+public:
+    short* chA_data;
+    short* chB_data;
+    double** data_out;
+    const int tau_points = 100;
+
+    void setUp(__attribute__ ((unused)) const celero::TestFixture::ExperimentValue& x) override {
+        // Seed generator for population of arrays
+        std::srand(std::time(0));
+        chA_data = new short[G1_DIGITISER_POINTS]();
+        chB_data = new short[G1_DIGITISER_POINTS]();
+        for (int i(0); i < G1_DIGITISER_POINTS; i++) {
+            chA_data[i] = digitiser_code();
+            chB_data[i] = digitiser_code();
+        }
+
+        data_out = new double*[G1::no_outputs];
+        for (int i(0); i < G1::no_outputs; i++)
+            data_out[i] = new double[tau_points]();
+    };
+
+    void tearDown() override {
+        delete[] chA_data;
+        delete[] chB_data;
+        for (int i(0); i < G1::no_outputs; i++)
+            delete[] data_out[i];
+        delete[] data_out;
+    };
+};
+
+class G1Kernel_CPU_FFTW : public celero::TestFixture {
+public:
+    short* chA_data;
+    short* chB_data;
+    double** data_out;
+    fftw_complex *aux_array;
+    fftw_plan *plans_forward, *plans_backward;
+    const int tau_points = 100;
+
+    virtual std::string get_plan_name() = 0;
+
+    void setUp(__attribute__ ((unused)) const celero::TestFixture::ExperimentValue& x) override {
+        chA_data = new short[G1_DIGITISER_POINTS]();
+        chB_data = new short[G1_DIGITISER_POINTS]();
+
+        // Pre-kernel setup
+        G1::CPU::FFTW::g1_allocate_memory(&data_out, &aux_array, "./dump/bench-1-thread-plan",
+                                          &plans_forward,
+                                          &plans_backward);
+    };
+
+    void tearDown() override {
+        delete[] chA_data;
+        delete[] chB_data;
+        G1::CPU::FFTW::g1_free_memory(data_out, aux_array, plans_forward, plans_backward);
+    };
+};
+
+class G1Kernel_CPU_FFTW1Threads : public G1Kernel_CPU_FFTW {
+public:
+    std::string get_plan_name() override {
+        return "../dump/bench-1-thread-plan";
+    }
+};
+
+class G1Kernel_CPU_FFTW2Threads : public G1Kernel_CPU_FFTW {
+public:
+    std::string get_plan_name() override {
+        return "bench-2-thread-plan";
+    }
+};
+
+class G1Kernel_CPU_FFTW4Threads : public G1Kernel_CPU_FFTW {
+public:
+    std::string get_plan_name() override {
+        return "bench-4-thread-plan";
+    }
+};
+
+class G1Kernel_CPU_FFTW8Threads : public G1Kernel_CPU_FFTW {
+public:
+    std::string get_plan_name() override {
+        return "bench-8-thread-plan";
+    }
+};
+
+BASELINE_F(G1, DIRECT_1T, G1Kernel_CPU_DIRECT, 0, 0) {
+    int no_threads = 1;
+    G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
+}
+BENCHMARK_F(G1, DIRECT_2T, G1Kernel_CPU_DIRECT, 0, 0) {
+    int no_threads = 2;
+    G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
+}
+BENCHMARK_F(G1, DIRECT_4T, G1Kernel_CPU_DIRECT, 0, 0) {
+    int no_threads = 4;
+    G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
+}
+BENCHMARK_F(G1, DIRECT_8T, G1Kernel_CPU_DIRECT, 0, 0) {
+    int no_threads = 8;
+    G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
+}
+BENCHMARK_F(G1, DIRECT_16T, G1Kernel_CPU_DIRECT, 0, 0) {
+    int no_threads = 16;
+    G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
+}
+BENCHMARK_F(G1, FFTW_1T, G1Kernel_CPU_FFTW1Threads, 0, 0)
+{
+    G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
+                             data_out, aux_array,
+                         plans_forward, plans_backward);
+}
+BENCHMARK_F(G1, FFTW_2T, G1Kernel_CPU_FFTW2Threads, 0, 0) {
+    G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
+                             data_out, aux_array,
+                             plans_forward, plans_backward);
+}
+BENCHMARK_F(G1, FFTW_4T, G1Kernel_CPU_FFTW4Threads, 0, 0) {
+    G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
+                             data_out, aux_array,
+                             plans_forward, plans_backward);
+}
+BENCHMARK_F(G1, FFTW_8T, G1Kernel_CPU_FFTW8Threads, 0, 0) {
+    G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
+                             data_out, aux_array,
+                             plans_forward, plans_backward);
+}

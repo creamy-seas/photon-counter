@@ -121,10 +121,13 @@ PLAY_SOURCE := ./playground
 PLAY_FLAGS := -D R_POINTS=2048
 PLAY_FLAGS += -D R_POINTS_PER_GPU_CHUNK=1024
 PLAY_FLAGS += -D SP_POINTS=10
+PLAY_FLAGS += -D G1_DIGITISER_POINTS=262144
 # PLAY_FLAGS += -D DEBUG=1
 # PLAY_FLAGS += -D TESTENV
 
 PLAY_BIN := ./bin/run
+
+# PLAY_RUN=cuda-memcheck --tool racecheck
 
 playc: | fresh play
 play:
@@ -213,14 +216,16 @@ BENCH_FLAGS := -DTESTENV
 BENCH_FLAGS += -D R_POINTS=128000 # 129055 for 400 points, 254200 for 200 points
 BENCH_FLAGS += -D SP_POINTS=400
 BENCH_FLAGS += -D R_POINTS_PER_GPU_CHUNK=1000
-BENCH_FLAGS += -D DEBUG=0
+# BENCH_FLAGS += -D DEBUG=1
+BENCH_FLAGS += -D G1_DIGITISER_POINTS=262144
 
 BENCH_LDLIBS := -lcelero # Bechmarking library
 
+BENCH_EXTRA_BIN_FLAGS=-Wl,--rpath ../Celero/build # Custom Celero library is used during benchmarking
+
 BENCH_BIN := ./bin/bench
 
-#This is used during runtime to locate Celero. cuda-memcheck can be used to audit the GPU for errors
-BENCH_RUN=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:../Celero/build:/usr/local/cuda-11.0/lib64 #cuda-memcheck
+# BENCH_RUN=LD_LIBRARY_PATH= #cuda-memcheck
 
 benchc: | fresh bench;
 bench:
@@ -228,6 +233,7 @@ bench:
 		BUILD_SOURCE="$(BENCH_SOURCE)" \
 		BUILD_FLAGS="$(BENCH_FLAGS)" \
 		BUILD_LDLIBS="$(BENCH_LDLIBS)" \
+		EXTRA_BIN_FLAGS="$(BENCH_EXTRA_BIN_FLAGS)" \
 		BUILD_BIN="$(BENCH_BIN)" \
 		build
 	$(BENCH_RUN) $(BENCH_BIN)

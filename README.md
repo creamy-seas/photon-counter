@@ -142,6 +142,8 @@ nm ./bin/ia_1488.so
 ldd ./bin/ia_1488.so
 ```
 
+- Warning: https://www.hpc.dtu.dk/?page_id=1180
+
 - Libraries are normally in `/usr/lib` and the header files in `/usr/include`.
 
 # Build #

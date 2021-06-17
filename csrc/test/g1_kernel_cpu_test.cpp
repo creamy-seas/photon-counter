@@ -70,7 +70,7 @@ public:
     }
     void beforeEach() {
         for (int i(0); i < G1::no_outputs; i++) {
-            for (int t; t < tau_points; t)
+            for (int t(0); t < tau_points; t++)
                 data_out[i][t] = 0;
         }
     }
@@ -118,22 +118,24 @@ public:
         G1::CPU::FFTW::g1_prepare_fftw_plan("./dump/test-fftw-plan", time_limit, no_threads);
 
         // Pre-kernel setup
-        double **data_out = new double*[G1::no_outputs]; fftw_complex *aux_array;
-        fftw_plan *plans_forward = new fftw_plan[G1::no_outputs]; fftw_plan *plans_backward = new fftw_plan[G1::no_outputs];
-        G1::CPU::FFTW::g1_allocate_memory(data_out, aux_array, "./dump/test-fftw-plan", plans_forward, plans_backward);
+        double **data_out_local; fftw_complex *aux_array;
+        fftw_plan *plans_forward, *plans_backward;
+        G1::CPU::FFTW::g1_allocate_memory(&data_out_local, &aux_array, "./dump/test-fftw-plan",
+                                          &plans_forward,
+                                          &plans_backward);
 
         // Test
         G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
-                                 data_out, aux_array,
+                                 data_out_local, aux_array,
                                  plans_forward, plans_backward);
-        for (int tau(0); tau < 20; tau++) {
+        for (int tau(0); tau < tau_points; tau++) {
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
                                                  g1_expected_biased_normalisation[tau],
-                                                 data_out[CHAG1][tau], 0.05);
+                                                 data_out_local[CHAG1][tau], 0.05);
         }
 
         // Post kernel
-        G1::CPU::FFTW::g1_free_memory(data_out, plans_forward, plans_backward);
+        G1::CPU::FFTW::g1_free_memory(data_out_local, aux_array, plans_forward, plans_backward);
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION( G1KernelCpuTest );
