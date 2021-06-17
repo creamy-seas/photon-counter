@@ -67,7 +67,7 @@ void power_kernel_runner(
     }
 }
 
-void CPU::power_kernel(
+void POWER::CPU::power_kernel(
     short *chA_data, short *chB_data, double **data_out,
     unsigned int processing_mask,
     short *chA_back, short *chB_back,

@@ -42,7 +42,7 @@ int odx; ///< Output inDeX for CHA, CHB, CHASQ ...
   * - gpu_chA_background
   * - gpu_chB_background
   */
-void GPU::copy_background_arrays_to_gpu(short *chA_background, short *chB_background) {
+void POWER::GPU::copy_background_arrays_to_gpu(short *chA_background, short *chB_background) {
 
     int success = 0;
     success += cudaMemcpyToSymbol(gpu_chA_background, chA_background,
@@ -150,8 +150,8 @@ void accumulate(long** data_out, long ***cpu_out, int no_streams){
     int odx;
 
     for (int sp(0); sp < SP_POINTS; sp++) {
-        for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
-            odx = GPU::outputs_from_gpu[i];
+        for (int i(0); i < POWER::GPU::no_outputs_from_gpu; i++) {
+            odx = POWER::GPU::outputs_from_gpu[i];
             for (int s(0); s < no_streams; s++)
                 data_out[odx][sp] += cpu_out[s][odx][sp];
         }
@@ -166,8 +166,8 @@ void accumulate(double** data_out, long ***cpu_out, int no_streams){
     int odx;
 
     for (int sp(0); sp < SP_POINTS; sp++) {
-        for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
-            odx = GPU::outputs_from_gpu[i];
+        for (int i(0); i < POWER::GPU::no_outputs_from_gpu; i++) {
+            odx = POWER::GPU::outputs_from_gpu[i];
             for (int s(0); s < no_streams; s++)
                 data_out[odx][sp] += (double)cpu_out[s][odx][sp];
             data_out[odx][sp] /= R_POINTS;
@@ -176,7 +176,7 @@ void accumulate(double** data_out, long ***cpu_out, int no_streams){
     }
 }
 
-template<typename T> void GPU::power_kernel(
+template<typename T> void POWER::GPU::power_kernel(
     short *chA_data, short *chB_data,
     T **data_out,
     short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams){
@@ -204,8 +204,8 @@ template<typename T> void GPU::power_kernel(
 
     // Reset cumulative arrays
     for (int s(0); s < no_streams; s++) {
-        for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
-            odx = GPU::outputs_from_gpu[i];
+        for (int i(0); i < POWER::GPU::no_outputs_from_gpu; i++) {
+            odx = POWER::GPU::outputs_from_gpu[i];
             success += cudaMemsetAsync(gpu_out[s][odx], 0, SP_POINTS*sizeof(long), stream_list[s]);
             if (success != 0) FAIL("Power Kernel: Failed to reset arrays on GPU");
         }
@@ -242,8 +242,8 @@ template<typename T> void GPU::power_kernel(
     }
     // Copy over accumulated data from GPU to CPU
     for (int s(0); s < no_streams; s++){
-        for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
-            odx = GPU::outputs_from_gpu[i];
+        for (int i(0); i < POWER::GPU::no_outputs_from_gpu; i++) {
+            odx = POWER::GPU::outputs_from_gpu[i];
             cudaMemcpyAsync(
                 cpu_out[s][odx],
                 gpu_out[s][odx],
@@ -268,12 +268,12 @@ template<typename T> void GPU::power_kernel(
     /** Ensure that free_memory is called ==> */
 }
 
-template void GPU::power_kernel<double>(
+template void POWER::GPU::power_kernel<double>(
     short *chA_data, short *chB_data,
     double **data_out,
     short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams); ///< When data_out is passed in as `double**` it is infered that data should be normalised as this is a single run.
 
-template void GPU::power_kernel<long>(
+template void POWER::GPU::power_kernel<long>(
     short *chA_data, short *chB_data,
     long **data_out,
     short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams); ///< When data_out is paseed in as `long**` it is infered that data should be accumulated, as there will be further repititions.

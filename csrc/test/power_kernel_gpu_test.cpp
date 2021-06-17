@@ -139,26 +139,26 @@ public:
         int no_streams = 2;
 
         // Check kernel
-        GPU::check_power_kernel_parameters();
+        POWER::GPU::check_power_kernel_parameters();
 
         // Copy over background data
-        GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
+        POWER::GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
 
         // Allocate memory and fill it up
-        GPU::allocate_memory(&chA_data_locked, &chB_data_locked, &gpu_in, &gpu_out, &cpu_out, no_streams);
+        POWER::GPU::allocate_memory(&chA_data_locked, &chB_data_locked, &gpu_in, &gpu_out, &cpu_out, no_streams);
         for (int i(0); i < 24; i++) {
             chA_data_locked[i] = chA_data[i];
             chB_data_locked[i] = chB_data[i];
         }
 
         // Run power kernel
-        GPU::power_kernel(chA_data_locked, chB_data_locked,
-                          data_out,
-                          gpu_in, gpu_out, cpu_out, no_streams);
+        POWER::GPU::power_kernel(chA_data_locked, chB_data_locked,
+                                 data_out,
+                                 gpu_in, gpu_out, cpu_out, no_streams);
 
         // Free memory
-        GPU::free_memory(chA_data_locked, chB_data_locked,
-                         gpu_in, gpu_out, cpu_out, no_streams);
+        POWER::GPU::free_memory(chA_data_locked, chB_data_locked,
+                                gpu_in, gpu_out, cpu_out, no_streams);
 
         // Compare
         for (int i(0); i < 1; i++) {
@@ -183,26 +183,26 @@ public:
         int no_streams = 1;
 
         // Check kernel
-        GPU::check_power_kernel_parameters();
+        POWER::GPU::check_power_kernel_parameters();
 
         // Copy over background data
-        GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
+        POWER::GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
 
         // Allocate memory and fill it up
-        GPU::allocate_memory(&chA_data_locked, &chB_data_locked, &gpu_in, &gpu_out, &cpu_out, no_streams);
+        POWER::GPU::allocate_memory(&chA_data_locked, &chB_data_locked, &gpu_in, &gpu_out, &cpu_out, no_streams);
         for (int i(0); i < 24; i++) {
             chA_data_locked[i] = chA_data[i];
             chB_data_locked[i] = chB_data[i];
         }
 
         // Run power kernel
-        GPU::power_kernel(chA_data_locked, chB_data_locked,
-                          data_out,
+        POWER::GPU::power_kernel(chA_data_locked, chB_data_locked,
+                                 data_out,
                           gpu_in, gpu_out, cpu_out, no_streams);
 
         // Free memory
-        GPU::free_memory(chA_data_locked, chB_data_locked,
-                         gpu_in, gpu_out, cpu_out, no_streams);
+        POWER::GPU::free_memory(chA_data_locked, chB_data_locked,
+                                gpu_in, gpu_out, cpu_out, no_streams);
 
         // Compare
         for (int i(0); i < 1; i++) {
@@ -222,13 +222,13 @@ public:
         int no_runs = 10;
 
         // Check kernel
-        GPU::check_power_kernel_parameters();
+        POWER::GPU::check_power_kernel_parameters();
 
         // Copy over background data
-        GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
+        POWER::GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
 
         // Allocate memory and fill it up
-        GPU::allocate_memory(&chA_data_locked, &chB_data_locked, &gpu_in, &gpu_out, &cpu_out, no_streams);
+        POWER::GPU::allocate_memory(&chA_data_locked, &chB_data_locked, &gpu_in, &gpu_out, &cpu_out, no_streams);
         for (int i(0); i < 24; i++) {
             chA_data_locked[i] = chA_data[i];
             chB_data_locked[i] = chB_data[i];
@@ -237,13 +237,13 @@ public:
         // Run power kernel multiple times
 
         for (int i(0); i < no_runs; i++)
-            GPU::power_kernel(chA_data_locked, chB_data_locked,
-                              data_out_cumulative,
-                              gpu_in, gpu_out, cpu_out, no_streams);
+            POWER::GPU::power_kernel(chA_data_locked, chB_data_locked,
+                                     data_out_cumulative,
+                                     gpu_in, gpu_out, cpu_out, no_streams);
 
         // Free memory
-        GPU::free_memory(chA_data_locked, chB_data_locked,
-                         gpu_in, gpu_out, cpu_out, no_streams);
+        POWER::GPU::free_memory(chA_data_locked, chB_data_locked,
+                                gpu_in, gpu_out, cpu_out, no_streams);
 
         // Compare
         for (int i(0); i < 1; i++) {

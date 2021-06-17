@@ -73,6 +73,7 @@ void G1::CPU::FFTW::g1_allocate_memory(double **data_out, fftw_complex *aux_arra
     // Create forward and backwards plans for each index
     if (!fftw_init_threads()) FAIL("Failed to init threads!");
 
+    // plans_forward = new fftw_plan[G1::no_outputs];
     fftw_import_wisdom_from_filename(derive_plan_forward_name(plan_name));
     for (int i(0); i < G1::no_outputs; i++){
         int odx = G1::outputs[i];
@@ -113,8 +114,7 @@ void G1::CPU::FFTW::g1_kernel(short *chA_data, short *chB_data,
     G1::CPU::preprocessor(chA_data, chB_data, G1_DIGITISER_POINTS, mean_list, variance_list, data_out);
 
     double normalisation;
-    // for (int i(0); i < G1::no_outputs; i++) {
-    for (int i(0); i < 1; i++) {
+    for (int i(0); i < G1::no_outputs; i++) {
         int odx = G1::outputs[i];
 
         // Run the forward transform -> Square -> Backward transform
@@ -132,5 +132,4 @@ void G1::CPU::FFTW::g1_kernel(short *chA_data, short *chB_data,
             data_out[odx][i] /= normalisation;
         }
     }
-    dump_arrays_to_file(data_out, 1, G1_DIGITISER_POINTS, "./dump/a.csv", "CHA", (double)1);
 }

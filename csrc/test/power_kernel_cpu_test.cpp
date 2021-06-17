@@ -75,7 +75,7 @@ public:
 
         processing_mask = SQ_MASK ^ CHA_MASK ^ CHB_MASK ^ CHBSQ_MASK ^ CHASQ_MASK;
 
-        CPU::power_kernel(
+        POWER::CPU::power_kernel(
             chA_data, chB_data, data_out,
             processing_mask,
             chA_background, chB_background,

@@ -14,7 +14,7 @@ const int NO_THREADS = 2; ///< One thread will be used to request data from digi
 const int NO_GPU_STREAMS = 2; ///< Benchmarking showed that 2 streams should be used on the GPU for best performance.
 
 /**
- * \copy GPU::power_kernel
+ * \copy POWER::GPU::power_kernel
  *
  * Evaluates the following from chA_data and chB_data data
  * - \f[ \left\langle{chA_data}\right\rangle \f]
@@ -34,7 +34,7 @@ void process_digitiser_data(short *chA_data, short *chB_data,
                             long **data_out,
                             short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams,
                             unsigned long run, std::string base_filename){
-    GPU::power_kernel(
+    POWER::GPU::power_kernel(
         chA_data, chB_data,
         data_out,
         gpu_in, gpu_out, cpu_out, no_streams);
@@ -55,7 +55,7 @@ int run_power_measurements(void* adq_cu_ptr,
 
     PYTHON_START;
 
-    GPU::check_power_kernel_parameters(false);
+    POWER::GPU::check_power_kernel_parameters(false);
 
     // Check valid amount of repetitions is used to prevent overflow
     // Casting to largest data type of comparisson
@@ -78,11 +78,11 @@ int run_power_measurements(void* adq_cu_ptr,
     // Other thread can be processing the other pair (chA, chB)
     short** chA_data = new short*[NO_THREADS]();
     short** chB_data = new short*[NO_THREADS]();
-    GPU::allocate_memory(&chA_data[1], &chB_data[1], 0, 0, 0, NO_GPU_STREAMS);
+    POWER::GPU::allocate_memory(&chA_data[1], &chB_data[1], 0, 0, 0, NO_GPU_STREAMS);
 
     // Single copy of there auxillary GPU address arrays, since only the processing thread will use them.
     short ***gpu_in; long ***gpu_out; long ***cpu_out;
-    GPU::allocate_memory(&chA_data[0], &chB_data[0], &gpu_in, &gpu_out, &cpu_out, NO_GPU_STREAMS);
+    POWER::GPU::allocate_memory(&chA_data[0], &chB_data[0], &gpu_in, &gpu_out, &cpu_out, NO_GPU_STREAMS);
     long** data_out = new long*[NO_OF_POWER_KERNEL_OUTPUTS];
     for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
         data_out[i] = new long[SP_POINTS]();
@@ -91,7 +91,7 @@ int run_power_measurements(void* adq_cu_ptr,
     ADQ214_MultiRecordSetup(adq_cu_ptr, 1, R_POINTS, SP_POINTS);
 
     // 3. Copy background data onto GPU
-    GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
+    POWER::GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
 
     // 4. Launch 2 parrallel threads, alternating between fetching from digitiser and processing on GPU.
     std::thread thread_list[NO_THREADS];
@@ -127,8 +127,8 @@ int run_power_measurements(void* adq_cu_ptr,
         no_runs, base_filename);
 
     // Deallocation of memory
-    GPU::free_memory(chA_data[0], chB_data[0], gpu_in, gpu_out, cpu_out, NO_GPU_STREAMS);
-    GPU::free_memory(chA_data[1], chB_data[1], 0, 0, 0, NO_GPU_STREAMS);
+    POWER::GPU::free_memory(chA_data[0], chB_data[0], gpu_in, gpu_out, cpu_out, NO_GPU_STREAMS);
+    POWER::GPU::free_memory(chA_data[1], chB_data[1], 0, 0, 0, NO_GPU_STREAMS);
     delete[] chA_data;
     delete[] chB_data;
     for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)

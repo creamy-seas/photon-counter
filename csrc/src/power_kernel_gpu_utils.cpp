@@ -14,14 +14,14 @@
 #include "sp_digitiser.hpp" // for digitiser parameters MAX_DIGITISER_CODE and MAX_NUMBER_OF_RECORDS
 #include "utils_gpu.hpp" // To fetch GPU parameters
 
-int GPU::fetch_power_kernel_threads() {
+int POWER::GPU::fetch_power_kernel_threads() {
     return THREADS_PER_BLOCK;
 };
-int GPU::fetch_power_kernel_blocks() {
+int POWER::GPU::fetch_power_kernel_blocks() {
     return BLOCKS;
 };
 
-int GPU::check_power_kernel_parameters(bool display){
+int POWER::GPU::check_power_kernel_parameters(bool display){
     PYTHON_START;
 
     // For reduction summation on GPU, this needs to be a power of 2
@@ -35,13 +35,13 @@ int GPU::check_power_kernel_parameters(bool display){
     cudaDeviceProp prop = fetch_gpu_parameters();
     const int shared_memory_required = (R_POINTS_PER_GPU_CHUNK
                                         * sizeof(long)
-                                        * GPU::no_outputs_from_gpu);
+                                        * POWER::GPU::no_outputs_from_gpu);
     if (prop.sharedMemPerBlock < shared_memory_required)
         FAIL(
             "Power Kernel: Not enough shared memory on GPU.\n\tR_POINTS_PER_GPU_CHUNK ("
             + std::to_string(R_POINTS_PER_GPU_CHUNK)
             + ") x LONG (8) x arrays used in GPU ("
-            + std::to_string(GPU::no_outputs_from_gpu)
+            + std::to_string(POWER::GPU::no_outputs_from_gpu)
             + ") = "
             + std::to_string(shared_memory_required)
             + " > "
@@ -83,12 +83,12 @@ int GPU::check_power_kernel_parameters(bool display){
     long gpu_global_memory_allocation = (
         SP_POINTS * R_POINTS_PER_GPU_CHUNK * sizeof(short) // chA
         + SP_POINTS * R_POINTS_PER_GPU_CHUNK * sizeof(short) // chB
-        + SP_POINTS * sizeof(long) * GPU::no_outputs_from_gpu // output
+        + SP_POINTS * sizeof(long) * POWER::GPU::no_outputs_from_gpu // output
         );
     if (gpu_global_memory_allocation > (long)prop.totalGlobalMem)
         FAIL(
             "Input arrays for chA and chB of type" + std::string("(short) and ")
-            + std::to_string(GPU::no_outputs_from_gpu) + "x output arrays of type (long)"
+            + std::to_string(POWER::GPU::no_outputs_from_gpu) + "x output arrays of type (long)"
             + "allocated in the gpu (" + std::to_string(gpu_global_memory_allocation)
             + "bytes) bigger than logbal memory on GPU (" + std::to_string(prop.totalGlobalMem) + "bytes)."
             );
@@ -114,7 +114,7 @@ int GPU::check_power_kernel_parameters(bool display){
     return 0;
 }
 
-void GPU::allocate_memory(
+void POWER::GPU::allocate_memory(
     short **chA_data, short **chB_data,
     short ****gpu_in, long****gpu_out, long ****cpu_out, int no_streams){
     /** There is a lot of derefenecing in this function, since the arrays ara passed in by address & */
@@ -164,10 +164,10 @@ void GPU::allocate_memory(
             (*gpu_out) = new long**[no_streams];
             (*cpu_out) = new long**[no_streams];
             for (int s(0); s < no_streams; s++) {
-                (*gpu_out)[s] = new long*[GPU::no_outputs_from_gpu];
-                (*cpu_out)[s] = new long*[GPU::no_outputs_from_gpu];
-                for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
-                    odx = GPU::outputs_from_gpu[i];
+                (*gpu_out)[s] = new long*[POWER::GPU::no_outputs_from_gpu];
+                (*cpu_out)[s] = new long*[POWER::GPU::no_outputs_from_gpu];
+                for (int i(0); i < POWER::GPU::no_outputs_from_gpu; i++) {
+                    odx = POWER::GPU::outputs_from_gpu[i];
 
                     // Processed Output data will accumulate on the GPU for each stream
                     success += cudaMalloc((void**)&(*gpu_out)[s][odx], SP_POINTS * sizeof(long));
@@ -183,7 +183,7 @@ void GPU::allocate_memory(
         OKGREEN("Power Kernel: Allocation done!");
     }
 
-void GPU::free_memory(
+void POWER::GPU::free_memory(
     short *chA_data, short *chB_data,
     short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_streams){
 
@@ -208,8 +208,8 @@ void GPU::free_memory(
 
     if (gpu_out != 0 && cpu_out != 0) {
         for (int s(0); s < no_streams; s++) {
-            for (int i(0); i < GPU::no_outputs_from_gpu; i++) {
-                odx = GPU::outputs_from_gpu[i];
+            for (int i(0); i < POWER::GPU::no_outputs_from_gpu; i++) {
+                odx = POWER::GPU::outputs_from_gpu[i];
 
                 success += cudaFree(gpu_out[s][odx]);
                 if (success != 0) FAIL("Power Kernel: Failed to free output memory on GPU.");

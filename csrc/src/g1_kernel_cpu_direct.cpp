@@ -62,9 +62,9 @@ void G1::CPU::DIRECT::g1_kernel(
     }
     t[no_threads - 1] = std::thread(g1_kernel_runner,
                                     data_out, wip_data, G1_DIGITISER_POINTS,
-                                           variance_list,
-                                           normalise_with_less_bias,
-                                           increment * (no_threads - 1),
+                                    variance_list,
+                                    normalise_with_less_bias,
+                                    increment * (no_threads - 1),
                                     tau_points);
 
     //collect the multiple threads together
