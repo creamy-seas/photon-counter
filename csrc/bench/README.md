@@ -1,8 +1,12 @@
-# April 30: Original benchmark #
+# Benchmarking #
+
+Summary of GPU vs CPU vs Digitiser speeds.
+
+## April 30: Original benchmark ##
 > 4b0d78cdf6576ee554204fe4d0124c745ac4f81b
 
 <details>
-<summary>Results</summary>
+<summary>Click this to collapse/fold.</summary>
 
 | Group | Experiment      | Prob. Space | Samples | Iterations | Baseline | us/Iteration | Iterations/sec | RAM (bytes) |
 |:-----:|:---------------:|:-----------:|:-------:|:----------:|:--------:|:------------:|:--------------:|:-----------:|
@@ -19,11 +23,11 @@
 </details>
 
 
-# May 11 2021: GPU better even when processing everything#
+## May 11 2021: GPU better even when processing everything##
 > 419c508dba9ff0bc003f9906fdca74dbc87d6380
 
 <details>
-<summary>Results</summary>
+<summary>Click this to collapse/fold.</summary>
 
 |     Group      |   Experiment    |   Prob. Space   |     Samples     |   Iterations    |    Baseline     |  us/Iteration   | Iterations/sec  |   RAM (bytes)   |
 |:--------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|
@@ -39,7 +43,7 @@
 
 </details>
 
-# May 22 2021: GPU using streams even faster, and allows processing of more data #
+## May 22 2021: GPU using streams even faster, and allows processing of more data ##
 > b0e451f5e91fa1f587ef08d3469f6b341b3be04c
 
 <details>
@@ -62,7 +66,7 @@
 
 </details>
 
-# May 25 2021: Comparing Digitiser read speed to GPU #
+## May 25 2021: Comparing Digitiser read speed to GPU ##
 > 68079aea94f892bbac75a7de04f7b434824ffee0
 
 Theoretically the digitiser will work at (from datasheet):
@@ -96,8 +100,7 @@ It seems that the GPU kernel peaks at 2 streams in terms of performance.
 
 </details>
 
-# May 28 2021: Real power pipeline comparisson #
-> Fill in
+## May 28 2021: Real power pipeline comparisson ##
 
 See above section from details on digitser. The GPU is still 2 times faster that digitiser readout.
 
@@ -116,11 +119,57 @@ See above section from details on digitser. The GPU is still 2 times faster that
 
 </details>
 
-# Float vs double: No difference #
+## June 18 2021: G1 Benchmark ##
+> 18aae62e583a087b00b91c2dc303d67a9786984c
+
+Multiple runs done with different plan times.
+
+<details>
+<summary>Click this to collapse/fold.</summary>
+
+> 100s plan time
+> G1_DIGITISER_POINTS = 262144
+
+| Group | Experiment | Prob. Space | Samples | Iterations | Baseline | us/Iteration | Iterations/sec | RAM (bytes) |
+|:-----:|:----------:|:-----------:|:-------:|:----------:|:--------:|:------------:|:--------------:|:-----------:|
+| G1    | DIRECT_1T  | Null        | 30      | 6          | 1.00000  | 140574.00000 | 7.11           | 71675904    |
+| G1    | DIRECT_2T  | Null        | 30      | 12         | 0.55110  | 77470.41667  | 12.91          | 81117184    |
+| G1    | DIRECT_4T  | Null        | 30      | 15         | 0.30910  | 43450.93333  | 23.01          | 97902592    |
+| G1    | DIRECT_8T  | Null        | 30      | 24         | 0.27102  | 38098.58333  | 26.25          | 97902592    |
+| G1    | DIRECT_16T | Null        | 30      | 33         | 0.22592  | 31758.27273  | 31.49          | 97902592    |
+| G1    | FFTW_1T    | Null        | 30      | 47         | 0.12359  | 17372.91489  | 57.56          | 108462080   |
+| G1    | FFTW_2T    | Null        | 30      | 55         | 0.12442  | 17489.85455  | 57.18          | 108462080   |
+| G1    | FFTW_4T    | Null        | 30      | 55         | 0.12426  | 17468.38182  | 57.25          | 108462080   |
+| G1    | FFTW_8T    | Null        | 30      | 55         | 0.12518  | 17596.58182  | 56.83          | 108462080   |
+
+</details>
+
+<details>
+<summary>Click this to collapse/fold.</summary>
+
+> 1000s plan time
+> G1_DIGITISER_POINTS = 262144
+
+| Group | Experiment | Prob. Space | Samples | Iterations | Baseline | us/Iteration | Iterations/sec | RAM (bytes) |
+|:-----:|:----------:|:-----------:|:-------:|:----------:|:--------:|:------------:|:--------------:|:-----------:|
+| G1    | DIRECT_1T  | Null        | 30      | 7          | 1.00000  | 141867.00000 | 7.05           | 71684096    |
+| G1    | DIRECT_2T  | Null        | 30      | 7          | 0.54246  | 76957.28571  | 12.99          | 81125376    |
+| G1    | DIRECT_4T  | Null        | 30      | 23         | 0.30209  | 42856.78261  | 23.33          | 97910784    |
+| G1    | DIRECT_8T  | Null        | 30      | 25         | 0.25998  | 36883.28000  | 27.11          | 97910784    |
+| G1    | DIRECT_16T | Null        | 30      | 32         | 0.22398  | 31775.50000  | 31.47          | 97910784    |
+| G1    | FFTW_1T    | Null        | 30      | 59         | 0.10268  | 14566.74576  | 68.65          | 106467328   |
+| G1    | FFTW_2T    | Null        | 30      | 49         | 0.10218  | 14496.63265  | 68.98          | 106422272   |
+| G1    | FFTW_4T    | Null        | 30      | 66         | 0.10188  | 14453.33333  | 69.19          | 106422272   |
+| G1    | FFTW_8T    | Null        | 30      | 67         | 0.10251  | 14542.91045  | 68.76          | 106422272   |
+
+</details>
+
+
+## Float vs double: No difference ##
 > 4b2b92bdcc7e9de0fce5234998fde309ac71d137
 
 <details>
-<summary>Results</summary>
+<summary>Click this to collapse/fold.</summary>
 
 | Group          | Experiment      | Prob. Space | Samples | Iterations | Baseline | us/Iteration | Iterations/sec | RAM (bytes) |
 |:--------------:|:---------------:|:-----------:|:-------:|:----------:|:--------:|:------------:|:--------------:|:-----------:|
