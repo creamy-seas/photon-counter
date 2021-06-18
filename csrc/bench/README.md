@@ -22,7 +22,6 @@ Summary of GPU vs CPU vs Digitiser speeds.
 
 </details>
 
-
 ## May 11 2021: GPU better even when processing everything##
 > 419c508dba9ff0bc003f9906fdca74dbc87d6380
 

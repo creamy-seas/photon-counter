@@ -19,17 +19,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+    /**
+     * \f[ g^{(1)}(\tau) = \left\langle{X}(t)X(t+\tau)\right\rangle correlation measurements \f]
+     */
     namespace G1 {
         namespace GPU {
-            namespace DIRECT {
-                int fetch_g1_kernel_blocks();
-                int fetch_g1_kernel_threads();
 
-                /**
-                 * Validation of kernel parameters before it's invocation.
-                 */
-                int check_g1_kernel_parameters(bool display=false);
-            }
+            /**
+             * Validation of kernel parameters before it's invocation.
+             */
+            int check_g1_kernel_parameters(bool display=false);
         }
     }
 
@@ -38,11 +37,27 @@ extern "C" {
 #endif
 
 /**
- * \f[ g^{(1)}(\tau) = \left\langle{X}(t)X(t+\tau)\right\rangle correlation measurements \f]
+ * @brief \f$ g^{(1)}(\tau) = \left\langle{X}(t)X(t+\tau)\right\rangle \f$ correlation measurements.
  */
 namespace G1 {
     const int no_outputs = 3; ///< Kernels returns CHAG1 and CHBG1 and SQG1
     const int outputs[3] = {CHAG1, CHBG1, SQG1}; ///< Convenience array for iteration in loops/
+
+    namespace GPU {
+
+        /**
+         * For evaluating correlation the data needs to undergo a normalisation by the average value.
+         * This preprocessor:
+         * - Apply normalisation
+         * - Evaluate mean
+         * - Evaluate variance
+         *
+         * Access the data using indicies CHAG1, CHBG1, SQG1.
+         */
+        void preprocessor(short *chA, short *chB, int N,
+                          double *mean_list, double *variance_list,
+                          double **normalised_data);
+    }
 
     namespace CPU {
 
@@ -59,6 +74,9 @@ namespace G1 {
                           double *mean_list, double *variance_list,
                           double **normalised_data);
 
+        /**
+         * @brief Evaluation by blunt iteration.
+         */
         namespace DIRECT {
 
             /**
@@ -78,6 +96,9 @@ namespace G1 {
                 );
         }
 
+        /**
+         * @brief Faster evaluation using Wiener-Khinchin Theorem.
+         */
         namespace FFTW {
 
             /**

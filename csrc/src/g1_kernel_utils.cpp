@@ -1,15 +1,7 @@
 #include "logging.hpp"
 #include "g1_kernel.hpp"
 
-int G1::GPU::DIRECT::fetch_g1_kernel_blocks(){
-    return 1;
-}
-
-int G1::GPU::DIRECT::fetch_g1_kernel_threads(){
-    return 1;
-}
-
-int G1::GPU::DIRECT::check_g1_kernel_parameters(bool display){
+int G1::GPU::check_g1_kernel_parameters(bool display){
     PYTHON_START;
 
     if ((G1_DIGITISER_POINTS & (G1_DIGITISER_POINTS - 1)) != 0)

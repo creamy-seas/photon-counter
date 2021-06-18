@@ -40,7 +40,7 @@ void process_digitiser_data(short *chA_data, short *chB_data,
         gpu_in, gpu_out, cpu_out, no_streams);
 
     dump_arrays_to_file(
-        data_out, NO_OF_POWER_KERNEL_OUTPUTS,
+        data_out, POWER::no_outputs,
         SP_POINTS,
         base_filename + std::to_string(run % LOG_ROTATE) + ".csv",
         "# Run " + std::to_string(run) +  "\n# CHA\tCHB\tCHASQ\tCHBSQ\tSQ",
@@ -83,8 +83,8 @@ int run_power_measurements(void* adq_cu_ptr,
     // Single copy of there auxillary GPU address arrays, since only the processing thread will use them.
     short ***gpu_in; long ***gpu_out; long ***cpu_out;
     POWER::GPU::allocate_memory(&chA_data[0], &chB_data[0], &gpu_in, &gpu_out, &cpu_out, NO_GPU_STREAMS);
-    long** data_out = new long*[NO_OF_POWER_KERNEL_OUTPUTS];
-    for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
+    long** data_out = new long*[POWER::no_outputs];
+    for (int i(0); i < POWER::no_outputs; i++)
         data_out[i] = new long[SP_POINTS]();
 
     // 2. Prepare for multirecord mode
@@ -131,7 +131,7 @@ int run_power_measurements(void* adq_cu_ptr,
     POWER::GPU::free_memory(chA_data[1], chB_data[1], 0, 0, 0, NO_GPU_STREAMS);
     delete[] chA_data;
     delete[] chB_data;
-    for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
+    for (int i(0); i < POWER::no_outputs; i++)
         delete[] data_out[i];
     delete[] data_out;
 

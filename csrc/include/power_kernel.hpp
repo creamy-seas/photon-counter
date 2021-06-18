@@ -18,7 +18,6 @@
 #define THREADS_PER_BLOCK (R_POINTS_PER_GPU_CHUNK > 1024) ? 1024 : R_POINTS_PER_GPU_CHUNK ///< Allocationg up to 1024 GPU threads for dealing with repetitions. If there are more repetitions than this, threads will be reused.
 
 // Verbose Indexes used for accessing array elements in a human-readable way e.g. array[CHASQ]
-#define NO_OF_POWER_KERNEL_OUTPUTS 5
 #define CHA 0
 #define CHB 1
 #define CHASQ 2
@@ -50,16 +49,20 @@ extern "C" {
 #endif
 
 /**
+ * @brief \f$ \left\langle{chA}\right\rangle, \left\langle{chB}\right\rangle, \left\langle{chA^2}\right\rangle, \left\langle{chB^2}\right\rangle, \left\langle{chA^2 + chB^2}\right\rangle \f$ measurements.
+ *
  * We expect the digitiser to return `SP_POINTS` (samples per record) repeated `R_POINTS` (number of records).
- * Therefore the chA and chB sizes are `SP_POINTS * R_POINTS`, which are processed to give:
+ * Therefore the chA and chB sizes are `SP_POINTS * R_POINTS`, which are processed to give an average value:
  * - \f[ \left\langle{chA}\right\rangle \f]
  * - \f[ \left\langle{chB}\right\rangle \f]
  * - \f[ \left\langle{chA^2}\right\rangle \f]
  * - \f[ \left\langle{chB^2}\right\rangle \f]
  * - \f[ \left\langle{chA^2 + chB^2}\right\rangle \f]
- * each of `SP_POINTS` in length as the repetitions are averaged.
  */
 namespace POWER {
+
+    const int no_outputs = 5;
+
     namespace CPU {
 
         /**
@@ -119,20 +122,20 @@ namespace POWER {
             short *chA_data, short *chB_data,
             short ***gpu_in, long ***gpu_out, long ***cpu_out, int no_of_streams);
 
-        /**
-         * **Important**
-         * - GPU kernels is compiled with fixed array sizes - use GPU::check_power_kernel_parameters to validate it.
-         * - The actual data is processes in chunks of size `R_POINTS_PER_GPU_CHUNK` each. Depending on whether data is accumulated (`long **data_out`)
-         *   or normalised (`double **data_out`) normalisation may need to take place outside the function.
-         *
-         * @param chA_data, chB_data raw data from the digitiser
-         * @param data_out kernel output: `[CHA, CHB, CHASQ, CHBSQ]`.
-         * @tparam T specifies whether data_out should be accumulated (long, for repetitive invocations) or normalised (double, for a single run)
-         * @param gpui, gpu_out, cpu_out auxillary arrays allocated using `allocate_memory` function.
-         * @param no_streams to launch on GPU. Benchmarking indicates that 2 is the optimal choice.
-         * @param accumulate if true, data will be accumulated in `data_out` with no normalisation. Idea is to normalise it after many repetitive runs.
-         *
-         */
+            /**
+             * **Important**
+             * - GPU kernels is compiled with fixed array sizes - use GPU::check_power_kernel_parameters to validate it.
+             * - The actual data is processes in chunks of size `R_POINTS_PER_GPU_CHUNK` each. Depending on whether data is accumulated (`long **data_out`)
+             *   or normalised (`double **data_out`) normalisation may need to take place outside the function.
+             *
+             * @param chA_data, chB_data raw data from the digitiser
+             * @param data_out kernel output: `[CHA, CHB, CHASQ, CHBSQ]`.
+             * @tparam T specifies whether data_out should be accumulated (long, for repetitive invocations) or normalised (double, for a single run)
+             * @param gpui, gpu_out, cpu_out auxillary arrays allocated using `allocate_memory` function.
+             * @param no_streams to launch on GPU. Benchmarking indicates that 2 is the optimal choice.
+             * @param accumulate if true, data will be accumulated in `data_out` with no normalisation. Idea is to normalise it after many repetitive runs.
+             *
+             */
         template <typename T> void power_kernel(
             short *chA_data, short *chB_data,
             T **data_out,

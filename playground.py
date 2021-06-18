@@ -4,14 +4,15 @@ from python_app.power_pipeline import PowerPipeline
 from python_app.utils import file_ops
 
 RUN_NAME = "repetition-02MHz_width-3000ns"
+RECOMPILE = True
 
 TIME_IN_NS = 5000
 AVERAGES = 1_000_00
 
-R_POINTS = 2048
-SP_POINTS = 2000
+R_POINTS = 128
+SP_POINTS = 40
 R_POINTS_PER_GPU_CHUNK = 64
-NO_RUNS = 10
+NO_RUNS = 2000
 
 chA_background=None; chB_background=None
 # (chA_background, chB_background) = file_ops.load_chA_chB_arrays("./dump/ttt.csv")
@@ -19,7 +20,7 @@ chA_background=None; chB_background=None
 # Setup
 pp = PowerPipeline(
     ipython=False,
-    recompile=False,
+    recompile=RECOMPILE,
     #time_in_ns=TIME_IN_NS, averages=AVERAGES
     R_POINTS=R_POINTS, SP_POINTS=SP_POINTS, R_POINTS_PER_GPU_CHUNK=R_POINTS_PER_GPU_CHUNK, NO_RUNS=NO_RUNS
 )

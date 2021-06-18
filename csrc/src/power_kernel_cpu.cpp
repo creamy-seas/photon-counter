@@ -78,8 +78,8 @@ void POWER::CPU::power_kernel(
     int no_points  = sp_points * r_points;
 
     // 1. Prepare processing arrays
-    unsigned int** flat_cumulative_data = new unsigned int*[NO_OF_POWER_KERNEL_OUTPUTS];
-    for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
+    unsigned int** flat_cumulative_data = new unsigned int*[POWER::no_outputs];
+    for (int i(0); i < POWER::no_outputs; i++)
         flat_cumulative_data[i] = new unsigned int[no_points]();
     // As the background data only countains sp_points, an auxillary cycle array
     // will hold the valid indicies for accessing the bacgkound data
@@ -120,7 +120,7 @@ void POWER::CPU::power_kernel(
                       sp_points, r_points);
 
     // 6. Free processing arrays
-    for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
+    for (int i(0); i < POWER::no_outputs; i++)
         delete[] flat_cumulative_data[i];
     delete[] cycle_array;
     delete[] t;

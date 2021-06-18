@@ -84,8 +84,8 @@ public:
             chB_data[i] = digitiser_code();
         }
 
-        data_out = new long*[NO_OF_POWER_KERNEL_OUTPUTS];
-        for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
+        data_out = new long*[POWER::no_outputs];
+        for (int i(0); i < POWER::no_outputs; i++)
             data_out[i] = new long[SP_POINTS];
 
         // Background
@@ -102,7 +102,7 @@ public:
         delete[] chB_data;
         delete[] chA_background;
         delete[] chB_background;
-        for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
+        for (int i(0); i < POWER::no_outputs; i++)
             delete[] data_out[i];
         delete[] data_out;
     };

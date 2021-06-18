@@ -99,8 +99,8 @@ public:
         chA_background = new short[3]{1, 2, 3};
         chB_background = new short[3]{0, 0, 0};
 
-        data_out = new double*[NO_OF_POWER_KERNEL_OUTPUTS];
-        for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
+        data_out = new double*[POWER::no_outputs];
+        for (int i(0); i < POWER::no_outputs; i++)
             data_out[i] = new double[3]();
 
         expected_A_out = new double[3]{1.625, 0.75, 1.5};
@@ -114,7 +114,7 @@ public:
         delete[] chA_background;
         delete[] chB_background;
 
-        for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
+        for (int i(0); i < POWER::no_outputs; i++)
             delete[] data_out[i];
         delete[] data_out;
 
@@ -214,8 +214,8 @@ public:
 
     void test_power_kernel_cumulative() {
         // For this test accumulate data instead of normalising it
-        long **data_out_cumulative = new long*[NO_OF_POWER_KERNEL_OUTPUTS];
-        for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
+        long **data_out_cumulative = new long*[POWER::no_outputs];
+        for (int i(0); i < POWER::no_outputs; i++)
             data_out_cumulative[i] = new long[3]();
 
         int no_streams = 4;

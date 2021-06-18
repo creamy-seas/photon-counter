@@ -66,10 +66,22 @@ int main()
     // test_connection();
 
     // Generate plans
-    int time_limit = 100;
+    int time_limit = 10000;
     int no_threads = 1;
     std::string plan_name = "./dump/bench-1-thread-plan";
     G1::CPU::FFTW::g1_prepare_fftw_plan(plan_name, time_limit, no_threads);
+
+    // no_threads = 2;
+    // plan_name = "./dump/bench-2-thread-plan";
+    // G1::CPU::FFTW::g1_prepare_fftw_plan(plan_name, time_limit, no_threads);
+
+    // no_threads = 4;
+    // plan_name = "./dump/bench-4-thread-plan";
+    // G1::CPU::FFTW::g1_prepare_fftw_plan(plan_name, time_limit, no_threads);
+
+    // no_threads = 8;
+    // plan_name = "./dump/bench-8-thread-plan";
+    // G1::CPU::FFTW::g1_prepare_fftw_plan(plan_name, time_limit, no_threads);
 
     // if (!fftw_init_threads()) FAIL("Failed to init threads!");
     // if (!fftw_import_wisdom_from_filename("./dump/bench-1-thread-plan_forward.wis")) FAIL("Failed to load wisdom file ");

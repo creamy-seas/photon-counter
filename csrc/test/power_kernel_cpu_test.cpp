@@ -49,8 +49,8 @@ public:
                 3, 3, 3};
 
         // output arrays, chA, chB, chAsq, chBsq, SQ
-        data_out = new double*[NO_OF_POWER_KERNEL_OUTPUTS];
-        for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++) {
+        data_out = new double*[POWER::no_outputs];
+        for (int i(0); i < POWER::no_outputs; i++) {
             data_out[i] = new double[3]();
         }
     }
@@ -58,7 +58,7 @@ public:
         delete[] chA_data;
         delete[] chB_data;
 
-        for (int i(0); i < NO_OF_POWER_KERNEL_OUTPUTS; i++)
+        for (int i(0); i < POWER::no_outputs; i++)
             delete[] data_out[i];
         delete[] data_out;
     }
