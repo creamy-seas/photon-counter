@@ -13,7 +13,7 @@
 void fftw_square(fftw_complex *fourier_transform) {
     int mid_point = G1_DIGITISER_POINTS / 2;
 
-    for (int i(0); i < mid_point; i++) {
+    for (int i(0); i < mid_point + 1; i++) {
         fourier_transform[i][REAL] = fourier_transform[i][REAL] * fourier_transform[i][REAL] + fourier_transform[i][IMAG] * fourier_transform[i][IMAG];
         fourier_transform[i][IMAG] = 0;
     }
