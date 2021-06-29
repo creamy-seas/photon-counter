@@ -28,9 +28,12 @@ INCS += -L/usr/local/cuda-11.0/lib64 # Cuda libraries
 INCS += -I./../Celero/include # Celero headers (benchmarking)
 INCS += -L./../Celero/build # Celero libraries (benchmarking)
 
+INCS += -I./cuda #TODO: Remove
+
 # Libraries
 LDLIBS := $(shell pkg-config --libs libadq) # Digitiser library
 LDLIBS += -lcudart # Cuda runtime (high level functions)
+LDLIBS += -lcufft # FFTW on library
 LDLIBS += -lfftw3 -lfftw3_threads
 
 # Source and object files evaluted from the BUILD_SOURCE that will need to be supplied

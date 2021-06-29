@@ -3,6 +3,7 @@
 
 #include <fftw3.h>
 #include <string>
+#include <cufft.h>
 
 #ifndef G1_DIGITISER_POINTS
 #define G1_DIGITISER_POINTS 262144 ///< A single readout is requested from digitiser. Powers of 2 are executed especially fast
@@ -36,6 +37,8 @@ extern "C" {
 }
 #endif
 
+void runTest();
+
 /**
  * @brief \f$ g^{(1)}(\tau) = \left\langle{X}(t)X(t+\tau)\right\rangle \f$ correlation measurements.
  */
@@ -43,7 +46,29 @@ namespace G1 {
     const int no_outputs = 3; ///< Kernels returns CHAG1 and CHBG1 and SQG1
     const int outputs[3] = {CHAG1, CHBG1, SQG1}; ///< Convenience array for iteration in loops/
 
+    /**
+     * **Recomendations for FFTW**
+     * - Use single precision transforms.
+     * - Restrict the size along all dimensions to be representable as 2a×3b×5c×7d.
+     * - Restrict the size along each dimension to use fewer distinct prime factors.
+     * - Restrict the data to be contiguous in memory when performing a single transform. When performing multiple transforms make the individual datasets contiguous
+     * Use out-of-place mode (copy data to new arrays)
+     *
+     */
     namespace GPU {
+
+        /**
+         * Prepare optimised plans for the FFTW transform on the GP
+         * Not all operations are supported on the GPU: https://docs.nvidia.com/cuda/cufft/index.html#fftw-supported-interface (such as dumping of wisdom files)
+         * @param plan_name base name under which to save the plans
+         * @param time_limit in seconds to run optimisation for
+         * @param no_threads to use for execution. For an 8 core system, 8 is best
+         *
+         * @returns 0 for success
+         */
+        int g1_prepare_fftw_plan(cufftHandle *plans_forward, cufftHandle *plans_backward);
+
+        // int delete_fftw_plan
 
         /**
          * For evaluating correlation the data needs to undergo a normalisation by the average value.

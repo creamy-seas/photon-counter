@@ -369,43 +369,55 @@ public:
     }
 };
 
-BASELINE_F(G1, DIRECT_1T, G1Kernel_CPU_DIRECT, 0, 0) {
-    int no_threads = 1;
-    G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
-}
-BENCHMARK_F(G1, DIRECT_2T, G1Kernel_CPU_DIRECT, 0, 0) {
-    int no_threads = 2;
-    G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
-}
-BENCHMARK_F(G1, DIRECT_4T, G1Kernel_CPU_DIRECT, 0, 0) {
-    int no_threads = 4;
-    G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
-}
-BENCHMARK_F(G1, DIRECT_8T, G1Kernel_CPU_DIRECT, 0, 0) {
-    int no_threads = 8;
-    G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
-}
-BENCHMARK_F(G1, DIRECT_16T, G1Kernel_CPU_DIRECT, 0, 0) {
-    int no_threads = 16;
-    G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
-}
-BENCHMARK_F(G1, FFTW_1T, G1Kernel_CPU_FFTW1Threads, 0, 0)
+// BASELINE_F(G1, READING, DigitiserFixture, 0, 0)
+// {
+//     // Prepare multirecord mode
+//     ADQ_MultiRecordSetup(adq_cu_ptr, 1, 1, G1_DIGITISER_POINTS);
+//     fetch_digitiser_data(adq_cu_ptr,
+//                          buff_a, buff_b,
+//                          G1_DIGITISER_POINTS, 1);
+//     ADQ_MultiRecordClose(adq_cu_ptr, 1);
+// }
+
+// BENCHMARK_F(G1, DIRECT_1T, G1Kernel_CPU_DIRECT, 0, 0) {
+//     int no_threads = 1;
+//     G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
+// }
+// BENCHMARK_F(G1, DIRECT_2T, G1Kernel_CPU_DIRECT, 0, 0) {
+//     int no_threads = 2;
+//     G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
+// }
+// BENCHMARK_F(G1, DIRECT_4T, G1Kernel_CPU_DIRECT, 0, 0) {
+//     int no_threads = 4;
+//     G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
+// }
+// BENCHMARK_F(G1, DIRECT_8T, G1Kernel_CPU_DIRECT, 0, 0) {
+//     int no_threads = 8;
+//     G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
+// }
+// BENCHMARK_F(G1, DIRECT_16T, G1Kernel_CPU_DIRECT, 0, 0) {
+//     int no_threads = 16;
+//     G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
+// }
+// BENCHMARK_F(G1, FFTW_1T, G1Kernel_CPU_FFTW1Threads, 0, 0)
+// {
+//     G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
+//                              data_out, aux_array,
+//                          plans_forward, plans_backward);
+// }
+// BENCHMARK_F(G1, FFTW_2T, G1Kernel_CPU_FFTW2Threads, 0, 0) {
+//     G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
+//                              data_out, aux_array,
+//                              plans_forward, plans_backward);
+// }
+// BENCHMARK_F(G1, FFTW_4T, G1Kernel_CPU_FFTW4Threads, 0, 0) {
+//     G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
+//                              data_out, aux_array,
+//                              plans_forward, plans_backward);
+// }
+BASELINE_F(G1, FFTW_8T, G1Kernel_CPU_FFTW8Threads, 0, 0)
+// BENCHMARK_F(G1, FFTW_8T, G1Kernel_CPU_FFTW8Threads, 0, 0)
 {
-    G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
-                             data_out, aux_array,
-                         plans_forward, plans_backward);
-}
-BENCHMARK_F(G1, FFTW_2T, G1Kernel_CPU_FFTW2Threads, 0, 0) {
-    G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
-                             data_out, aux_array,
-                             plans_forward, plans_backward);
-}
-BENCHMARK_F(G1, FFTW_4T, G1Kernel_CPU_FFTW4Threads, 0, 0) {
-    G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
-                             data_out, aux_array,
-                             plans_forward, plans_backward);
-}
-BENCHMARK_F(G1, FFTW_8T, G1Kernel_CPU_FFTW8Threads, 0, 0) {
     G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
                              data_out, aux_array,
                              plans_forward, plans_backward);

@@ -65,11 +65,15 @@ int main()
 
     // test_connection();
 
-    // Generate plans
-    int time_limit = 10000;
-    int no_threads = 1;
-    std::string plan_name = "./dump/bench-1-thread-plan";
-    G1::CPU::FFTW::g1_prepare_fftw_plan(plan_name, time_limit, no_threads);
+    ///////////////////////////////////////////////////////////////////////////
+//                               Plan creation                               //
+///////////////////////////////////////////////////////////////////////////////
+
+        // Generate plans
+    // int time_limit = 10000;
+    // int no_threads = 1;
+    // std::string plan_name = "./dump/bench-1-thread-plan";
+    // G1::CPU::FFTW::g1_prepare_fftw_plan(plan_name, time_limit, no_threads);
 
     // no_threads = 2;
     // plan_name = "./dump/bench-2-thread-plan";
@@ -85,4 +89,29 @@ int main()
 
     // if (!fftw_init_threads()) FAIL("Failed to init threads!");
     // if (!fftw_import_wisdom_from_filename("./dump/bench-1-thread-plan_forward.wis")) FAIL("Failed to load wisdom file ");
+
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                           G1 Kernel preprocessor                      //
+    ///////////////////////////////////////////////////////////////////////////
+    // short chA[G1_DIGITISER_POINTS];
+    // short chB[G1_DIGITISER_POINTS];
+    // int sq_data[G1_DIGITISER_POINTS];
+
+    // double mean_list[G1::no_outputs];
+    // double variance_list[G1::no_outputs];
+
+    // double *normalised_data[G1::no_outputs];
+    // double chA_normalised[G1_DIGITISER_POINTS]; double chB_normalised[G1_DIGITISER_POINTS]; double sq_normalised[G1_DIGITISER_POINTS];
+    // normalised_data[CHAG1] = chA_normalised;
+    // normalised_data[CHBG1] = chB_normalised;
+    // normalised_data[SQG1] = sq_normalised;
+
+    // G1::GPU::preprocessor(chA, chB, G1_DIGITISER_POINTS, mean_list, variance_list, normalised_data);
+
+    ///////////////////////////////////////////////////////////////////////////
+//                               G1 on the GPU                               //
+///////////////////////////////////////////////////////////////////////////////
+    runTest();
+
 }
