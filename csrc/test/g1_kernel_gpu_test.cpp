@@ -73,8 +73,8 @@ public:
     }
 
     void test_g1_prepare_fftw_plan() {
-        // cufftHandle plan;
-        // G1::GPU::g1_prepare_fftw_plan(plan);
+        cufftHandle *plans_forward; cufftHandle *plans_backward;
+        G1::GPU::g1_prepare_fftw_plan(plans_forward, plans_backward);
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION( G1KernelGpuTest );

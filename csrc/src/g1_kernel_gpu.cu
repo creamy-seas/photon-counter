@@ -206,13 +206,45 @@ void runTest() {
     // cufftExecC2R
 }
 
-// int G1::GPU::g1_prepare_fftw_plan(cufftHandle *&plans_forward, cufftHandle *&plans_backward) {
+int G1::GPU::g1_prepare_fftw_plan(cufftHandle *&plans_forward, cufftHandle *&plans_backward) {
 
-//     plans_forward = cufftHandle[GPU::]
-//         if (
-//         cufftPlan1d(&planForward, G1_DIGITISER_POINTS, CUFFT_R2C, 1)
-//         != CUFFT_SUCCESS
-//         ) FAIL("Failed to create FFTW Plan on GPU");
+    OKBLUE("Generating optimised forward and backward plans");
+    plans_forward = new cufftHandle[G1::no_outputs]; plans_backward = new cufftHandle[G1::no_outputs];
+    for (int i(0); i < G1::no_outputs; i++) {
+        if (
+            cufftPlan1d(&plans_forward[i], G1_DIGITISER_POINTS, CUFFT_R2C, 1) != CUFFT_SUCCESS)
+            FAIL("Failed to create FFTW Forward Plan on GPU");
 
-//     return 0;
+        if (
+            cufftPlan1d(&plans_backward[i], G1_DIGITISER_POINTS, CUFFT_C2R, 1) != CUFFT_SUCCESS)
+            FAIL("Failed to create FFTW Backward Plan on GPU");
+    }
+    return 0;
+}
+
+// TODO: turns out that CPU implementation is already very fast. No need to do anything on GPU.
+// void G1::GPU::g1_kernel(
+//     short *chA_data, short *chB_data,
+//     double **data_out,
+//     cufftHandle *plans_forward, cufftHandle *plans_backward){
+
+//     // Allocate memory for the GPU
+//     Complex *intermediate_array = reinterpret_cast<Complex *>(malloc(sizeof(Complex) * G1_DIGITISER_POINTS));
+
+//     // Normalise input arrays
+//     double mean_list[G1::no_outputs];
+//     double variance_list[G1::no_outputs];
+//     G1::CPU::preprocessor(chA_data, chB_data, G1_DIGITISER_POINTS, mean_list, variance_list, data_out);
+
+//     for (int i(0);
+//          // i < G1::no_outputs;
+//          i < 1;
+//          i++) {
+
+//         cufftExecD2Z(
+//             plans_forward[i],
+//             reinterpret_cast<cufftDoubleReal *>(data_out[i]),
+//             intermediate_array,
+//             );
+//     }
 // }

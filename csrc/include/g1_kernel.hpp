@@ -46,6 +46,8 @@ namespace G1 {
     const int no_outputs = 3; ///< Kernels returns CHAG1 and CHBG1 and SQG1
     const int outputs[3] = {CHAG1, CHBG1, SQG1}; ///< Convenience array for iteration in loops/
 
+
+    // TODO: GPU not implemented, as CPU performance is good enough
     /**
      * **Recomendations for FFTW**
      * - Use single precision transforms.
@@ -53,7 +55,6 @@ namespace G1 {
      * - Restrict the size along each dimension to use fewer distinct prime factors.
      * - Restrict the data to be contiguous in memory when performing a single transform. When performing multiple transforms make the individual datasets contiguous
      * Use out-of-place mode (copy data to new arrays)
-     *
      */
     namespace GPU {
 
@@ -68,7 +69,10 @@ namespace G1 {
          */
         int g1_prepare_fftw_plan(cufftHandle *&plans_forward, cufftHandle *&plans_backward);
 
-        // int delete_fftw_plan
+        void g1_kernel(
+            short *chA_data, short *chB_data,
+            double **data_out,
+            cufftHandle *plans_forward, cufftHandle *plans_backward);
 
         /**
          * For evaluating correlation the data needs to undergo a normalisation by the average value.
