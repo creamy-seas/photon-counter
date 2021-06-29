@@ -66,7 +66,7 @@ namespace G1 {
          *
          * @returns 0 for success
          */
-        int g1_prepare_fftw_plan(cufftHandle *plans_forward, cufftHandle *plans_backward);
+        int g1_prepare_fftw_plan(cufftHandle *&plans_forward, cufftHandle *&plans_backward);
 
         // int delete_fftw_plan
 
@@ -141,19 +141,17 @@ namespace G1 {
              * Each array is supplemented with an optimised plan.
              *
              * @param data_out array that will store the eventual CHAG1, CHBG1 and SQG1 values
-             * @param aux_array used for intermediate computations. FFTW Plans are created between data_out[idx] <-> aux_array (thus aux_array is reused for multiple transforms).
+             * @param aux_arrays used for intermediate computations. FFTW Plans are created between data_out[idx] <-> aux_arrays[idx].
              * @param plan_name base name of the wisdom files made using g1_prepare_fftw_plan. These optimised files are used as a baseline for generating plans specific to the allocated arrays
              * @param plans_forward, plans_backward arrays to store the optimised plans.
              *
-             * Pass in the ADDRESSES of the pointers that will store these arrays e.g.
-             *
              *     fftw_plan *plans_forward, *plans_backward;
-             *     g1_allocate_memory(&data_out, &aux_array, plan_name, &plans_forward, &plans_backward);
+             *     g1_allocate_memory(data_out, aux_arrays, plan_name, plans_forward, plans_backward);
              */
-            void g1_allocate_memory(double ***data_out, fftw_complex **aux_array,
+            void g1_allocate_memory(double **&data_out, fftw_complex **&aux_arrays,
                                     std::string plan_name,
-                                    fftw_plan **plans_forward, fftw_plan **plans_backward);
-            void g1_free_memory(double **data_out, fftw_complex *aux_array,
+                                    fftw_plan *&plans_forward, fftw_plan *&plans_backward);
+            void g1_free_memory(double **data_out, fftw_complex **aux_arrays,
                                 fftw_plan *plans_forward, fftw_plan *plans_backward);
 
             /**
@@ -162,13 +160,13 @@ namespace G1 {
              *
              * The rest of the parameters must be generated using the g1_allocate_memory function:
              * @param data_out arrays for storing `CHAG1`, `CHBG1` and `SQG1` results.
-             * @param aux_array used for intermediate computations. FFTW Plans are created between data_out[idx] <-> aux_array (thus aux_array is reused for multiple transforms).
+             * @param aux_arrays used for intermediate computations. FFTW Plans are created between data_out[idx] <-> aux_arrays[idx].
              * @param plans_forward, plans_backward an optimised plans for thw FFTW.
              */
             void g1_kernel(
                 short *chA_data,
                 short *chB_data,
-                double **data_out, fftw_complex *aux_array,
+                double **data_out, fftw_complex **aux_arrays,
                 fftw_plan *plans_forward, fftw_plan *plans_backward
                 );
         }

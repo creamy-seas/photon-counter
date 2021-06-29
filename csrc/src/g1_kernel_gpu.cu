@@ -206,14 +206,13 @@ void runTest() {
     // cufftExecC2R
 }
 
-// int G1::GPU::g1_prepare_fftw_plan(cufftHandle *plans_forward, cufftHandle *plans_backward) {
+// int G1::GPU::g1_prepare_fftw_plan(cufftHandle *&plans_forward, cufftHandle *&plans_backward) {
 
-
-//     if (
+//     plans_forward = cufftHandle[GPU::]
+//         if (
 //         cufftPlan1d(&planForward, G1_DIGITISER_POINTS, CUFFT_R2C, 1)
 //         != CUFFT_SUCCESS
 //         ) FAIL("Failed to create FFTW Plan on GPU");
 
 //     return 0;
-
 // }

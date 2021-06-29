@@ -1,7 +1,6 @@
 #include <fftw3.h> // for all fttw related items
 #include <string> // for to_string
-
-#include <iostream> // TODO: remove
+#include <thread> // for std::thread
 
 #include "logging.hpp"
 #include "g1_kernel.hpp"
@@ -61,43 +60,45 @@ int G1::CPU::FFTW::g1_prepare_fftw_plan(std::string plan_name, int time_limit, i
     return 0;
 }
 
-void G1::CPU::FFTW::g1_allocate_memory(double ***data_out, fftw_complex **aux_array,
+void G1::CPU::FFTW::g1_allocate_memory(double **&data_out, fftw_complex **&aux_arrays,
                                        std::string plan_name,
-                                       fftw_plan **plans_forward, fftw_plan **plans_backward) {
+                                       fftw_plan *&plans_forward, fftw_plan *&plans_backward) {
     /** There is a lot of derefenecing in this function, since the arrays ara passed in by address & */
 
     // Allocate arrays for use with FFTW
-    (*data_out) = new double*[G1::no_outputs];
-    for (int i(0); i < G1::no_outputs; i++)
-        (*data_out)[G1::outputs[i]] = (double*)fftw_malloc(sizeof(double) * G1_DIGITISER_POINTS);
-    (*aux_array) = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * (int(G1_DIGITISER_POINTS / 2) + 1));
+    data_out = new double*[G1::no_outputs];
+    aux_arrays = new fftw_complex*[G1::no_outputs];
+    for (int i(0); i < G1::no_outputs; i++){
+        data_out[G1::outputs[i]] = (double*)fftw_malloc(sizeof(double) * G1_DIGITISER_POINTS);
+        aux_arrays[G1::outputs[i]] = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * (int(G1_DIGITISER_POINTS / 2) + 1));
+    }
 
     // Create forward and backwards plans for each index. Since plans are loaded, set a time limit of 0
     if (!fftw_init_threads()) FAIL("Failed to init threads!");
     fftw_set_timelimit(0);
 
     OKBLUE("Generating optimised forward plans");
-    (*plans_forward) = new fftw_plan[G1::no_outputs];
+    plans_forward = new fftw_plan[G1::no_outputs];
     if (!fftw_import_wisdom_from_filename(derive_plan_forward_name(plan_name))) FAIL("Failed to load wisdom file " + std::string(derive_plan_forward_name(plan_name)));
     for (int i(0); i < G1::no_outputs; i++){
         int odx = G1::outputs[i];
-        (*plans_forward)[odx] = fftw_plan_dft_r2c_1d(
-            G1_DIGITISER_POINTS, (*data_out)[odx], (*aux_array), FFTW_EXHAUSTIVE);
+        plans_forward[odx] = fftw_plan_dft_r2c_1d(
+            G1_DIGITISER_POINTS, data_out[odx], aux_arrays[odx], FFTW_EXHAUSTIVE);
     }
     fftw_forget_wisdom();
 
     OKBLUE("Generating optimised backward plans");
-    (*plans_backward) = new fftw_plan[G1::no_outputs];
+    plans_backward = new fftw_plan[G1::no_outputs];
     if (!fftw_import_wisdom_from_filename(derive_plan_backward_name(plan_name))) FAIL("Failed to load wisdom file " + std::string(derive_plan_backward_name(plan_name)));
     for (int i(0); i < G1::no_outputs; i++){
         int odx = G1::outputs[i];
-        (*plans_backward)[odx] = fftw_plan_dft_c2r_1d(
-            G1_DIGITISER_POINTS, (*aux_array), (*data_out)[odx], FFTW_EXHAUSTIVE);
+        plans_backward[odx] = fftw_plan_dft_c2r_1d(
+            G1_DIGITISER_POINTS, aux_arrays[odx], data_out[odx], FFTW_EXHAUSTIVE);
     }
     fftw_forget_wisdom();
 }
 
-void G1::CPU::FFTW::g1_free_memory(double **data_out, fftw_complex *aux_array,
+void G1::CPU::FFTW::g1_free_memory(double **data_out, fftw_complex **aux_arrays,
                                    fftw_plan *plans_forward, fftw_plan *plans_backward) {
     for (int i(0); i < G1::no_outputs; i++) {
         int odx = G1::outputs[i];
@@ -105,39 +106,54 @@ void G1::CPU::FFTW::g1_free_memory(double **data_out, fftw_complex *aux_array,
         fftw_destroy_plan(plans_forward[odx]);
         fftw_destroy_plan(plans_backward[odx]);
         fftw_free(data_out[odx]);
+        fftw_free(aux_arrays[odx]);
     }
 
-    fftw_free(aux_array);
+    delete[] aux_arrays;
     delete[] data_out;
     fftw_cleanup_threads();
     fftw_cleanup();
 }
 
+void g1_kernel_runner(double *data_out,
+                      fftw_complex *aux_array,
+                      fftw_plan plan_forward, fftw_plan plan_backward,
+                      double variance){
+    // Run the forward transform -> Square -> Backward transform
+    fftw_execute_dft_r2c(plan_forward, data_out, aux_array);
+    fftw_square(aux_array);
+    fftw_execute_dft_c2r(plan_backward, aux_array, data_out);
+
+    double normalisation = (double)G1_DIGITISER_POINTS * G1_DIGITISER_POINTS * variance;
+    for (int i(0); i < G1_DIGITISER_POINTS; i++){
+        normalisation = (
+            ((double)G1_DIGITISER_POINTS)
+            * (G1_DIGITISER_POINTS)
+            * variance
+            );
+        data_out[i] /= normalisation;
+    }
+}
+
 void G1::CPU::FFTW::g1_kernel(short *chA_data, short *chB_data,
-                              double **data_out, fftw_complex *aux_array,
+                              double **data_out, fftw_complex **aux_arrays,
                               fftw_plan *plans_forward, fftw_plan *plans_backward) {
     // Normalise input arrays
     double mean_list[G1::no_outputs];
     double variance_list[G1::no_outputs];
     G1::CPU::preprocessor(chA_data, chB_data, G1_DIGITISER_POINTS, mean_list, variance_list, data_out);
 
-    double normalisation;
+    // Each thread will perform it's own transform
+    std::thread thread_list[G1::no_outputs];
     for (int i(0); i < G1::no_outputs; i++) {
         int odx = G1::outputs[i];
-
-        // Run the forward transform -> Square -> Backward transform
-        fftw_execute_dft_r2c(plans_forward[odx], data_out[odx], aux_array);
-        fftw_square(aux_array);
-        fftw_execute_dft_c2r(plans_backward[odx], aux_array, data_out[odx]);
-
-        normalisation = (double)G1_DIGITISER_POINTS * G1_DIGITISER_POINTS * variance_list[odx];
-        for (int i(0); i < G1_DIGITISER_POINTS; i++){
-            normalisation = (
-                ((double)G1_DIGITISER_POINTS)
-                * (G1_DIGITISER_POINTS)
-                * variance_list[odx]
-                );
-            data_out[odx][i] /= normalisation;
-        }
+        thread_list[i] = std::thread(g1_kernel_runner,
+                                     data_out[odx],
+                                     aux_arrays[odx],
+                                     plans_forward[odx],
+                                     plans_backward[odx],
+                                     variance_list[odx]);
     }
+    for (int i(0); i < G1::no_outputs; i++)
+        thread_list[i].join();
 }

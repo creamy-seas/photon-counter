@@ -318,7 +318,7 @@ public:
     short* chA_data;
     short* chB_data;
     double** data_out;
-    fftw_complex *aux_array;
+    fftw_complex **aux_array;
     fftw_plan *plans_forward, *plans_backward;
     const int tau_points = 100;
 
@@ -329,9 +329,9 @@ public:
         chB_data = new short[G1_DIGITISER_POINTS]();
 
         // Pre-kernel setup
-        G1::CPU::FFTW::g1_allocate_memory(&data_out, &aux_array, "./dump/bench-1-thread-plan",
-                                          &plans_forward,
-                                          &plans_backward);
+        G1::CPU::FFTW::g1_allocate_memory(data_out, aux_array, "./dump/bench-1-thread-plan",
+                                          plans_forward,
+                                          plans_backward);
     };
 
     void tearDown() override {
@@ -399,12 +399,13 @@ public:
 //     int no_threads = 16;
 //     G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
 // }
+BASELINE_F(G1, FFTW_1T, G1Kernel_CPU_FFTW1Threads, 0, 0)
 // BENCHMARK_F(G1, FFTW_1T, G1Kernel_CPU_FFTW1Threads, 0, 0)
-// {
-//     G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
-//                              data_out, aux_array,
-//                          plans_forward, plans_backward);
-// }
+{
+    G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
+                             data_out, aux_array,
+                             plans_forward, plans_backward);
+}
 // BENCHMARK_F(G1, FFTW_2T, G1Kernel_CPU_FFTW2Threads, 0, 0) {
 //     G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
 //                              data_out, aux_array,
@@ -415,10 +416,10 @@ public:
 //                              data_out, aux_array,
 //                              plans_forward, plans_backward);
 // }
-BASELINE_F(G1, FFTW_8T, G1Kernel_CPU_FFTW8Threads, 0, 0)
+// BASELINE_F(G1, FFTW_8T, G1Kernel_CPU_FFTW8Threads, 0, 0)
 // BENCHMARK_F(G1, FFTW_8T, G1Kernel_CPU_FFTW8Threads, 0, 0)
-{
-    G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
-                             data_out, aux_array,
-                             plans_forward, plans_backward);
-}
+// {
+//     G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
+//                              data_out, aux_array,
+//                              plans_forward, plans_backward);
+// }
