@@ -129,59 +129,59 @@ void POWER::GPU::allocate_memory(
             + std::to_string(R_POINTS) + "/" + std::to_string(R_POINTS_PER_GPU_CHUNK)
             + ") = " + std::to_string(chunks));
 
-        int success = 0; int odx;
+    int success = 0; int odx;
 
-        // Digitiser will transfer data into memory-locked arrays, made with cudaHostAlloc
-        if (chA_data != 0)
-            success += cudaHostAlloc((void**)chA_data,
-                                     SP_POINTS * R_POINTS * sizeof(short),
-                                     cudaHostAllocDefault);
-        if (chB_data != 0)
-            success += cudaHostAlloc((void**)chB_data,
-                                     SP_POINTS * R_POINTS * sizeof(short),
-                                     cudaHostAllocDefault);
-        if (success != 0) FAIL("Power Kernel: Failed to allocate locked input memory on CPU.");
+    // Digitiser will transfer data into memory-locked arrays, made with cudaHostAlloc
+    if (chA_data != 0)
+        success += cudaHostAlloc((void**)chA_data,
+                                 SP_POINTS * R_POINTS * sizeof(short),
+                                 cudaHostAllocDefault);
+    if (chB_data != 0)
+        success += cudaHostAlloc((void**)chB_data,
+                                 SP_POINTS * R_POINTS * sizeof(short),
+                                 cudaHostAllocDefault);
+    if (success != 0) FAIL("Power Kernel: Failed to allocate locked input memory on CPU.");
 
 
-        // Input data is fed in chunks of R_POINTS_PER_GPU_CHUNK * SP_POINTS
-        // (gpu_in is passed in by address, so dereference first, and assign it to a new 2D array of stream x channels)
-        if (gpu_in != 0) {
-            (*gpu_in) = new short**[no_streams];
-            for (int s(0); s < no_streams; s++){
-                // (each stream will have entries for chA and chB)
-                (*gpu_in)[s] = new short*[2];
+    // Input data is fed in chunks of R_POINTS_PER_GPU_CHUNK * SP_POINTS
+    // (gpu_in is passed in by address, so dereference first, and assign it to a new 2D array of stream x channels)
+    if (gpu_in != 0) {
+        (*gpu_in) = new short**[no_streams];
+        for (int s(0); s < no_streams; s++){
+            // (each stream will have entries for chA and chB)
+            (*gpu_in)[s] = new short*[2];
 
-                // (chA and chB will store the address (short*) of the memory allocated on GPU)
-                // (- they need to be passed in by address & in order for cudaMalloc to update their values)
-                success += cudaMalloc((void**)&(*gpu_in)[s][CHA], SP_POINTS * R_POINTS_PER_GPU_CHUNK * sizeof(short));
-                success += cudaMalloc((void**)&(*gpu_in)[s][CHB], SP_POINTS * R_POINTS_PER_GPU_CHUNK * sizeof(short));
-            }
+            // (chA and chB will store the address (short*) of the memory allocated on GPU)
+            // (- they need to be passed in by address & in order for cudaMalloc to update their values)
+            success += cudaMalloc((void**)&(*gpu_in)[s][CHA], SP_POINTS * R_POINTS_PER_GPU_CHUNK * sizeof(short));
+            success += cudaMalloc((void**)&(*gpu_in)[s][CHB], SP_POINTS * R_POINTS_PER_GPU_CHUNK * sizeof(short));
         }
-        if (success != 0) FAIL("Power Kernel: Failed to allocate input memory on GPU.");
-
-        if (gpu_out != 0 && cpu_out != 0) {
-            // Each stream will have it's dedicated arrays for writting results to
-            (*gpu_out) = new long**[no_streams];
-            (*cpu_out) = new long**[no_streams];
-            for (int s(0); s < no_streams; s++) {
-                (*gpu_out)[s] = new long*[POWER::GPU::no_outputs_from_gpu];
-                (*cpu_out)[s] = new long*[POWER::GPU::no_outputs_from_gpu];
-                for (int i(0); i < POWER::GPU::no_outputs_from_gpu; i++) {
-                    odx = POWER::GPU::outputs_from_gpu[i];
-
-                    // Processed Output data will accumulate on the GPU for each stream
-                    success += cudaMalloc((void**)&(*gpu_out)[s][odx], SP_POINTS * sizeof(long));
-                    if (success != 0) FAIL("Power Kernel: Failed to allocate output memory on GPU.");
-
-                    // And will be copied and summed on the cpu
-                    success += cudaHostAlloc((void**)&(*cpu_out)[s][odx], SP_POINTS * sizeof(long), cudaHostAllocDefault);
-                    if (success != 0) FAIL("Power Kernel: Failed to allocate locked output memory on CPU.");
-                }
-            }
-        }
-
-        OKGREEN("Power Kernel: Allocation done!");
     }
+    if (success != 0) FAIL("Power Kernel: Failed to allocate input memory on GPU.");
+
+    if (gpu_out != 0 && cpu_out != 0) {
+        // Each stream will have it's dedicated arrays for writting results to
+        (*gpu_out) = new long**[no_streams];
+        (*cpu_out) = new long**[no_streams];
+        for (int s(0); s < no_streams; s++) {
+            (*gpu_out)[s] = new long*[POWER::GPU::no_outputs_from_gpu];
+            (*cpu_out)[s] = new long*[POWER::GPU::no_outputs_from_gpu];
+            for (int i(0); i < POWER::GPU::no_outputs_from_gpu; i++) {
+                odx = POWER::GPU::outputs_from_gpu[i];
+
+                // Processed Output data will accumulate on the GPU for each stream
+                success += cudaMalloc((void**)&(*gpu_out)[s][odx], SP_POINTS * sizeof(long));
+                if (success != 0) FAIL("Power Kernel: Failed to allocate output memory on GPU.");
+
+                // And will be copied and summed on the cpu
+                success += cudaHostAlloc((void**)&(*cpu_out)[s][odx], SP_POINTS * sizeof(long), cudaHostAllocDefault);
+                if (success != 0) FAIL("Power Kernel: Failed to allocate locked output memory on CPU.");
+            }
+        }
+    }
+
+    OKGREEN("Power Kernel: Allocation done!");
+}
 
 void POWER::GPU::free_memory(
     short *chA_data, short *chB_data,

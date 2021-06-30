@@ -15,6 +15,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sstream>
+
+#include <iostream>
 
 // includes, project
 #include <cuda_runtime.h>
@@ -54,11 +57,31 @@ static __global__ void ComplexPointwiseMulAndScale(
     Complex *a, const Complex *b,
     int size, float scale) {
 
-    const int numThreads = blockDim.x * gridDim.x;
-    const int threadID = blockIdx.x * blockDim.x + threadIdx.x;
+    const int step = blockDim.x * gridDim.x;
+    const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
 
-    for (int i = threadID; i < size; i += numThreads)
+    for (int i = thread_id; i < size; i += step)
         a[i] = ComplexScale(ComplexMul(a[i], b[i]), scale);
+}
+
+// static __device__ __host__ inline cufftComplex complex_multiplication(cufftComplex a, cufftComplex b) {
+//     Complex c;
+//     c.x = a.x * b.x - a.y * b.y;
+//     c.y = a.x * b.y + a.y * b.x;
+//     return c;
+// }
+static __global__ void fftw_square(cufftComplex *fourier_transform) {
+
+    // const int step = blockDim.x * gridDim.x;
+    // const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+
+    // for (int i = thread_id; i < G1_DIGITISER_POINTS; i += step) {
+    //     fourier_transform[i].x = (
+    //         fourier_transform[i].x * fourier_transform[i].x +
+    //         fourier_transform[i].y * fourier_transform[i].y) + 10;
+    //     fourier_transform[i].y = -20;
+    // }
+    fourier_transform[0].x = 100;
 }
 
 // Computes convolution on the host
@@ -120,19 +143,16 @@ void runTest() {
     printf("[simpleCUFFT] is starting...\n");
 
     // Allocate host memory for the signal
-    Complex *h_signal =
-        reinterpret_cast<Complex *>(malloc(sizeof(Complex) * SIGNAL_SIZE));
-    for (unsigned int i = 0; i < SIGNAL_SIZE; ++i) {
-        h_signal[i].x = rand() / static_cast<float>(RAND_MAX);
-        h_signal[i].y = 0;
+    Complex *h_signal = reinterpret_cast<Complex *>(malloc(sizeof(Complex) * SIGNAL_SIZE));
+    for (unsigned int i = 0; i < SIGNAL_SIZE; ++i){
+        h_signal[i].x = rand() / static_cast<float>(RAND_MAX); h_signal[i].y = 0;
     }
 
+
     // Allocate host memory for the filter
-    Complex *h_filter_kernel =
-        reinterpret_cast<Complex *>(malloc(sizeof(Complex) * FILTER_KERNEL_SIZE));
-    for (unsigned int i = 0; i < FILTER_KERNEL_SIZE; ++i) {
-        h_filter_kernel[i].x = rand() / static_cast<float>(RAND_MAX);
-        h_filter_kernel[i].y = 0;
+    Complex *h_filter_kernel = reinterpret_cast<Complex *>(malloc(sizeof(Complex) * FILTER_KERNEL_SIZE));
+    for (unsigned int i = 0; i < FILTER_KERNEL_SIZE; ++i){
+        h_filter_kernel[i].x = rand() / static_cast<float>(RAND_MAX); h_filter_kernel[i].y = 0;
     }
 
     // Pad signal and filter kernel
@@ -214,7 +234,6 @@ int G1::GPU::g1_prepare_fftw_plan(cufftHandle *&plans_forward, cufftHandle *&pla
         if (
             cufftPlan1d(&plans_forward[i], G1_DIGITISER_POINTS, CUFFT_R2C, 1) != CUFFT_SUCCESS)
             FAIL("Failed to create FFTW Forward Plan on GPU");
-
         if (
             cufftPlan1d(&plans_backward[i], G1_DIGITISER_POINTS, CUFFT_C2R, 1) != CUFFT_SUCCESS)
             FAIL("Failed to create FFTW Backward Plan on GPU");
@@ -222,29 +241,88 @@ int G1::GPU::g1_prepare_fftw_plan(cufftHandle *&plans_forward, cufftHandle *&pla
     return 0;
 }
 
-// TODO: turns out that CPU implementation is already very fast. No need to do anything on GPU.
-// void G1::GPU::g1_kernel(
-//     short *chA_data, short *chB_data,
-//     double **data_out,
-//     cufftHandle *plans_forward, cufftHandle *plans_backward){
+void G1::GPU::allocate_memory(short **chA_data, short **chB_data){
+    int success = 0;
+    success += cudaHostAlloc((void**)chA_data,
+                             SP_POINTS * R_POINTS * sizeof(short),
+                             cudaHostAllocDefault);
+    success += cudaHostAlloc((void**)chB_data,
+                                 SP_POINTS * R_POINTS * sizeof(short),
+                                 cudaHostAllocDefault);
+    if (success != 0) FAIL("Power Kernel: Failed to allocate locked input memory on CPU.");
+}
 
-//     // Allocate memory for the GPU
-//     Complex *intermediate_array = reinterpret_cast<Complex *>(malloc(sizeof(Complex) * G1_DIGITISER_POINTS));
+void handle_error(cufftResult result, std::string error_message){
+    if (result != CUFFT_SUCCESS) {
+        std::stringstream ss;
+        ss << error_message << ": Error code " << result << "\nCheck https://docs.nvidia.com/cuda/cufft/index.html#cufftresult";
+        FAIL(ss.str());
+    }
+}
+void handle_error(cudaError_t result, std::string error_message){
+    std::cout << result << std::endl;
 
-//     // Normalise input arrays
-//     double mean_list[G1::no_outputs];
-//     double variance_list[G1::no_outputs];
-//     G1::CPU::preprocessor(chA_data, chB_data, G1_DIGITISER_POINTS, mean_list, variance_list, data_out);
+    if (result != 0) {
+        std::stringstream ss;
+        ss << error_message << ": Error code " << result << "\nCheck  https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html#group__CUDART__TYPES_1g3f51e3575c2178246db0a94a430e0038";
+        FAIL(ss.str());
+    }
+}
 
-//     for (int i(0);
-//          // i < G1::no_outputs;
-//          i < 1;
-//          i++) {
+void G1::GPU::g1_kernel(
+    short *chA_data, short *chB_data,
+    double **data_out,
+    cufftHandle *plans_forward, cufftHandle *plans_backward){
 
-//         cufftExecD2Z(
-//             plans_forward[i],
-//             reinterpret_cast<cufftDoubleReal *>(data_out[i]),
-//             intermediate_array,
-//             );
-//     }
-// }
+    // TODO: move sections below to separate method
+    // Allocate memory for the GPU
+    // Complex *intermediate_array = reinterpret_cast<Complex *>(malloc(sizeof(Complex) * G1_DIGITISER_POINTS));
+
+    // Normalise input arrays
+    // double mean_list[G1::no_outputs];
+    // double variance_list[G1::no_outputs];
+    // G1::CPU::preprocessor(chA_data, chB_data, G1_DIGITISER_POINTS, mean_list, variance_list, data_out);
+
+    // Memory allocation
+    // gpu_inout
+    cufftReal *gpu_chA;
+    checkCudaErrors(cudaMalloc(reinterpret_cast<void**>(&gpu_chA), sizeof(cufftReal) * G1_DIGITISER_POINTS));
+    // gpu_aux
+    cufftComplex *aux_array;
+    checkCudaErrors(
+        cudaMalloc(
+            reinterpret_cast<void **>(&aux_array), sizeof(cufftComplex) * (int(G1_DIGITISER_POINTS / 2) + 1)));
+    // cpu_out
+    // Complex *chA_outc = new Complex[G1_DIGITISER_POINTS];
+
+    float *chA_out;
+    checkCudaErrors(
+        cudaHostAlloc(
+            (void**)&chA_out,
+            sizeof(float) * G1_DIGITISER_POINTS,
+            cudaHostAllocDefault
+            ));
+
+    // Forward transform
+    checkCudaErrors(cufftExecR2C(
+                        plans_forward[0],
+                        gpu_chA, aux_array));
+    // Square
+    fftw_square<<<G1_DIGITISER_POINTS / 1024 + 1,1024>>>(aux_array);
+    // cudaMemcpy(aux_array, chA_out,
+    //            sizeof(cufftReal) * G1_DIGITISER_POINTS,
+    //            cudaMemcpyDeviceToHost);
+
+    // Backward transform
+    checkCudaErrors(cufftExecC2R(
+                        plans_backward[0],
+                        aux_array, gpu_chA));
+// Copy back to CPU
+    checkCudaErrors(
+        cudaMemcpy(chA_out, gpu_chA,
+                   sizeof(cufftReal) * G1_DIGITISER_POINTS,
+                   cudaMemcpyDeviceToHost));
+
+    for (int i(0); i < G1_DIGITISER_POINTS; i+=1)
+        std::cout << chA_out[i] << std::endl;
+}

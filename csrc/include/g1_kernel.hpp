@@ -24,13 +24,11 @@ extern "C" {
      * \f[ g^{(1)}(\tau) = \left\langle{X}(t)X(t+\tau)\right\rangle correlation measurements \f]
      */
     namespace G1 {
-        namespace GPU {
 
-            /**
-             * Validation of kernel parameters before it's invocation.
-             */
-            int check_g1_kernel_parameters(bool display=false);
-        }
+        /**
+         * Validation of kernel parameters before it's invocation.
+         */
+        int check_g1_kernel_parameters(bool display=false);
     }
 
 #ifdef __cplusplus
@@ -68,6 +66,29 @@ namespace G1 {
          * @returns 0 for success
          */
         int g1_prepare_fftw_plan(cufftHandle *&plans_forward, cufftHandle *&plans_backward);
+
+        /**
+         * Memory allocation is required for streamed copying and processing of data on GPU:
+         * - `chA` and `chB` data is read into pinned CPU memory, so
+         * - Streams are used to process these chunks in parallel.
+         * - Memory is allocated for for each stream separately to avoid race conditions.
+         * - Memory on the CPU needs to be pinned so that it is never paged and always accessible to streams.
+         * - Memory on the GPU will be allocated and it's address (`short*`) stored in an array.
+         *
+         * Pass in the ADDRESSES of the pointers that will store the location of these arrays on the GPU e.g.
+         *
+         *     short ***gpu_in; short **gpu_out; long ***cpu_out; short *chA_data, short *chB_data;
+         *     allocate_memory(&chA_data, &chB_data, &gpu_in, &gpu_out, &cpu_out, 2);
+         *
+         * @param chA_data, chB_data arrays to be populated by the digitiser. Pinned
+         * @param gpu_in, gpu_out arrays holding the addresses of the GPU arrays
+         * @param cpu_out Pinned memory on CPU
+         * See https://docs.nvidia.com/cuda/cufft/index.html#multi-dimensional for dimensions to allocate
+         */
+        void allocate_memory(
+            short **chA_data, short **chB_data
+            // short ****gpu_in, long ****gpu_out, long ****cpu_out, int no_of_streams
+            );
 
         void g1_kernel(
             short *chA_data, short *chB_data,
