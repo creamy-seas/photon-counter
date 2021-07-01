@@ -369,6 +369,37 @@ public:
     }
 };
 
+class G1Kernel_GPU : public celero::TestFixture {
+public:
+    cufftHandle *plans_forward; cufftHandle *plans_backward;
+    short* chA_data, *chB_data;
+    cufftReal **gpu_inout;
+    cufftComplex **gpu_aux;
+    float **cpu_out;
+
+    float **preprocessed_data;
+    float variance_list[3] = {1, 1, 1};
+
+    void setUp(__attribute__ ((unused)) const celero::TestFixture::ExperimentValue& x) override {
+
+        G1::GPU::g1_prepare_fftw_plan(plans_forward, plans_backward);
+
+        preprocessed_data = new float*[G1::no_outputs];
+        for (int i(0); i < G1::no_outputs; i++)
+            preprocessed_data[i] = new float[G1_DIGITISER_POINTS];
+
+        G1::GPU::allocate_memory(chA_data, chB_data, gpu_inout, gpu_aux, cpu_out);
+
+        // Validate kernel
+        G1::check_g1_kernel_parameters(false);
+    };
+
+    void tearDown() override {
+        G1::GPU::free_memory(chA_data, chB_data, gpu_inout, gpu_aux, cpu_out);
+    };
+};
+
+
 // BASELINE_F(G1, READING, DigitiserFixture, 0, 0)
 // {
 //     // Prepare multirecord mode
@@ -423,3 +454,8 @@ BASELINE_F(G1, FFTW_1T, G1Kernel_CPU_FFTW1Threads, 0, 0)
 //                              data_out, aux_array,
 //                              plans_forward, plans_backward);
 // }
+BENCHMARK_F(G1, GPU, G1Kernel_GPU, 0, 0)
+// BENCHMARK_F(G1, FFTW_1T, G1Kernel_CPU_FFTW1Threads, 0, 0)
+{
+    G1::GPU::g1_kernel(preprocessed_data, variance_list, gpu_inout, gpu_aux, cpu_out, plans_forward, plans_backward);
+}

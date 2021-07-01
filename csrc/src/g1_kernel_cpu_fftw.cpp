@@ -71,8 +71,8 @@ void G1::CPU::FFTW::g1_allocate_memory(double **&data_out, fftw_complex **&aux_a
     data_out = new double*[G1::no_outputs];
     aux_arrays = new fftw_complex*[G1::no_outputs];
     for (int i(0); i < G1::no_outputs; i++){
-        data_out[G1::outputs[i]] = (double*)fftw_malloc(sizeof(double) * G1_DIGITISER_POINTS);
-        aux_arrays[G1::outputs[i]] = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * (int(G1_DIGITISER_POINTS / 2) + 1));
+        data_out[i] = (double*)fftw_malloc(sizeof(double) * G1_DIGITISER_POINTS);
+        aux_arrays[i] = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * (int(G1_DIGITISER_POINTS / 2) + 1));
     }
 
     // Create forward and backwards plans for each index. Since plans are loaded, set a time limit of 0
@@ -82,33 +82,27 @@ void G1::CPU::FFTW::g1_allocate_memory(double **&data_out, fftw_complex **&aux_a
     OKBLUE("Generating optimised forward plans");
     plans_forward = new fftw_plan[G1::no_outputs];
     if (!fftw_import_wisdom_from_filename(derive_plan_forward_name(plan_name))) FAIL("Failed to load wisdom file " + std::string(derive_plan_forward_name(plan_name)));
-    for (int i(0); i < G1::no_outputs; i++){
-        int odx = G1::outputs[i];
-        plans_forward[odx] = fftw_plan_dft_r2c_1d(
-            G1_DIGITISER_POINTS, data_out[odx], aux_arrays[odx], FFTW_EXHAUSTIVE);
-    }
+    for (int i(0); i < G1::no_outputs; i++)
+        plans_forward[i] = fftw_plan_dft_r2c_1d(
+            G1_DIGITISER_POINTS, data_out[i], aux_arrays[i], FFTW_EXHAUSTIVE);
     fftw_forget_wisdom();
 
     OKBLUE("Generating optimised backward plans");
     plans_backward = new fftw_plan[G1::no_outputs];
     if (!fftw_import_wisdom_from_filename(derive_plan_backward_name(plan_name))) FAIL("Failed to load wisdom file " + std::string(derive_plan_backward_name(plan_name)));
-    for (int i(0); i < G1::no_outputs; i++){
-        int odx = G1::outputs[i];
-        plans_backward[odx] = fftw_plan_dft_c2r_1d(
-            G1_DIGITISER_POINTS, aux_arrays[odx], data_out[odx], FFTW_EXHAUSTIVE);
-    }
+    for (int i(0); i < G1::no_outputs; i++)
+        plans_backward[i] = fftw_plan_dft_c2r_1d(
+            G1_DIGITISER_POINTS, aux_arrays[i], data_out[i], FFTW_EXHAUSTIVE);
     fftw_forget_wisdom();
 }
 
 void G1::CPU::FFTW::g1_free_memory(double **data_out, fftw_complex **aux_arrays,
                                    fftw_plan *plans_forward, fftw_plan *plans_backward) {
     for (int i(0); i < G1::no_outputs; i++) {
-        int odx = G1::outputs[i];
-
-        fftw_destroy_plan(plans_forward[odx]);
-        fftw_destroy_plan(plans_backward[odx]);
-        fftw_free(data_out[odx]);
-        fftw_free(aux_arrays[odx]);
+        fftw_destroy_plan(plans_forward[i]);
+        fftw_destroy_plan(plans_backward[i]);
+        fftw_free(data_out[i]);
+        fftw_free(aux_arrays[i]);
     }
 
     delete[] aux_arrays;
@@ -135,20 +129,19 @@ void G1::CPU::FFTW::g1_kernel(short *chA_data, short *chB_data,
                               double **data_out, fftw_complex **aux_arrays,
                               fftw_plan *plans_forward, fftw_plan *plans_backward) {
     // Normalise input arrays
-    double mean_list[G1::no_outputs];
+    // double mean_list[G1::no_outputs];
     double variance_list[G1::no_outputs];
-    G1::CPU::preprocessor(chA_data, chB_data, G1_DIGITISER_POINTS, mean_list, variance_list, data_out);
+    // G1::CPU::preprocessor(chA_data, chB_data, G1_DIGITISER_POINTS, mean_list, variance_list, data_out);
 
     // Each thread will perform it's own transform
     std::thread thread_list[G1::no_outputs];
     for (int i(0); i < G1::no_outputs; i++) {
-        int odx = G1::outputs[i];
         thread_list[i] = std::thread(g1_kernel_runner,
-                                     data_out[odx],
-                                     aux_arrays[odx],
-                                     plans_forward[odx],
-                                     plans_backward[odx],
-                                     variance_list[odx]);
+                                     data_out[i],
+                                     aux_arrays[i],
+                                     plans_forward[i],
+                                     plans_backward[i],
+                                     variance_list[i]);
     }
     for (int i(0); i < G1::no_outputs; i++)
         thread_list[i].join();

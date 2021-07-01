@@ -243,20 +243,54 @@ int G1::GPU::g1_prepare_fftw_plan(cufftHandle *&plans_forward, cufftHandle *&pla
     return 0;
 }
 
-void G1::GPU::allocate_memory(short *&chA_data, short *&chB_data, cufftReal **&gpu_inout) {
+void G1::GPU::allocate_memory(short *&chA_data, short *&chB_data,
+                              cufftReal **&gpu_inout, cufftComplex **&gpu_aux,
+                              float **&cpu_out) {
     int success = 0;
-    success += cudaHostAlloc((void**)&chA_data,
+    success += cudaHostAlloc(reinterpret_cast<void**>(&chA_data),
                              SP_POINTS * R_POINTS * sizeof(short),
                              cudaHostAllocDefault);
-    success += cudaHostAlloc((void**)&chB_data,
+    success += cudaHostAlloc(reinterpret_cast<void**>(&chB_data),
                              SP_POINTS * R_POINTS * sizeof(short),
                              cudaHostAllocDefault);
-    if (success != 0) FAIL("Power Kernel: Failed to allocate locked input memory on CPU.");
+    if (success != 0) FAIL("G1 Kernel: Failed to allocate locked input memory on CPU.");
 
     gpu_inout = new cufftReal*[G1::no_outputs];
+    gpu_aux = new cufftComplex*[G1::no_outputs];
+    for (int i(0); i < G1::no_outputs; i++){
+        success += cudaMalloc(reinterpret_cast<void**>(&gpu_inout[i]), G1_DIGITISER_POINTS * sizeof(cufftReal));
+        success += cudaMalloc(reinterpret_cast<void**>(&gpu_aux[i]), (int(G1_DIGITISER_POINTS / 2) + 1) * sizeof(cufftComplex));
+    }
+    if (success != 0) FAIL("G1 Kernel: Failed to allocate memory on GPU.");
+
+    cpu_out = new float*[G1::no_outputs];
     for (int i(0); i < G1::no_outputs; i++)
-        success += cudaMalloc((void**)&gpu_inout[i], G1_DIGITISER_POINTS * sizeof(cufftReal));
-    if (success != 0) FAIL("Power Kernel: Failed to allocate memory on GPU.");
+        success += cudaHostAlloc(reinterpret_cast<void**>(&cpu_out[i]), G1_DIGITISER_POINTS * sizeof(float), cudaHostAllocDefault);
+    if (success != 0) FAIL("G1 Kernel: Failed to allocate locked output memory on CPU.");
+}
+
+void G1::GPU::free_memory(short *chA_data, short *chB_data,
+                          cufftReal **gpu_inout, cufftComplex **gpu_aux,
+                          float **cpu_out) {
+    OKBLUE("G1 Kernel: Deallocating memory on GPU and CPU.");
+    int success = 0;
+    success += cudaFreeHost(chA_data);
+    success += cudaFreeHost(chB_data);
+    if (success != 0) FAIL("Power Kernel: Failed to free locked input memory on CPU.");
+
+    for (int i(0); i < G1::no_outputs; i++) {
+        success += cudaFree(gpu_inout[i]);
+        success += cudaFree(gpu_aux[i]);
+    }
+    delete[] gpu_inout;
+    delete[] gpu_aux;
+    if (success != 0) FAIL("Power Kernel: Failed to free memory on GPU.");
+
+    for (int i(0); i < G1::no_outputs; i++) {
+        success += cudaFreeHost(cpu_out[i]);
+    }
+    delete[] cpu_out;
+    if (success != 0) FAIL("Power Kernel: Failed to free output memory on CPU.");
 }
 
 void handle_error(cufftResult result, std::string error_message){
@@ -277,52 +311,30 @@ void handle_error(cudaError_t result, std::string error_message){
 }
 
 void G1::GPU::g1_kernel(
-    short *chA_data, short *chB_data,
-    float **preprocessed_data,
-    float *&chA_out,
+    float **preprocessed_data, float *variance_list,
+    cufftReal **gpu_inout, cufftComplex **gpu_aux, float **cpu_out,
     cufftHandle *plans_forward, cufftHandle *plans_backward){
 
-    // Normalise input arrays
-    float mean_list[G1::no_outputs]; float variance_list[G1::no_outputs];
-    G1::CPU::preprocessor(chA_data, chB_data, G1_DIGITISER_POINTS, mean_list, variance_list, preprocessed_data);
-
-    // Memory allocation
-    // gpu_inout
-    cufftReal *gpu_chA;
-    checkCudaErrors(cudaMalloc(reinterpret_cast<void**>(&gpu_chA), sizeof(cufftReal) * G1_DIGITISER_POINTS));
-     // gpu_aux
-    cufftComplex *aux_array;
-     checkCudaErrors(
-         cudaMalloc(
-             reinterpret_cast<void **>(&aux_array), sizeof(cufftComplex) * (int(G1_DIGITISER_POINTS / 2) + 1)));
-     // cpu_out
-     checkCudaErrors(
-         cudaHostAlloc(
-             (void**)&chA_out,
-             sizeof(float) * G1_DIGITISER_POINTS,
-             cudaHostAllocDefault
-             ));
-
-     // Copy data
-     checkCudaErrors(cudaMemcpy(gpu_chA, preprocessed_data[CHAG1],
+    // Copy data
+     checkCudaErrors(cudaMemcpy(gpu_inout[CHAG1], preprocessed_data[CHAG1],
                                 sizeof(float) * G1_DIGITISER_POINTS, cudaMemcpyHostToDevice));
 
      // Forward transform
      checkCudaErrors(cufftExecR2C(
                          plans_forward[0],
-                         gpu_chA, aux_array));
+                         gpu_inout[CHAG1], gpu_aux[CHAG1]));
      // Square and normalise
      fftw_square<<<G1_DIGITISER_POINTS / 1024 + 1,1024>>>(
-         aux_array,
+         gpu_aux[CHAG1],
          G1_DIGITISER_POINTS * G1_DIGITISER_POINTS * variance_list[CHAG1]);
      // Backward transform
      checkCudaErrors(cufftExecC2R(
                          plans_backward[0],
-                         aux_array, gpu_chA));
+                         gpu_aux[CHAG1], gpu_inout[CHAG1]));
 
      // Copy back to CPU
      checkCudaErrors(
-         cudaMemcpy(chA_out, gpu_chA,
+         cudaMemcpy(cpu_out[CHAG1], gpu_inout[CHAG1],
                     sizeof(cufftReal) * G1_DIGITISER_POINTS,
                     cudaMemcpyDeviceToHost));
 }

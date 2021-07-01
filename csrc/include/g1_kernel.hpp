@@ -79,23 +79,27 @@ namespace G1 {
          *     allocate_memory(&chA_data, &chB_data, &gpu_in, &gpu_out, &cpu_out, 2);
          *
          * @param chA_data, chB_data arrays to be populated by the digitiser. Pinned
-         * @param gpu_inout an array `[CHAG1, CHBG1, SQG1]`, where each index holds the address of the arrays on the GPU
-         * @param cpu_out Pinned memory on CPU
+         * @param gpu_inout an array `[CHAG1, CHBG1, SQG1]`, where each index holds the address of the arrays on the GPU for reading data to/from GPU
+         * @param gpu_aux an array `[CHAG1, CHBG1, SQG1]`, where each index holds the address of the arrays on the GPU for intermediate operations.
+         * @param cpu_out an array `[CHAG1, CHBG1, SQG1]`, where each element accesses it's own array of pinned memory on CPU
          * See https://docs.nvidia.com/cuda/cufft/index.html#multi-dimensional for dimensions to allocate
          */
         void allocate_memory(
             short *&chA_data, short *&chB_data,
-            cufftReal **&gpu_inout
-            // short ****gpu_in, long ****gpu_out, long ****cpu_out, int no_of_streams
+            cufftReal **&gpu_inout, cufftComplex **&gpu_aux, float **&cpu_out
+            );
+        void free_memory(
+            short *chA_data, short *chB_data,
+            cufftReal **gpu_inout, cufftComplex **gpu_aux, float **cpu_out
             );
 
         /**
          * @oaram preprocessed_data channel data `[CHAG1, CHBG1, SQG1]` that has been run through normalisation.
          */
         void g1_kernel(
-            short *chA_data, short *chB_data,
-            float **preprocessed_data,
-            float *&chA_out,
+            // short *chA_data, short *chB_data,
+            float **preprocessed_data, float *variance_list,
+            cufftReal **gpu_inout, cufftComplex **gpu_aux, float **cpu_out,
             cufftHandle *plans_forward, cufftHandle *plans_backward);
 
         /**
