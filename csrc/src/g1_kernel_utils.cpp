@@ -14,16 +14,16 @@ int G1::check_g1_kernel_parameters(bool display){
     return 0;
 }
 
-void G1::CPU::preprocessor(short *chA_data, short *chB_data,
-                           int N,
-                           double *mean_list,
-                           double *variance_list,
-                           double **normalised_data) {
-    double chA_mean(0), chB_mean(0), sq_mean(0);
+template <typename T> void G1::CPU::preprocessor(short *chA_data, short *chB_data,
+                                                 int N,
+                                                 T *mean_list,
+                                                 T *variance_list,
+                                                 T **normalised_data) {
+    T chA_mean(0), chB_mean(0), sq_mean(0);
     for (int i = 0; i < N; i++) {
         chA_mean += chA_data[i];
         chB_mean += chB_data[i];
-        normalised_data[SQG1][i] = (int)chA_data[i] * chA_data[i] + (int)chB_data[i] * chB_data[i];
+        normalised_data[SQG1][i] = (T)chA_data[i] * (T)chA_data[i] + (T)chB_data[i] * (T)chB_data[i];
         sq_mean += normalised_data[SQG1][i];
     }
     chA_mean /= N;
@@ -31,7 +31,7 @@ void G1::CPU::preprocessor(short *chA_data, short *chB_data,
     sq_mean /= N;
 
     // Evaluation of variance and normalisation
-    double chA_sqDiff(0), chB_sqDiff(0), sq_sqDiff(0);
+    T chA_sqDiff(0), chB_sqDiff(0), sq_sqDiff(0);
     for (int i = 0; i < N; i++) {
         normalised_data[CHAG1][i] = chA_data[i] - chA_mean;
         normalised_data[CHBG1][i] = chB_data[i] - chB_mean;
@@ -50,3 +50,6 @@ void G1::CPU::preprocessor(short *chA_data, short *chB_data,
     variance_list[CHBG1] = chB_sqDiff / N;
     variance_list[SQG1] = sq_sqDiff / N;
 }
+
+template void G1::CPU::preprocessor<float>(short *chA_data, short *chB_data, int N, float *mean_list, float *variance_list, float **normalised_data);
+template void G1::CPU::preprocessor<double>(short *chA_data, short *chB_data, int N, double *mean_list, double *variance_list, double **normalised_data);

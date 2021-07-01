@@ -2,6 +2,8 @@
 #include <string> // for to_string
 #include <thread> // for std::thread
 
+#include <iostream> // TODO: remove
+
 #include "logging.hpp"
 #include "g1_kernel.hpp"
 #include "utils.hpp"
@@ -125,14 +127,8 @@ void g1_kernel_runner(double *data_out,
     fftw_execute_dft_c2r(plan_backward, aux_array, data_out);
 
     double normalisation = (double)G1_DIGITISER_POINTS * G1_DIGITISER_POINTS * variance;
-    for (int i(0); i < G1_DIGITISER_POINTS; i++){
-        normalisation = (
-            ((double)G1_DIGITISER_POINTS)
-            * (G1_DIGITISER_POINTS)
-            * variance
-            );
+    for (int i(0); i < G1_DIGITISER_POINTS; i++)
         data_out[i] /= normalisation;
-    }
 }
 
 void G1::CPU::FFTW::g1_kernel(short *chA_data, short *chB_data,

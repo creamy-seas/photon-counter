@@ -42,8 +42,6 @@ void runTest();
  */
 namespace G1 {
     const int no_outputs = 3; ///< Kernels returns CHAG1 and CHBG1 and SQG1
-    const int outputs[3] = {CHAG1, CHBG1, SQG1}; ///< Convenience array for iteration in loops/
-
 
     // TODO: GPU not implemented, as CPU performance is good enough
     /**
@@ -81,18 +79,23 @@ namespace G1 {
          *     allocate_memory(&chA_data, &chB_data, &gpu_in, &gpu_out, &cpu_out, 2);
          *
          * @param chA_data, chB_data arrays to be populated by the digitiser. Pinned
-         * @param gpu_in, gpu_out arrays holding the addresses of the GPU arrays
+         * @param gpu_inout an array `[CHAG1, CHBG1, SQG1]`, where each index holds the address of the arrays on the GPU
          * @param cpu_out Pinned memory on CPU
          * See https://docs.nvidia.com/cuda/cufft/index.html#multi-dimensional for dimensions to allocate
          */
         void allocate_memory(
-            short **chA_data, short **chB_data
+            short *&chA_data, short *&chB_data,
+            cufftReal **&gpu_inout
             // short ****gpu_in, long ****gpu_out, long ****cpu_out, int no_of_streams
             );
 
+        /**
+         * @oaram preprocessed_data channel data `[CHAG1, CHBG1, SQG1]` that has been run through normalisation.
+         */
         void g1_kernel(
             short *chA_data, short *chB_data,
-            double **data_out,
+            float **preprocessed_data,
+            float *&chA_out,
             cufftHandle *plans_forward, cufftHandle *plans_backward);
 
         /**
@@ -119,10 +122,11 @@ namespace G1 {
          * - Evaluate variance
          *
          * Access the data using indicies CHAG1, CHBG1, SQG1.
+         * @tparam T `float` or `double`
          */
-        void preprocessor(short *chA, short *chB, int N,
-                          double *mean_list, double *variance_list,
-                          double **normalised_data);
+        template <typename T> void preprocessor(short *chA, short *chB, int N,
+                                                T *mean_list, T *variance_list,
+                                                T **normalised_data);
 
         /**
          * @brief Evaluation by blunt iteration.
