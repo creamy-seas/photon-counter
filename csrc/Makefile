@@ -19,7 +19,7 @@ CXXFLAGS += -Wno-write-strings
 # CXXFLAGS += -Wshadow # Warn when shadowing variables
 # CXXFLAGS += -Wextra # Enable additional warnings
 
-CUDA_FLAGS = -gencode arch=compute_61,code=compute_61 --machine 64 -ccbin=$(CXX)
+CUDA_FLAGS = -gencode arch=compute_62,code=compute_62 --machine 64 -ccbin=$(CXX)
 
 # Search paths
 INCS := -Iinclude # Location of header files

@@ -17,6 +17,9 @@
 #define REAL 0
 #define IMAG 1
 
+// Complex data type
+typedef float2 Complex;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -85,21 +88,18 @@ namespace G1 {
          * See https://docs.nvidia.com/cuda/cufft/index.html#multi-dimensional for dimensions to allocate
          */
         void allocate_memory(
-            short *&chA_data, short *&chB_data,
-            cufftReal **&gpu_inout, cufftComplex **&gpu_aux, float **&cpu_out
+            cufftReal **&gpu_inout, cufftComplex **&gpu_aux, float **&cpu_inout
             );
         void free_memory(
-            short *chA_data, short *chB_data,
-            cufftReal **gpu_inout, cufftComplex **gpu_aux, float **cpu_out
+            cufftReal **gpu_inout, cufftComplex **gpu_aux, float **cpu_inout
             );
 
         /**
-         * @oaram preprocessed_data channel data `[CHAG1, CHBG1, SQG1]` that has been run through normalisation.
+         * @oaram normalised_data channel data `[CHAG1, CHBG1, SQG1]` that has been run through normalisation.
          */
         void g1_kernel(
-            // short *chA_data, short *chB_data,
-            float **preprocessed_data, float *variance_list,
-            cufftReal **gpu_inout, cufftComplex **gpu_aux, float **cpu_out,
+            short *chA_data, short *chB_data,
+            cufftReal **gpu_inout, cufftComplex **gpu_aux, float **cpu_inout,
             cufftHandle *plans_forward, cufftHandle *plans_backward);
 
         /**
@@ -111,7 +111,7 @@ namespace G1 {
          *
          * Access the data using indicies CHAG1, CHBG1, SQG1.
          */
-        void preprocessor(short *chA, short *chB, int N,
+        void preprocessor(short *chA, short *chB,
                           double *mean_list, double *variance_list,
                           double **normalised_data);
     }

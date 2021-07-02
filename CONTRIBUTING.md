@@ -102,6 +102,7 @@ print(libia.example_gpu_func(10,2))
 # Cuda notes #
 - Use cuda-11.0
 - `nvcc` will automatically lookup relevant headers and libraries, so it can be used for compilation. It can even pass the non-gpu code to the standard compuler. But it will not be able to inject `-fprofile-arcs` and `-ftest-coverage` so it is better to use it for only building object files and not the total compilation.
+- Quadro P6000 GPU has Pascal Architecture with compute capability `6.1` (`sm_61`). See [this page](https://en.wikipedia.org/wiki/CUDA) or the `cudaGetDeviceProperties` function.
 
 # Digitiser Notes #
 - ADQ214 Digitiser
