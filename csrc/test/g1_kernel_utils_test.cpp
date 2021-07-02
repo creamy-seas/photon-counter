@@ -141,8 +141,8 @@ public:
         G1::GPU::preprocessor(
             N, chA_data,
             chB_data, mean_list, var_list, normalised_data);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(8.0, mean_list[CHAG1], 0.00001);
 
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(8.0, mean_list[CHAG1], 0.00001);
         // CPPUNIT_ASSERT_DOUBLES_EQUAL(2048.125, mean_list[CHBG1], 0.00001);
         // CPPUNIT_ASSERT_DOUBLES_EQUAL(33554504.375, mean_list[SQG1], 0.00001);
 
@@ -150,17 +150,17 @@ public:
         // CPPUNIT_ASSERT_DOUBLES_EQUAL(29359616.109375, var_list[CHBG1], 0.00001);
         // CPPUNIT_ASSERT_DOUBLES_EQUAL(7881304154573057.0, var_list[SQG1], 0.00001);
 
-        // double normalised_data_expected[3][N] = {
-        //     {-4, -3, -2, -1,  0,  2,  4,  4},
-        //     {-2048.125, -2048.125, -2048.125, -2048.125, -2048.125, -2047.125,
-        //      -2048.125, 14335.875},
-        //     {0, 0, 0, 0, 0, 0, 0, 0}
-        // };
+        float normalised_data_expected[3][N] = {
+            {-4, -3, -2, -1,  0,  2,  4,  4},
+            {-2048.125, -2048.125, -2048.125, -2048.125, -2048.125, -2047.125,
+             -2048.125, 14335.875},
+            {0, 0, 0, 0, 0, 0, 0, 0}
+        };
 
-        // for (int i = 0; i < N; i++){
-        //     CPPUNIT_ASSERT_EQUAL(normalised_data_expected[0][i], normalised_data[CHAG1][i]);
-        //     CPPUNIT_ASSERT_EQUAL(normalised_data_expected[1][i], normalised_data[CHBG1][i]);
-        // }
+        for (int i = 0; i < N; i++){
+            CPPUNIT_ASSERT_EQUAL(normalised_data_expected[0][i], normalised_data[CHAG1][i]);
+            // CPPUNIT_ASSERT_EQUAL(normalised_data_expected[1][i], normalised_data[CHBG1][i]);
+        }
 
     }
 };

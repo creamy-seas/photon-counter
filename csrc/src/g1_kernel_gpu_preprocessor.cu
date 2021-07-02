@@ -79,17 +79,17 @@ T block_reduce_sum(T val) {
 }
 
 /**
- * Entrypoint to `block_reduce_sum` for reducing for all threads (max 1024) in a single block,
+ * Summation of `gpu_in` into `gpu_out` with optional normalisation.
  */
 template <typename Tin, typename Tout>
-__global__ void reduce_kernel(
+__global__ void reduction_kernel(
     Tin *gpu_in, Tout *gpu_out,
     unsigned int N,
     Tout normalisation
     ) {
-    Tout sum(0);
 
-    // Copy over input data. Thread is reutilised multiple times
+    Tout sum(0);
+    // Copy over input data to `sum` that is local to this thread.
     for (int tidx = blockIdx.x * blockDim.x + threadIdx.x;
          tidx < N;
          tidx += blockDim.x * gridDim.x) {
@@ -98,9 +98,41 @@ __global__ void reduce_kernel(
 
     // Perform reduction
     sum = block_reduce_sum<Tout>(sum);
+
+    // With the value reduced in the first thread, normalise and output
     if (threadIdx.x == 0)
         gpu_out[blockIdx.x] = sum / normalisation;
 }
+
+/**
+ * gpu_out
+ */
+__global__ void variance_and_normalisation_kernel(
+    short *gpu_in, float *gpu_out,
+    float *gpu_normalised,
+    float *gpu_mean_list,
+    unsigned int N
+    ) {
+
+    float sum(0);
+
+    // Normalise by the mean and seed the `sum` for this thread
+    // in order to sum up the square differences for evaluation of the variance.
+    for (int tidx = blockIdx.x * blockDim.x + threadIdx.x;
+         tidx < N;
+         tidx += blockDim.x * gridDim.x) {
+        gpu_normalised[tidx] = (float)gpu_in[tidx] - gpu_mean_list[CHAG1];
+        sum += gpu_normalised[tidx] * gpu_normalised[tidx];
+    }
+
+    // Perform reduction
+    sum = block_reduce_sum<float>(sum);
+
+    // With the value reduced in the first thread, normalise and output
+    if (threadIdx.x == 0)
+        gpu_out[blockIdx.x] = sum;
+}
+
 
 void G1::GPU::preprocessor(int N,
                            short *chA_data, short *chB_data,
@@ -110,19 +142,31 @@ void G1::GPU::preprocessor(int N,
 
     short *gpu_in;
     float *gpu_out;
-    // float *gpu_mean_list;
+    float *gpu_mean_list; float *gpu_variance_list;
+    float *gpu_normalised;
     success += cudaMalloc(reinterpret_cast<void**>(&gpu_in), N * sizeof(short));
     success += cudaMalloc(reinterpret_cast<void**>(&gpu_out), N * sizeof(float));
-    // success += cudaMalloc(reinterpret_cast<void**>(&gpu_mean_list), G1::no_outputs * sizeof(float));
+    success += cudaMalloc(reinterpret_cast<void**>(&gpu_mean_list), G1::no_outputs * sizeof(float));
+    success += cudaMalloc(reinterpret_cast<void**>(&gpu_variance_list), G1::no_outputs * sizeof(float));
+    success += cudaMalloc(reinterpret_cast<void**>(&gpu_normalised), N * sizeof(float));
     if (success != 0) FAIL("Failed memory allocation");
+
+    const unsigned long blocks = (N + G1::GPU::pp_threads - 1) / G1::GPU::pp_threads;
 
     // Copy input data
     cudaMemcpy(gpu_in, chA_data, N * sizeof(short), cudaMemcpyHostToDevice);
 
-    const unsigned long blocks = (N + G1::GPU::pp_threads - 1) / G1::GPU::pp_threads;
     // Evaluation of mean
-    reduce_kernel<<<blocks, G1::GPU::pp_threads, G1::GPU::pp_shared_memory>>>(gpu_in, gpu_out, N, (float)1);
-    reduce_kernel<<<1, G1::GPU::pp_threads, G1::GPU::pp_shared_memory>>>(gpu_out, gpu_out, blocks, (float)N);
+    reduction_kernel<<<blocks, G1::GPU::pp_threads, G1::GPU::pp_shared_memory>>>(gpu_in, gpu_out, N, (float)1);
+    reduction_kernel<<<1, G1::GPU::pp_threads, G1::GPU::pp_shared_memory>>>(gpu_out, gpu_mean_list, blocks, (float)N);
 
-    cudaMemcpy(&mean_list[CHAG1], gpu_out, sizeof(float), cudaMemcpyDeviceToHost);
+    // Evaluation of variance and normalisation
+    variance_and_normalisation_kernel
+        <<<blocks, G1::GPU::pp_threads, G1::GPU::pp_shared_memory>>>
+        (gpu_in, gpu_out, gpu_normalised, gpu_mean_list, N);
+    reduction_kernel<<<1, G1::GPU::pp_threads, G1::GPU::pp_shared_memory>>>(gpu_out, gpu_variance_list, blocks, (float)1);
+
+    cudaMemcpy(mean_list, gpu_mean_list, sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(variance_list, gpu_variance_list, sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(normalised_data[CHAG1], gpu_normalised, N * sizeof(float), cudaMemcpyDeviceToHost);
 }

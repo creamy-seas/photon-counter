@@ -28,7 +28,7 @@ INCS += -L/usr/local/cuda-11.0/lib64 # Cuda libraries
 INCS += -I./../Celero/include # Celero headers (benchmarking)
 INCS += -L./../Celero/build # Celero libraries (benchmarking)
 
-INCS += -I./cuda #TODO: Remove
+INCS += -I./cuda-samples/Common
 
 # Libraries
 LDLIBS := $(shell pkg-config --libs libadq) # Digitiser library

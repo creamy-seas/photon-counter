@@ -56,6 +56,9 @@ template <typename T> void G1::CPU::preprocessor(short *chA_data, short *chB_dat
     chA_mean /= N;
     chB_mean /= N;
     sq_mean /= N;
+    mean_list[CHAG1] = chA_mean;
+    mean_list[CHBG1] = chB_mean;
+    mean_list[SQG1] = sq_mean;
 
     // Evaluation of variance and normalisation
     T chA_sqDiff(0), chB_sqDiff(0), sq_sqDiff(0);
@@ -68,10 +71,6 @@ template <typename T> void G1::CPU::preprocessor(short *chA_data, short *chB_dat
         chB_sqDiff += normalised_data[CHBG1][i] * normalised_data[CHBG1][i];
         sq_sqDiff += normalised_data[SQG1][i] * normalised_data[SQG1][i];
     }
-
-    mean_list[CHAG1] = chA_mean;
-    mean_list[CHBG1] = chB_mean;
-    mean_list[SQG1] = sq_mean;
 
     variance_list[CHAG1] = chA_sqDiff / N;
     variance_list[CHBG1] = chB_sqDiff / N;
