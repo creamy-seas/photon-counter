@@ -5,9 +5,15 @@
 #include <string>
 #include <cufft.h>
 
+#include "utils_gpu.hpp"
+
 #ifndef G1_DIGITISER_POINTS
 #define G1_DIGITISER_POINTS 262144 ///< A single readout is requested from digitiser. Powers of 2 are executed especially fast
 #endif
+
+// #if (G1_DIGITISER_POINTS & (G1_DIGITISER_POINTS - 1)) != 0
+// #warning "For FFTW g1 evaluation G1_DIGITISER_POINTS must be a power of 2 for efficient FFTW"
+// #endif
 
 // Verbose Indexes used for accessing array elements in a human-readable way e.g. array[CHASQ]
 #define CHAG1 0
@@ -111,9 +117,13 @@ namespace G1 {
          *
          * Access the data using indicies CHAG1, CHBG1, SQG1.
          */
-        void preprocessor(short *chA, short *chB,
-                          double *mean_list, double *variance_list,
-                          double **normalised_data);
+        const int pp_threads = 1024; ///< Threads used in reduction. Kernel ignores `threads > N`.
+        const int pp_shared_memory = (pp_threads + WARP_SIZE) / WARP_SIZE;
+
+        void preprocessor(
+            int N, short *chA, short *chB,
+            float *mean_list, float *variance_list,
+            float **normalised_data);
     }
 
     namespace CPU {

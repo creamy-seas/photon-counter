@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <string> // for std::string
+#include <sstream>
 
 #ifndef _COLOURS_
 #define _COLOURS_
@@ -44,12 +45,26 @@ void append_to_log_file(std::string);
 #define PYTHON_END
 #endif
 #define LOG_FILE "libia.log"
-#define FAIL(str) {                                             \
-        append_to_log_file(str);                                \
-        std::cout << "\033[91m\033[1m" << str << ENDC << "\n";  \
-        throw std::runtime_error(str);                          \
+#define FAIL(error_string) {                                            \
+        std::ostringstream os ;                                         \
+        os << __FILE__ << "(" << __LINE__ << "): " << error_string;     \
+                                                                        \
+        std::string appended_string = os.str();                         \
+        append_to_log_file(appended_string);                            \
+        std::cout << "\033[91m\033[1m" << appended_string << ENDC << "\n"; \
+        throw std::runtime_error(appended_string);                      \
     }
-
+// Successful result is always 0 for CUDA functions. Anything else is a specific error
+#define CUDA_CHECK(result, error_string) {                              \
+    if (result) {                                                       \
+    std::ostringstream os ;                                             \
+    os << error_string;                                                 \
+    os << "\n- " << #result;                                            \
+    os << "\n- " << "CUDA error " << result << ": " << _cudaGetErrorEnum(result); \
+    std::string error = os.str();                                       \
+    FAIL(error);                                                        \
+    }                                                                   \
+    }
 
 #define UNDERLINE(str, ...) PRINT_COLOR("\033[4m", str, ##__VA_ARGS__)
 #define FLASH(str, ...) PRINT_COLOR("\033[5m", str, ##__VA_ARGS__)

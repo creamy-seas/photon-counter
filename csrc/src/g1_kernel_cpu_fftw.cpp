@@ -129,9 +129,9 @@ void G1::CPU::FFTW::g1_kernel(short *chA_data, short *chB_data,
                               double **data_out, fftw_complex **aux_arrays,
                               fftw_plan *plans_forward, fftw_plan *plans_backward) {
     // Normalise input arrays
-    // double mean_list[G1::no_outputs];
+    double mean_list[G1::no_outputs];
     double variance_list[G1::no_outputs];
-    // G1::CPU::preprocessor(chA_data, chB_data, G1_DIGITISER_POINTS, mean_list, variance_list, data_out);
+    G1::CPU::preprocessor(chA_data, chB_data, G1_DIGITISER_POINTS, mean_list, variance_list, data_out);
 
     // Each thread will perform it's own transform
     std::thread thread_list[G1::no_outputs];

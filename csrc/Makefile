@@ -19,7 +19,7 @@ CXXFLAGS += -Wno-write-strings
 # CXXFLAGS += -Wshadow # Warn when shadowing variables
 # CXXFLAGS += -Wextra # Enable additional warnings
 
-CUDA_FLAGS = -gencode arch=compute_62,code=compute_62 --machine 64 -ccbin=$(CXX)
+CUDA_FLAGS = -gencode arch=compute_61,code=compute_61 --machine 64 -ccbin=$(CXX) -std=c++11
 
 # Search paths
 INCS := -Iinclude # Location of header files
@@ -152,7 +152,7 @@ TEST_FLAGS += -D R_POINTS=8
 TEST_FLAGS += -D R_POINTS_PER_GPU_CHUNK=2
 TEST_FLAGS += -D SP_POINTS=3
 TEST_FLAGS += -D DEBUG=1
-TEST_FLAGS += -D G1_DIGITISER_POINTS=501
+TEST_FLAGS += -D G1_DIGITISER_POINTS=500
 
 TEST_EXTRA_CXX_FLAGS := -fprofile-arcs -ftest-coverage
 

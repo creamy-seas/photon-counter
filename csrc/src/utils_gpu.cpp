@@ -12,6 +12,13 @@ cudaDeviceProp fetch_gpu_parameters(bool display){
     cudaDeviceProp prop;
     cudaGetDeviceProperties(&prop, 0);
 
+    if (WARP_SIZE != prop.warpSize)
+        FAIL(
+            "The WARP_SIZE=" + std::to_string(WARP_SIZE)
+            + " declared in utils_gpu.hpp is different to the warpSize="
+            + std::to_string(prop.warpSize)
+            + " of this GPU. Update the value and recompile.");
+
     if (display) {
         OKBLUE("===========================================");
         OKBLUE("Device parameters");
@@ -64,15 +71,15 @@ cudaDeviceProp fetch_gpu_parameters(bool display){
         WHITE("Registers per block: %d\n", prop.regsPerBlock );
         WHITE("Threads in warp: %d\n", prop.warpSize );
         WHITE("Max threads per block: %d\n",
-              prop.maxThreadsPerBlock );
-        WHITE("Max block dimensions: (%d, %d, %d)\n",
-              prop.maxThreadsDim[0], prop.maxThreadsDim[1],
-              prop.maxThreadsDim[2] );
-        WHITE("Max grid dimensions: (%d, %d, %d)\n",
-              prop.maxGridSize[0], prop.maxGridSize[1],
-              prop.maxGridSize[2] );
-        OKBLUE("===========================================");
-    }
+prop.maxThreadsPerBlock );
+                WHITE("Max block dimensions: (%d, %d, %d)\n",
+                      prop.maxThreadsDim[0], prop.maxThreadsDim[1],
+                      prop.maxThreadsDim[2] );
+                WHITE("Max grid dimensions: (%d, %d, %d)\n",
+                      prop.maxGridSize[0], prop.maxGridSize[1],
+                      prop.maxGridSize[2] );
+                OKBLUE("===========================================");
+            }
 
     return prop;
 }

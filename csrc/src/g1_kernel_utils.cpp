@@ -1,14 +1,41 @@
+#include <cuda_runtime_api.h> //for cudaDeviceProp
+
 #include "logging.hpp"
 #include "g1_kernel.hpp"
+#include "utils_gpu.hpp"
 
 int G1::check_g1_kernel_parameters(bool display){
     PYTHON_START;
 
-    if ((G1_DIGITISER_POINTS & (G1_DIGITISER_POINTS - 1)) != 0)
+    cudaDeviceProp prop = fetch_gpu_parameters(display);
+
+    if (G1::GPU::pp_threads > prop.maxThreadsPerBlock)
+        FAIL("pp_threads ("
+             + std::to_string(G1::GPU::pp_threads)
+             + ") declared in g1_kernel.hpp > maxThreadsPerBlock ("
+             + std::to_string(prop.maxThreadsPerBlock)
+             + ") of "
+             + std::string(prop.name)
+            );
+
+    if (G1::GPU::pp_shared_memory * 3 > prop.sharedMemPerBlock)
+        FAIL("pp_shared_memory x 3 for CHAG1, CHBG1, SQG1 preprocessing ("
+             + std::to_string(3 * G1::GPU::pp_shared_memory)
+             + " bytes) > sharedMemPerBlock ("
+             + std::to_string(prop.sharedMemPerBlock)
+             + " bytes) of "
+             + std::string(prop.name)
+            );
+
+    if (
+        (G1_DIGITISER_POINTS + G1::GPU::pp_threads - 1) / G1::GPU::pp_threads
+        >
+        G1::GPU::pp_threads)
         FAIL(
-            "For FFTW g1 evaluation G1_DIGITISER_POINTS=" +
-            std::to_string(G1_DIGITISER_POINTS)
-            + "must be a power of 2 for efficient FFTW");
+            "G1 Kernel will not be able to preprocess the G1_DIGITISER_POINTS ("
+            + std::to_string(G1_DIGITISER_POINTS)
+            + ") using a reduction summation."
+            );
 
     PYTHON_END;
     return 0;

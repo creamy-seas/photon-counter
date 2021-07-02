@@ -52,32 +52,27 @@ public:
         // Create plans
         cufftHandle *plans_forward(0); cufftHandle *plans_backward(0);
         G1::GPU::g1_prepare_fftw_plan(plans_forward, plans_backward);
-        // Allocation of memory
-        short *chA_data_loc(0), *chB_data_loc(0);
-        cufftReal **gpu_inout; cufftComplex **gpu_aux; float **cpu_out;
-        G1::GPU::allocate_memory(chA_data_loc, chB_data_loc, gpu_inout, gpu_aux, cpu_out);
-        // Normalise input arrays
-        float mean_list[G1::no_outputs]; float variance_list[G1::no_outputs];
-        float **preprocessed_data = new float*[G1::no_outputs];
-        for (int i(0); i < G1::no_outputs; i++)
-            preprocessed_data[i] = new float[G1_DIGITISER_POINTS];
-        G1::CPU::preprocessor(chA_data, chB_data, G1_DIGITISER_POINTS, mean_list, variance_list, preprocessed_data);
 
-        G1::GPU::g1_kernel(preprocessed_data, variance_list,
-                           gpu_inout, gpu_aux, cpu_out,
+        // Allocation of memory
+        cufftReal **gpu_inout; cufftComplex **gpu_aux; float **cpu_inout;
+        G1::GPU::allocate_memory(gpu_inout, gpu_aux, cpu_inout);
+
+        G1::GPU::g1_kernel(chA_data, chB_data,
+                           gpu_inout, gpu_aux, cpu_inout,
                            plans_forward, plans_backward);
 
         for (int tau(0); tau < tau_points; tau++) {
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
                                                  g1_expected_biased_normalisation[tau],
-                                                 cpu_out[CHAG1][tau],
+                                                 cpu_inout[CHAG1][tau],
+                                                 0.05);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
+                                                 g1_expected_biased_normalisation[tau],
+                                                 cpu_inout[CHBG1][tau],
                                                  0.05);
         }
 
-        G1::GPU::free_memory(chA_data_loc, chB_data_loc, gpu_inout, gpu_aux, cpu_out);
-        for (int i(0); i < G1::no_outputs; i++)
-            delete[] preprocessed_data[i];
-        delete[] preprocessed_data;
+        G1::GPU::free_memory(gpu_inout, gpu_aux, cpu_inout);
     }
 };
-CPPUNIT_TEST_SUITE_REGISTRATION( G1KernelGpuTest );
+// CPPUNIT_TEST_SUITE_REGISTRATION( G1KernelGpuTest );
