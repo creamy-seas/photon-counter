@@ -120,10 +120,21 @@ namespace G1 {
         const int pp_threads = 1024; ///< Threads used in reduction. Kernel ignores `threads > N`.
         const int pp_shared_memory = (pp_threads + WARP_SIZE) / WARP_SIZE;
 
+        /**
+         * For evaluating correlation the data needs to undergo a normalisation by the average value.
+         * This preprocessor:
+         * - Applies normalisation
+         * - Evaluates mean
+         * - Evaluates variance
+         *
+         * Access the data using indicies CHAG1, CHBG1, SQG1.
+         * @tparam T `float` or `double`
+         */
+        template <typename T>
         void preprocessor(
             int N, short *chA, short *chB,
-            float *mean_list, float *variance_list,
-            float **normalised_data);
+            T *mean_list, T *variance_list,
+            T **normalised_data);
     }
 
     namespace CPU {
@@ -131,9 +142,9 @@ namespace G1 {
         /**
          * For evaluating correlation the data needs to undergo a normalisation by the average value.
          * This preprocessor:
-         * - Apply normalisation
-         * - Evaluate mean
-         * - Evaluate variance
+         * - Applies normalisation
+         * - Evaluates mean
+         * - Evaluates variance
          *
          * Access the data using indicies CHAG1, CHBG1, SQG1.
          * @tparam T `float` or `double`
