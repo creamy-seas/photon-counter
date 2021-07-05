@@ -154,11 +154,16 @@ namespace G1 {
         int g1_prepare_fftw_plan(cufftHandle *&plans_forward, cufftHandle *&plans_backward);
 
         /**
-         * @param normalised_data channel data `[CHAG1, CHBG1, SQG1]` that has been run through normalisation.
+         * Evaluation is performed using the the Wiener–Khinchin theorem on the GPU. First data is normalsied and preprocessed. Then the g1 kernel is run
+         *
+         * @param gpu_inout, cpu_inout array for transferring data to and from GPU.
+         * @param gpu_raw_data, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance auxillary arrays from processing on GPU. Allocate then with allocate_memory and reuse them on every kernel invocation
+         * @param plans_forward, plans_backward plans for the transform, which should be prepared once with g1_prepare_fftw_plan and reused on every kernel invocation
          */
         void g1_kernel(
             short *chA_data, short *chB_data,
-            cufftReal **gpu_inout, cufftComplex **gpu_fftw_aux, float **cpu_inout,
+            cufftReal **gpu_inout, float **cpu_inout,
+            short **gpu_raw_data, float **gpu_pp_aux, cufftComplex **gpu_fftw_aux, float *gpu_mean, float *gpu_variance,
             cufftHandle *plans_forward, cufftHandle *plans_backward);
     }
 

@@ -54,7 +54,8 @@ public:
         G1::GPU::allocate_memory(gpu_raw_data, gpu_inout, cpu_inout, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance);
 
         G1::GPU::g1_kernel(chA_data, chB_data,
-                           gpu_inout, gpu_fftw_aux, cpu_inout,
+                           gpu_inout, cpu_inout,
+                           gpu_raw_data, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance,
                            plans_forward, plans_backward);
 
         for (int tau(0); tau < tau_points; tau++) {

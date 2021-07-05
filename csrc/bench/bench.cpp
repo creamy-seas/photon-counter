@@ -289,6 +289,12 @@ public:
     double** data_out;
     const int tau_points = 100;
 
+    // For the CPU preprocessor
+    double chA_wip[G1_DIGITISER_POINTS]; double chB_wip[G1_DIGITISER_POINTS]; double sq_wip[G1_DIGITISER_POINTS];
+    double *wip_data[G1::no_outputs] = {chA_wip, chB_wip, sq_wip};
+    double mean_list[G1::no_outputs];
+    double variance_list[G1::no_outputs];
+
     void setUp(__attribute__ ((unused)) const celero::TestFixture::ExperimentValue& x) override {
         // Seed generator for population of arrays
         std::srand(std::time(0));
@@ -367,10 +373,12 @@ public:
     }
 };
 
-class G1Kernel_GPU : public celero::TestFixture {
+class G1_GPU : public celero::TestFixture {
 public:
     cufftHandle *plans_forward; cufftHandle *plans_backward;
-    cufftReal **gpu_inout; cufftComplex **gpu_fftw_aux; float **cpu_inout;
+    short **gpu_raw_data; cufftReal **gpu_inout;
+    float **gpu_pp_aux; cufftComplex **gpu_fftw_aux; float *gpu_mean, *gpu_variance;
+    float **cpu_inout;
 
     short* chA_data = new short[G1_DIGITISER_POINTS]();
     short* chB_data = new short[G1_DIGITISER_POINTS]();
@@ -378,7 +386,7 @@ public:
     void setUp(__attribute__ ((unused)) const celero::TestFixture::ExperimentValue& x) override {
 
         G1::GPU::g1_prepare_fftw_plan(plans_forward, plans_backward);
-        G1::GPU::allocate_memory(gpu_inout, gpu_fftw_aux, cpu_inout);
+        G1::GPU::allocate_memory(gpu_raw_data, gpu_inout, cpu_inout, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance);
 
         std::srand(std::time(0));
         for (int i(0); i < G1_DIGITISER_POINTS; i++) {
@@ -391,7 +399,7 @@ public:
     };
 
     void tearDown() override {
-        G1::GPU::free_memory(gpu_inout, gpu_fftw_aux, cpu_inout);
+        G1::GPU::free_memory(gpu_raw_data, gpu_inout, cpu_inout, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance);
     };
 };
 
@@ -406,54 +414,67 @@ public:
 //     ADQ_MultiRecordClose(adq_cu_ptr, 1);
 // }
 
-// BENCHMARK_F(G1, DIRECT_1T, G1Kernel_CPU_DIRECT, 0, 0) {
+// BENCHMARK_F(G1, CPU_DIRECT_1T, G1Kernel_CPU_DIRECT, 0, 0) {
 //     int no_threads = 1;
 //     G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
 // }
-// BENCHMARK_F(G1, DIRECT_2T, G1Kernel_CPU_DIRECT, 0, 0) {
+// BENCHMARK_F(G1, CPU_DIRECT_2T, G1Kernel_CPU_DIRECT, 0, 0) {
 //     int no_threads = 2;
 //     G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
 // }
-// BENCHMARK_F(G1, DIRECT_4T, G1Kernel_CPU_DIRECT, 0, 0) {
+// BENCHMARK_F(G1, CPU_DIRECT_4T, G1Kernel_CPU_DIRECT, 0, 0) {
 //     int no_threads = 4;
 //     G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
 // }
-// BENCHMARK_F(G1, DIRECT_8T, G1Kernel_CPU_DIRECT, 0, 0) {
+// BENCHMARK_F(G1, CPU_DIRECT_8T, G1Kernel_CPU_DIRECT, 0, 0) {
 //     int no_threads = 8;
 //     G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
 // }
-// BENCHMARK_F(G1, DIRECT_16T, G1Kernel_CPU_DIRECT, 0, 0) {
-//     int no_threads = 16;
-//     G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
-// }
-BASELINE_F(G1, FFTW_1T, G1Kernel_CPU_FFTW1Threads, 0, 0)
-// BENCHMARK_F(G1, FFTW_1T, G1Kernel_CPU_FFTW1Threads, 0, 0)
+BASELINE_F(G1, CPU_DIRECT_16T, G1Kernel_CPU_DIRECT, 0, 0)
+// BENCHMARK_F(G1, CPU_DIRECT_16T, G1Kernel_CPU_DIRECT, 0, 0)
+{
+    int no_threads = 16;
+    G1::CPU::DIRECT::g1_kernel(chA_data, chB_data, data_out, tau_points, false, no_threads);
+}
+// BASELINE_F(G1, CPU_FFTW_1T, G1Kernel_CPU_FFTW1Threads, 0, 0)
+BENCHMARK_F(G1, CPU_FFTW_1T, G1Kernel_CPU_FFTW1Threads, 0, 0)
 {
     G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
                              data_out, aux_array,
                              plans_forward, plans_backward);
 }
-// BENCHMARK_F(G1, FFTW_2T, G1Kernel_CPU_FFTW2Threads, 0, 0) {
+// BENCHMARK_F(G1, CPU_FFTW_2T, G1Kernel_CPU_FFTW2Threads, 0, 0) {
 //     G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
 //                              data_out, aux_array,
 //                              plans_forward, plans_backward);
 // }
-// BENCHMARK_F(G1, FFTW_4T, G1Kernel_CPU_FFTW4Threads, 0, 0) {
+// BENCHMARK_F(G1, CPU_FFTW_4T, G1Kernel_CPU_FFTW4Threads, 0, 0) {
 //     G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
 //                              data_out, aux_array,
 //                              plans_forward, plans_backward);
 // }
-// BASELINE_F(G1, FFTW_8T, G1Kernel_CPU_FFTW8Threads, 0, 0)
-// BENCHMARK_F(G1, FFTW_8T, G1Kernel_CPU_FFTW8Threads, 0, 0)
+// BASELINE_F(G1, CPU_FFTW_8T, G1Kernel_CPU_FFTW8Threads, 0, 0)
+// BENCHMARK_F(G1, CPU_FFTW_8T, G1Kernel_CPU_FFTW8Threads, 0, 0)
 // {
 //     G1::CPU::FFTW::g1_kernel(chA_data, chB_data,
 //                              data_out, aux_array,
 //                              plans_forward, plans_backward);
 // }
-BENCHMARK_F(G1, GPU, G1Kernel_GPU, 0, 0)
-// BENCHMARK_F(G1, FFTW_1T, G1Kernel_CPU_FFTW1Threads, 0, 0)
+BENCHMARK_F(G1, CPU_PREPROCESSOR, G1Kernel_CPU_DIRECT, 0, 0)
 {
-    G1::GPU::g1_kernel(
-        chA_data, chB_data,
-        gpu_inout, gpu_fftw_aux, cpu_inout, plans_forward, plans_backward);
+    G1::CPU::preprocessor(chA_data, chB_data, G1_DIGITISER_POINTS, mean_list, variance_list, wip_data);
+}
+BENCHMARK_F(G1, GPU_FFTW, G1_GPU, 0, 0)
+{
+    G1::GPU::g1_kernel(chA_data, chB_data,
+                       gpu_inout, cpu_inout,
+                       gpu_raw_data, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance,
+                       plans_forward, plans_backward);
+}
+BENCHMARK_F(G1, GPU_PREPROCESSOR, G1_GPU, 0, 0)
+{
+    G1::GPU::preprocessor(
+        G1_DIGITISER_POINTS, chA_data, chB_data,
+        gpu_raw_data, reinterpret_cast<float**>(gpu_inout),
+        gpu_pp_aux, gpu_mean, gpu_variance);
 }

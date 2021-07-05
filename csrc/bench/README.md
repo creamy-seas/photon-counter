@@ -169,6 +169,30 @@ Multiple runs done with different plan times.
 
 </details>
 
+## July 2021: G1 Benchmark  ##
+This time the evaluation was split into preprocessing and g1 evaluation by commenting out the entries in code.
+
+<details>
+<summary>Click this to collapse/fold.</summary>
+
+> 1000s plan time
+> G1_DIGITISER_POINTS = 262144
+
+| Group | Experiment                | Prob. Space | Samples | Iterations | Baseline | us/Iteration | Iterations/sec | RAM (bytes) |
+|:-----:|:-------------------------:|:-----------:|:-------:|:----------:|:--------:|:------------:|:--------------:|:-----------:|
+| G1    | READING                   | Null        | 30      | 102        | 1.00000  | 9167.90196   | 109.08         | 67010560    |
+|:-----:|:-------------------------:|:-----------:|:-------:|:----------:|:--------:|:------------:|:--------------:|:-----------:|
+| G1    | CPU_DIRECT_16T            | Null        | 30      | 31         | 1.00000  | 25992.19355  | 38.47          | 310226944   |
+| G1    | CPU_FFTW_1T               | Null        | 30      | 142        | 0.15452  | 4016.26761   | 248.99         | 303935488   |
+| G1    | CPU_PREPROCESSOR          | Null        | 30      | 237        | 0.14963  | 3889.27004   | 257.12         | 310226944   |
+|:-----:|:-------------------------:|:-----------:|:-------:|:----------:|:--------:|:------------:|:--------------:|:-----------:|
+| G1    | GPU_FFTW                  | Null        | 30      | 434        | 0.04313  | 1120.95392   | 892.10         | 9726398464  |
+| G1    | GPU_PREPROCESSOR          | Null        | 30      | 257        | 0.00953  | 247.68482    | 4037.39        | 10210144256 |
+| G1    | GPU_FFTW_AND_PREPROCESSOR | Null        | 30      | 278        | 0.02785  | 876.92086    | 1140.35        | 9741717504  |
+
+GPU_FFTW_AND_PREPROCESSOR is faster as there is no copying required!
+
+</details>
 
 ## Float vs double: No difference ##
 > 4b2b92bdcc7e9de0fce5234998fde309ac71d137
