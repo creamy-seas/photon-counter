@@ -46,7 +46,7 @@ void G1::GPU::g1_kernel(
 
     // Normalise input arrays
     float mean_list[G1::no_outputs]; float variance_list[G1::no_outputs];
-    // G1::CPU::preprocessor(chA_data, chB_data, G1_DIGITISER_POINTS, mean_list, variance_list, cpu_inout);
+    G1::CPU::preprocessor(chA_data, chB_data, G1_DIGITISER_POINTS, mean_list, variance_list, cpu_inout);
 
     // cudaStream_t *stream_list = new cudaStream_t[G1::no_outputs];
     // for (int s(0); s < G1::no_outputs; s++){

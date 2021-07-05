@@ -20,31 +20,28 @@ class G1KernelCpuTest : public CppUnit::TestFixture {
 
     CPPUNIT_TEST_SUITE_END();
 private:
-    const int tau_points = 50;
+    const int tau_points = 200; // First 200 points analysed during tests
+    const int N = 262140; // Test files prepared with this many data points
 
-    short* chA_data = new short[G1_DIGITISER_POINTS];
-    short* chB_data = new short[G1_DIGITISER_POINTS];
+    short* chA_data = new short[N];
+    short* chB_data = new short[N];
     double** data_out = new double*[G1::no_outputs];
 
-    short *g1_test_data = new short[G1_DIGITISER_POINTS];
-    double *g1_expected_biased_normalisation = new double[G1_DIGITISER_POINTS];
-    double *g1_expected_unbiased_normalisation = new double[G1_DIGITISER_POINTS];
+    double *chA_g1_biased = new double[N]; double *chB_g1_biased = new double[N]; double *sq_g1_biased = new double[N];
+    double *chA_g1_unbiased = new double[N]; double *chB_g1_unbiased = new double[N]; double *sq_g1_unbiased = new double[N];
 
 public:
     void setUp() {
-        short *_aux_arr_1[1] = {g1_test_data};
-        load_arrays_from_file(_aux_arr_1, "./test/test_files/g1_test_data.txt", 1, G1_DIGITISER_POINTS);
-        for (int i(0); i < G1_DIGITISER_POINTS; i++) {
-            chA_data[i] = g1_test_data[i];
-            chB_data[i] = g1_test_data[i];
-        }
+        short *_aux_arr_1[2] = {chA_data, chB_data};
+        load_arrays_from_file(_aux_arr_1, "./test/test_files/g1_test_data.txt", 2, N);
 
-        double *_aux_arr_2[1] = {g1_expected_unbiased_normalisation};
-        load_arrays_from_file(_aux_arr_2, "./test/test_files/g1_expected_unbiased_normalisation.txt",
-                              1, G1_DIGITISER_POINTS);
-        _aux_arr_2[0] = {g1_expected_biased_normalisation};
+        double *_aux_arr_2[3] = {chA_g1_biased, chB_g1_biased, sq_g1_biased};
         load_arrays_from_file(_aux_arr_2, "./test/test_files/g1_expected_biased_normalisation.txt",
-                              1, G1_DIGITISER_POINTS);
+                              3, tau_points);
+
+        double *_aux_arr_3[3] = {chA_g1_unbiased, chB_g1_unbiased, sq_g1_unbiased};
+        load_arrays_from_file(_aux_arr_3, "./test/test_files/g1_expected_unbiased_normalisation.txt",
+                              3, tau_points);
 
         for (int i(0); i < G1::no_outputs; i++)
             data_out[i] = new double[tau_points]();
@@ -56,7 +53,9 @@ public:
         for (int i(0); i < G1::no_outputs; i++)
             delete[] data_out[i];
         delete[] data_out;
-        delete[] g1_expected_unbiased_normalisation;
+
+        delete[] chA_g1_biased; delete[] chB_g1_biased; delete[] sq_g1_biased;
+        delete[] chA_g1_unbiased; delete[] chB_g1_unbiased; delete[] sq_g1_unbiased;
     }
     void beforeEach() {
         for (int i(0); i < G1::no_outputs; i++) {
@@ -72,8 +71,16 @@ public:
 
         for (int tau(0); tau < tau_points; tau++) {
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
-                                                 g1_expected_unbiased_normalisation[tau],
+                                                 chA_g1_unbiased[tau],
                                                  data_out[CHAG1][tau],
+                                                 0.001);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
+                                                 chB_g1_unbiased[tau],
+                                                 data_out[CHBG1][tau],
+                                                 0.001);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
+                                                 sq_g1_unbiased[tau],
+                                                 data_out[SQG1][tau],
                                                  0.001);
         }
     }
@@ -85,7 +92,17 @@ public:
 
         for (int tau(0); tau < tau_points; tau++) {
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
-                                                 g1_expected_unbiased_normalisation[tau], data_out[CHAG1][tau], 0.001);
+                                                 chA_g1_unbiased[tau],
+                                                 data_out[CHAG1][tau],
+                                                 0.001);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
+                                                 chB_g1_unbiased[tau],
+                                                 data_out[CHBG1][tau],
+                                                 0.001);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
+                                                 sq_g1_unbiased[tau],
+                                                 data_out[SQG1][tau],
+                                                 0.001);
         }
     }
 
@@ -96,7 +113,17 @@ public:
 
         for (int tau(0); tau < tau_points; tau++) {
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
-                                                 g1_expected_biased_normalisation[tau], data_out[CHAG1][tau], 0.001);
+                                                 chA_g1_biased[tau],
+                                                 data_out[CHAG1][tau],
+                                                 0.001);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
+                                                 chB_g1_biased[tau],
+                                                 data_out[CHBG1][tau],
+                                                 0.001);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
+                                                 sq_g1_biased[tau],
+                                                 data_out[SQG1][tau],
+                                                 0.001);
         }
     }
 
@@ -119,16 +146,22 @@ public:
                                  data_out_local, aux_arrays,
                                  plans_forward, plans_backward);
         for (int tau(0); tau < tau_points; tau++) {
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
-                                                 g1_expected_biased_normalisation[tau],
-                                                 data_out_local[CHAG1][tau], 0.05);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
-                                                 g1_expected_biased_normalisation[tau],
-                                                 data_out_local[CHBG1][tau], 0.05);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("CHA Error on tau=" + std::to_string(tau),
+                                                 chA_g1_unbiased[tau],
+                                                 data_out_local[CHAG1][tau],
+                                                 0.001);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("CHB Error on tau=" + std::to_string(tau),
+                                                 chB_g1_unbiased[tau],
+                                                 data_out_local[CHBG1][tau],
+                                                 0.001);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("SQ Error on tau=" + std::to_string(tau),
+                                                 sq_g1_unbiased[tau],
+                                                 data_out_local[SQG1][tau],
+                                                 0.001);
         }
 
         // Post kernel
         G1::CPU::FFTW::g1_free_memory(data_out_local, aux_arrays, plans_forward, plans_backward);
     }
 };
-// CPPUNIT_TEST_SUITE_REGISTRATION( G1KernelCpuTest );
+CPPUNIT_TEST_SUITE_REGISTRATION( G1KernelCpuTest );

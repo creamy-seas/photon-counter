@@ -89,8 +89,8 @@ T warp_reduce_sum(T val) {
 }
 
 /**
- * Whereas `warp_reduce_sum` reduces for warpSize (32 threads) within a single warp
- * this function recues all 1024 (maximum) threads within a single block
+ * Whereas `warp_reduce_sum` reduces values in threads running in a single warp (32 threads)
+ * this function recues all 1024 threads (32 warps) within a single block
  */
 template <typename T>
 __inline__ __device__

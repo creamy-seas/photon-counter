@@ -18,34 +18,28 @@ class G1KernelGpuTest : public CppUnit::TestFixture {
 
     CPPUNIT_TEST_SUITE_END();
 private:
-    const int tau_points = 50;
+    const int tau_points = 200;
+
     short* chA_data = new short[G1_DIGITISER_POINTS];
     short* chB_data = new short[G1_DIGITISER_POINTS];
 
-    short *g1_test_data = new short[G1_DIGITISER_POINTS];
-    float *g1_expected_biased_normalisation = new float[G1_DIGITISER_POINTS];
-    float *g1_expected_unbiased_normalisation = new float[G1_DIGITISER_POINTS];
+    double *chA_g1 = new double[G1_DIGITISER_POINTS];
+    double *chB_g1 = new double[G1_DIGITISER_POINTS];
+    double *sq_g1 = new double[G1_DIGITISER_POINTS];
 
 public:
     void setUp() {
         // Auxillary arrays used to load in data from specific columns
-        short *_aux_arr_1[1] = {g1_test_data};
-        load_arrays_from_file(_aux_arr_1, "./test/test_files/g1_test_data.txt", 1, G1_DIGITISER_POINTS);
-        for (int i(0); i < G1_DIGITISER_POINTS; i++) {
-            chA_data[i] = g1_test_data[i];
-            chB_data[i] = g1_test_data[i];
-        }
+        short *_aux_arr_1[2] = {chA_data, chB_data};
+        load_arrays_from_file(_aux_arr_1, "./test/test_files/g1_test_data.txt", 2, G1_DIGITISER_POINTS);
 
-        float *_aux_arr_2[1] = {g1_expected_unbiased_normalisation};
-        load_arrays_from_file(_aux_arr_2, "./test/test_files/g1_expected_unbiased_normalisation.txt",
-                              1, G1_DIGITISER_POINTS);
-        _aux_arr_2[0] = {g1_expected_biased_normalisation};
+        double *_aux_arr_2[3] = {chA_g1, chB_g1, sq_g1};
         load_arrays_from_file(_aux_arr_2, "./test/test_files/g1_expected_biased_normalisation.txt",
-                              1, G1_DIGITISER_POINTS);
+                              3, tau_points);
     }
     void tearDown() {
         delete[] chA_data; delete[] chB_data;
-        delete[] g1_expected_unbiased_normalisation;
+        delete[] chA_g1; delete[]  chB_g1; delete[] sq_g1;
     }
 
     void test_g1_kernel() {
@@ -62,17 +56,21 @@ public:
                            plans_forward, plans_backward);
 
         for (int tau(0); tau < tau_points; tau++) {
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
-                                                 g1_expected_biased_normalisation[tau],
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("CHA Error on tau=" + std::to_string(tau),
+                                                 chA_g1[tau],
                                                  cpu_inout[CHAG1][tau],
                                                  0.05);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Error on tau=" + std::to_string(tau),
-                                                 g1_expected_biased_normalisation[tau],
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("CHB Error on tau=" + std::to_string(tau),
+                                                 chB_g1[tau],
                                                  cpu_inout[CHBG1][tau],
+                                                 0.05);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("SQ Error on tau=" + std::to_string(tau),
+                                                 sq_g1[tau],
+                                                 cpu_inout[SQG1][tau],
                                                  0.05);
         }
 
         G1::GPU::free_memory(gpu_inout, gpu_aux, cpu_inout);
     }
 };
-// CPPUNIT_TEST_SUITE_REGISTRATION( G1KernelGpuTest );
+CPPUNIT_TEST_SUITE_REGISTRATION( G1KernelGpuTest );
