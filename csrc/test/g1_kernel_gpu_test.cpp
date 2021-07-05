@@ -48,11 +48,13 @@ public:
         G1::GPU::g1_prepare_fftw_plan(plans_forward, plans_backward);
 
         // Allocation of memory
-        cufftReal **gpu_inout; cufftComplex **gpu_aux; float **cpu_inout;
-        G1::GPU::allocate_memory(gpu_inout, gpu_aux, cpu_inout);
+        short **gpu_raw_data; cufftReal **gpu_inout;
+        float **gpu_pp_aux; cufftComplex **gpu_fftw_aux; float *gpu_mean, *gpu_variance;
+        float **cpu_inout;
+        G1::GPU::allocate_memory(gpu_raw_data, gpu_inout, cpu_inout, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance);
 
         G1::GPU::g1_kernel(chA_data, chB_data,
-                           gpu_inout, gpu_aux, cpu_inout,
+                           gpu_inout, gpu_fftw_aux, cpu_inout,
                            plans_forward, plans_backward);
 
         for (int tau(0); tau < tau_points; tau++) {
@@ -70,7 +72,7 @@ public:
                                                  0.05);
         }
 
-        G1::GPU::free_memory(gpu_inout, gpu_aux, cpu_inout);
+        G1::GPU::free_memory(gpu_raw_data, gpu_inout, cpu_inout, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance);
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION( G1KernelGpuTest );

@@ -62,18 +62,6 @@ namespace G1 {
      * Use out-of-place mode (copy data to new arrays)
      */
     namespace GPU {
-
-        /**
-         * Prepare optimised plans for the FFTW transform on the GP
-         * Not all operations are supported on the GPU: https://docs.nvidia.com/cuda/cufft/index.html#fftw-supported-interface (such as dumping of wisdom files)
-         * @param plan_name base name under which to save the plans
-         * @param time_limit in seconds to run optimisation for
-         * @param no_threads to use for execution. For an 8 core system, 8 is best
-         *
-         * @returns 0 for success
-         */
-        int g1_prepare_fftw_plan(cufftHandle *&plans_forward, cufftHandle *&plans_backward);
-
         /**
          * Memory allocation is required for streamed copying and processing of data on GPU:
          * - `chA` and `chB` data is read into pinned CPU memory, so
@@ -88,37 +76,30 @@ namespace G1 {
          *     allocate_memory(&chA_data, &chB_data, &gpu_in, &gpu_out, &cpu_out, 2);
          *
          * @param chA_data, chB_data arrays to be populated by the digitiser. Pinned
-         * @param gpu_inout an array `[CHAG1, CHBG1, SQG1]`, where each index holds the address of the arrays on the GPU for reading data to/from GPU
-         * @param gpu_aux an array `[CHAG1, CHBG1, SQG1]`, where each index holds the address of the arrays on the GPU for intermediate operations.
-         * @param cpu_out an array `[CHAG1, CHBG1, SQG1]`, where each element accesses it's own array of pinned memory on CPU
-         * See https://docs.nvidia.com/cuda/cufft/index.html#multi-dimensional for dimensions to allocate
+         * @param gpu_raw_data arrays on GPU to copy over the raw chA and chB data
+         * @param gpu_inout array `[CHAG1, CHBG1, SQG1]`, where each index holds the address of the arrays on the GPU for reading data to/from GPU.
+         * @param gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance arrays arrays `[CHAG1, CHBG1, SQG1]` on the GPU for intermediate execution
+         * @param cpu_out array `[CHAG1, CHBG1, SQG1]`, where each element accesses it's own array of pinned memory on CPU
+         * SEE https://docs.nvidia.com/cuda/cufft/index.html#multi-dimensional for dimensions to allocate
          */
         void allocate_memory(
-            cufftReal **&gpu_inout, cufftComplex **&gpu_aux, float **&cpu_inout
+            short **&gpu_raw_data,
+            cufftReal **&gpu_inout,
+            float **&cpu_inout,
+            float **&gpu_pp_aux, cufftComplex **&gpu_fftw_aux, float *&gpu_mean, float *&gpu_variance,
+            int N=G1_DIGITISER_POINTS
             );
         void free_memory(
-            cufftReal **gpu_inout, cufftComplex **gpu_aux, float **cpu_inout
+            short **gpu_raw_data, cufftReal **gpu_inout, float **cpu_inout,
+            float **gpu_pp_aux, cufftComplex **gpu_fftw_aux, float *gpu_mean, float *gpu_variance
             );
 
-        /**
-         * @oaram normalised_data channel data `[CHAG1, CHBG1, SQG1]` that has been run through normalisation.
-         */
-        void g1_kernel(
-            short *chA_data, short *chB_data,
-            cufftReal **gpu_inout, cufftComplex **gpu_aux, float **cpu_inout,
-            cufftHandle *plans_forward, cufftHandle *plans_backward);
-
-        /**
-         * For evaluating correlation the data needs to undergo a normalisation by the average value.
-         * This preprocessor:
-         * - Apply normalisation
-         * - Evaluate mean
-         * - Evaluate variance
-         *
-         * Access the data using indicies CHAG1, CHBG1, SQG1.
-         */
-        const int pp_threads = 1024; ///< Threads used in reduction. Kernel ignores `threads > N`.
+        const int pp_threads = 1024; ///< Threads used in preprocessing. Kernel ignores `threads > N`.
         const int pp_shared_memory = (pp_threads + WARP_SIZE) / WARP_SIZE;
+        /**
+         * Evaluates the number of blockas the preprocessor must be run with, in ordero to process entires of length `N`.
+         */
+        unsigned long get_number_of_blocks(int N);
 
         /**
          * For evaluating correlation the data needs to undergo a normalisation by the average value.
@@ -127,14 +108,58 @@ namespace G1 {
          * - Evaluates mean
          * - Evaluates variance
          *
-         * Access the data using indicies CHAG1, CHBG1, SQG1.
+         * Access the `normalised_data` using indicies CHAG1, CHBG1, SQG1.
+         * @param N size of the inputs
+         * @param chA, chB raw data from digitiser
+         * @param gpu_raw_data memory allocated on GPU for copying of input data.
+         * @param gpu_normalised memory on GPU that keeps hold of the preprocessed data. Will be used in the g1_kernel.
+         * @param gpu_pp_auxm, gpu_mean, gpu_variance, auxillary memory allocated on GPU for processing.
+         * @param mean_list, variance_list, normalised_data arrays on CPU where mean and variance and normalisation are copied
          * @tparam T `float` or `double`
          */
         template <typename T>
         void preprocessor(
             int N, short *chA, short *chB,
-            T *mean_list, T *variance_list,
-            T **normalised_data);
+            short **gpu_raw_data, T **gpu_normalised,
+            T **gpu_pp_aux, T *gpu_mean, T *gpu_variance,
+            T *mean_list, T *variance_list, T **normalised_data);
+        /**
+         * For evaluating correlation the data needs to undergo a normalisation by the average value.
+         * This preprocessor:
+         * - Applies normalisation
+         * - Evaluates mean
+         * - Evaluates variance
+         * **Data is not copied back CPU - reuse the GPU arrays in the main straight away, without copying to and fro**
+         *
+         * Access the `normalised_data` using indicies CHAG1, CHBG1, SQG1.
+         * @param N size of the inputs
+         * @param chA, chB raw data from digitiser
+         * @tparam T `float` or `double`
+         */
+        template <typename T>
+        void preprocessor(int N,
+                          short *chA_data, short *chB_data,
+                          short **gpu_raw_data, T **gpu_normalised,
+                          T **gpu_pp_aux, T *gpu_mean, T *gpu_variance);
+
+        /**
+         * Prepare optimised plans for the FFTW transform on the GP
+         * Not all operations are supported on the GPU: https://docs.nvidia.com/cuda/cufft/index.html#fftw-supported-interface (such as dumping of wisdom files)
+         * @param plan_name base name under which to save the plans
+         * @param time_limit in seconds to run optimisation for
+         * @param no_threads to use for execution. For an 8 core system, 8 is best
+         *
+         * @returns 0 for success
+         */
+        int g1_prepare_fftw_plan(cufftHandle *&plans_forward, cufftHandle *&plans_backward);
+
+        /**
+         * @param normalised_data channel data `[CHAG1, CHBG1, SQG1]` that has been run through normalisation.
+         */
+        void g1_kernel(
+            short *chA_data, short *chB_data,
+            cufftReal **gpu_inout, cufftComplex **gpu_fftw_aux, float **cpu_inout,
+            cufftHandle *plans_forward, cufftHandle *plans_backward);
     }
 
     namespace CPU {

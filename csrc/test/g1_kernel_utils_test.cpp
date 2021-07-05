@@ -13,7 +13,7 @@ class G1KernelUtilsTest : public CppUnit::TestFixture {
     // Population with tests
     // CPPUNIT_TEST_EXCEPTION( 🐙, CppUnit::Exception );
     CPPUNIT_TEST( test_on_cpu );
-    // CPPUNIT_TEST( test_on_gpu );
+    CPPUNIT_TEST( test_on_gpu );
 
     CPPUNIT_TEST_SUITE_END();
 
@@ -85,9 +85,18 @@ public:
         normalised_data[CHBG1] = chB_normalised;
         normalised_data[SQG1] = sq_normalised;
 
+        // Allocation of memory
+        short **gpu_raw_data; cufftReal **gpu_inout;
+        float **gpu_pp_aux; cufftComplex **gpu_fftw_aux; float *gpu_mean, *gpu_variance;
+        float **cpu_inout;
+        G1::GPU::allocate_memory(gpu_raw_data, gpu_inout, cpu_inout, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance);
+
         G1::check_g1_kernel_parameters(false);
         G1::GPU::preprocessor(
-            N, chA_data, chB_data, mean_list, variance_list, normalised_data);
+            N, chA_data, chB_data,
+            gpu_raw_data, reinterpret_cast<float**>(gpu_inout),
+            gpu_pp_aux, gpu_mean, gpu_variance,
+            mean_list, variance_list, normalised_data);
 
         // 1% tolerance
         for (int i(0); i < 3; i++) {
@@ -105,6 +114,7 @@ public:
                 normalised_data[SQG1][i], 0.01 * expected_mean[SQG1]);
         }
 
+        G1::GPU::free_memory(gpu_raw_data, gpu_inout, cpu_inout, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance);
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION( G1KernelUtilsTest );

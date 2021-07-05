@@ -370,7 +370,7 @@ public:
 class G1Kernel_GPU : public celero::TestFixture {
 public:
     cufftHandle *plans_forward; cufftHandle *plans_backward;
-    cufftReal **gpu_inout; cufftComplex **gpu_aux; float **cpu_inout;
+    cufftReal **gpu_inout; cufftComplex **gpu_fftw_aux; float **cpu_inout;
 
     short* chA_data = new short[G1_DIGITISER_POINTS]();
     short* chB_data = new short[G1_DIGITISER_POINTS]();
@@ -378,7 +378,7 @@ public:
     void setUp(__attribute__ ((unused)) const celero::TestFixture::ExperimentValue& x) override {
 
         G1::GPU::g1_prepare_fftw_plan(plans_forward, plans_backward);
-        G1::GPU::allocate_memory(gpu_inout, gpu_aux, cpu_inout);
+        G1::GPU::allocate_memory(gpu_inout, gpu_fftw_aux, cpu_inout);
 
         std::srand(std::time(0));
         for (int i(0); i < G1_DIGITISER_POINTS; i++) {
@@ -391,7 +391,7 @@ public:
     };
 
     void tearDown() override {
-        G1::GPU::free_memory(gpu_inout, gpu_aux, cpu_inout);
+        G1::GPU::free_memory(gpu_inout, gpu_fftw_aux, cpu_inout);
     };
 };
 
@@ -455,5 +455,5 @@ BENCHMARK_F(G1, GPU, G1Kernel_GPU, 0, 0)
 {
     G1::GPU::g1_kernel(
         chA_data, chB_data,
-        gpu_inout, gpu_aux, cpu_inout, plans_forward, plans_backward);
+        gpu_inout, gpu_fftw_aux, cpu_inout, plans_forward, plans_backward);
 }

@@ -41,7 +41,7 @@ static __global__ void fftw_square(cufftComplex *fourier_transform, float normal
 
 void G1::GPU::g1_kernel(
     short *chA_data, short *chB_data,
-    cufftReal **gpu_inout, cufftComplex **gpu_aux, float **cpu_inout,
+    cufftReal **gpu_inout, cufftComplex **gpu_fftw_aux, float **cpu_inout,
     cufftHandle *plans_forward, cufftHandle *plans_backward){
 
     // Normalise input arrays
@@ -68,14 +68,14 @@ void G1::GPU::g1_kernel(
         CUDA_CHECK(
             cufftExecR2C(
                 plans_forward[i],
-                gpu_inout[i], gpu_aux[i]),
+                gpu_inout[i], gpu_fftw_aux[i]),
             "G1 Kernel: Failed forward transform.");
         fftw_square<<<(unsigned long long)G1_DIGITISER_POINTS / 1024 + 1,1024>>>(
-            gpu_aux[i],
+            gpu_fftw_aux[i],
             (long)G1_DIGITISER_POINTS * G1_DIGITISER_POINTS * variance_list[i]);
         CUDA_CHECK(
             cufftExecC2R(
-                plans_backward[i], gpu_aux[i], gpu_inout[i]),
+                plans_backward[i], gpu_fftw_aux[i], gpu_inout[i]),
             "G1 Kernel: Failed backward transform."
             );
         CUDA_CHECK(
