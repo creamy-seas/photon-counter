@@ -21,19 +21,18 @@ class G1KernelCpuTest : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE_END();
 private:
     const int tau_points = 200; // First 200 points analysed during tests
-    const int N = 262140; // Test files prepared with this many data points
 
-    short* chA_data = new short[N];
-    short* chB_data = new short[N];
+    short* chA_data = new short[G1_DIGITISER_POINTS];
+    short* chB_data = new short[G1_DIGITISER_POINTS];
     double** data_out = new double*[G1::no_outputs];
 
-    double *chA_g1_biased = new double[N]; double *chB_g1_biased = new double[N]; double *sq_g1_biased = new double[N];
-    double *chA_g1_unbiased = new double[N]; double *chB_g1_unbiased = new double[N]; double *sq_g1_unbiased = new double[N];
+    double *chA_g1_biased = new double[G1_DIGITISER_POINTS]; double *chB_g1_biased = new double[G1_DIGITISER_POINTS]; double *sq_g1_biased = new double[G1_DIGITISER_POINTS];
+    double *chA_g1_unbiased = new double[G1_DIGITISER_POINTS]; double *chB_g1_unbiased = new double[G1_DIGITISER_POINTS]; double *sq_g1_unbiased = new double[G1_DIGITISER_POINTS];
 
 public:
     void setUp() {
         short *_aux_arr_1[2] = {chA_data, chB_data};
-        load_arrays_from_file(_aux_arr_1, "./test/test_files/g1_test_data.txt", 2, N);
+        load_arrays_from_file(_aux_arr_1, "./test/test_files/g1_test_data.txt", 2, G1_DIGITISER_POINTS);
 
         double *_aux_arr_2[3] = {chA_g1_biased, chB_g1_biased, sq_g1_biased};
         load_arrays_from_file(_aux_arr_2, "./test/test_files/g1_expected_biased_normalisation.txt",
@@ -164,4 +163,4 @@ public:
         G1::CPU::FFTW::g1_free_memory(data_out_local, aux_arrays, plans_forward, plans_backward);
     }
 };
-CPPUNIT_TEST_SUITE_REGISTRATION( G1KernelCpuTest );
+// CPPUNIT_TEST_SUITE_REGISTRATION( G1KernelCpuTest );

@@ -15,8 +15,7 @@
 #include <stdio.h>
 #include <helper_cuda.h> // for CUDA_CHECK
 
-// TODO: remove
-#include <iostream>
+#include <iostream> // TODO: remove
 
 #include "logging.hpp"
 #include "g1_kernel.hpp"
@@ -132,29 +131,32 @@ T block_reduce_sum(T val) {
  */
 template <typename Tin, typename Tout>
 __global__ void reduction_kernel(
-    Tin *gpu_in_chA, Tin *gpu_in_chB,
+    Tin *gpu_in_chA, Tin *gpu_in_chB, Tin *gpu_in_sq,
     Tout *gpu_out,
     unsigned int N,
     Tout normalisation
     ) {
 
-    Tout chA_sum(0), chB_sum(0);//, sq_sum(0);
+    Tout chA_sum(0), chB_sum(0), sq_sum(0);
     // Copy over input data to `sum` that is local to this thread.
     for (int tidx = blockIdx.x * blockDim.x + threadIdx.x;
          tidx < N;
          tidx += blockDim.x * gridDim.x) {
         chA_sum += (Tout)gpu_in_chA[tidx];
         chB_sum += (Tout)gpu_in_chB[tidx];
+        sq_sum += (Tout)gpu_in_sq[tidx];
     }
 
     // Perform reduction
     chA_sum = block_reduce_sum<Tout>(chA_sum);
     chB_sum = block_reduce_sum<Tout>(chB_sum);
+    sq_sum = block_reduce_sum<Tout>(sq_sum);
 
     // With the value reduced in the first thread, normalise and output
     if (threadIdx.x == 0) {
         gpu_out[CHAG1] = chA_sum / normalisation;
         gpu_out[CHBG1] = chB_sum / normalisation;
+        gpu_out[SQG1] = sq_sum / normalisation;
     }
 }
 
@@ -167,27 +169,34 @@ __global__ void reduction_kernel(
 template <typename Tin, typename Tout>
 __global__ void mean_kernel(
     Tin *gpu_in_chA, Tin *gpu_in_chB,
-    Tout *gpu_out_chA, Tout *gpu_out_chB,
+    Tout *gpu_out_chA, Tout *gpu_out_chB, Tout *gpu_out_sq,
     unsigned int N
     ) {
 
-    Tout chA_sum(0), chB_sum(0);//, sq_sum(0);
+    Tout chA_sum(0), chB_sum(0), sq_sum(0);
+    Tout _chA, _chB;
     // Copy over input data to `sum` that is local to this thread.
     for (int tidx = blockIdx.x * blockDim.x + threadIdx.x;
          tidx < N;
          tidx += blockDim.x * gridDim.x) {
-        chA_sum += (Tout)gpu_in_chA[tidx];
-        chB_sum += (Tout)gpu_in_chB[tidx];
+        _chA = (Tout)gpu_in_chA[tidx];
+        _chB = (Tout)gpu_in_chB[tidx];
+
+        chA_sum += _chA;
+        chB_sum += _chB;
+        sq_sum += _chA * _chA + _chB * _chB;
     }
 
     // Perform reduction
     chA_sum = block_reduce_sum<Tout>(chA_sum);
     chB_sum = block_reduce_sum<Tout>(chB_sum);
+    sq_sum = block_reduce_sum<Tout>(sq_sum);
 
     // With the value reduced in the first thread, normalise and output
     if (threadIdx.x == 0) {
         gpu_out_chA[blockIdx.x] = chA_sum;
         gpu_out_chB[blockIdx.x] = chB_sum;
+        gpu_out_sq[blockIdx.x] = sq_sum;
     }
 }
 
@@ -200,34 +209,43 @@ __global__ void mean_kernel(
 template <typename Tin, typename Tout>
 __global__ void variance_and_normalisation_kernel(
     Tin *gpu_in_chA, Tin *gpu_in_chB,
-    Tout *gpu_out_chA, Tout *gpu_out_chB,
-    Tout *gpu_normalised_chA, Tout *gpu_normalised_chB,
+    Tout *gpu_out_chA, Tout *gpu_out_chB, Tout *gpu_out_sq,
+    Tout *gpu_normalised_chA, Tout *gpu_normalised_chB, Tout *gpu_normalised_sq,
     Tout *gpu_mean_list,
     unsigned int N
     ) {
 
-    Tout chA_sum(0), chB_sum(0);//, sq_sum(0);
+    Tout chA_sum(0), chB_sum(0), sq_sum(0);
+    Tout _chA, _chB;
 
     // Normalise by the mean and seed the `sum` for this thread
     // in order to sum up the square differences for evaluation of the variance.
     for (int tidx = blockIdx.x * blockDim.x + threadIdx.x;
          tidx < N;
          tidx += blockDim.x * gridDim.x) {
-        gpu_normalised_chA[tidx] = (Tout)gpu_in_chA[tidx] - gpu_mean_list[CHAG1];
-        gpu_normalised_chB[tidx] = (Tout)gpu_in_chB[tidx] - gpu_mean_list[CHBG1];
+
+        _chA = (Tout)gpu_in_chA[tidx];
+        _chB = (Tout)gpu_in_chB[tidx];
+
+        gpu_normalised_chA[tidx] = _chA - gpu_mean_list[CHAG1];
+        gpu_normalised_chB[tidx] = _chB - gpu_mean_list[CHBG1];
+        gpu_normalised_sq[tidx] = _chA * _chA + _chB * _chB - gpu_mean_list[SQG1];
 
         chA_sum += gpu_normalised_chA[tidx] * gpu_normalised_chA[tidx];
         chB_sum += gpu_normalised_chB[tidx] * gpu_normalised_chB[tidx];
+        sq_sum += gpu_normalised_sq[tidx] * gpu_normalised_sq[tidx];
     }
 
     // Perform reduction
     chA_sum = block_reduce_sum<Tout>(chA_sum);
     chB_sum = block_reduce_sum<Tout>(chB_sum);
+    sq_sum = block_reduce_sum<Tout>(sq_sum);
 
     // With the value reduced in the first thread, normalise and output
     if (threadIdx.x == 0){
         gpu_out_chA[blockIdx.x] = chA_sum;
         gpu_out_chB[blockIdx.x] = chB_sum;
+        gpu_out_sq[blockIdx.x] = sq_sum;
     }
 }
 
@@ -240,16 +258,18 @@ void G1::GPU::preprocessor(int N,
 
     int success = 0;
     short *gpu_in_chA, *gpu_in_chB;
-    T *gpu_out_chA, *gpu_out_chB;
-    T *gpu_normalised_chA, *gpu_normalised_chB;
+    T *gpu_chA, *gpu_chB, *gpu_sq;
+    T *gpu_normalised_chA, *gpu_normalised_chB, *gpu_normalised_sq;
     T *gpu_mean_list; T *gpu_variance_list;
 
     success += cudaMalloc(reinterpret_cast<void**>(&gpu_in_chA), N * sizeof(short));
     success += cudaMalloc(reinterpret_cast<void**>(&gpu_in_chB), N * sizeof(short));
-    success += cudaMalloc(reinterpret_cast<void**>(&gpu_out_chA), blocks * sizeof(T));
-    success += cudaMalloc(reinterpret_cast<void**>(&gpu_out_chB), blocks * sizeof(T));
+    success += cudaMalloc(reinterpret_cast<void**>(&gpu_chA), blocks * sizeof(T));
+    success += cudaMalloc(reinterpret_cast<void**>(&gpu_chB), blocks * sizeof(T));
+    success += cudaMalloc(reinterpret_cast<void**>(&gpu_sq), blocks * sizeof(T));
     success += cudaMalloc(reinterpret_cast<void**>(&gpu_normalised_chA), N * sizeof(T));
     success += cudaMalloc(reinterpret_cast<void**>(&gpu_normalised_chB), N * sizeof(T));
+    success += cudaMalloc(reinterpret_cast<void**>(&gpu_normalised_sq), N * sizeof(T));
     success += cudaMalloc(reinterpret_cast<void**>(&gpu_mean_list), G1::no_outputs * sizeof(T));
     success += cudaMalloc(reinterpret_cast<void**>(&gpu_variance_list), G1::no_outputs * sizeof(T));
     if (success != 0) FAIL("Failed memory allocation");
@@ -261,18 +281,21 @@ void G1::GPU::preprocessor(int N,
     // Evaluation of mean
     mean_kernel
         <<<blocks, G1::GPU::pp_threads, G1::GPU::pp_shared_memory>>>
-        (gpu_in_chA, gpu_in_chB, gpu_out_chA, gpu_out_chB, N);
+        (gpu_in_chA, gpu_in_chB, gpu_chA, gpu_chB, gpu_sq, N);
     reduction_kernel
         <<<1, G1::GPU::pp_threads, G1::GPU::pp_shared_memory>>>
-        (gpu_out_chA, gpu_out_chB, gpu_mean_list, blocks, (T)N);
+        (gpu_chA, gpu_chB, gpu_sq, gpu_mean_list, blocks, (T)N);
 
     // Evaluation of variance and normalisation
     variance_and_normalisation_kernel
         <<<blocks, G1::GPU::pp_threads, G1::GPU::pp_shared_memory>>>
-        (gpu_in_chA, gpu_in_chB, gpu_out_chA, gpu_out_chB, gpu_normalised_chA, gpu_normalised_chB, gpu_mean_list, N);
+        (gpu_in_chA, gpu_in_chB,
+         gpu_chA, gpu_chB, gpu_sq,
+         gpu_normalised_chA, gpu_normalised_chB, gpu_normalised_sq,
+         gpu_mean_list, N);
     reduction_kernel
         <<<1, G1::GPU::pp_threads, G1::GPU::pp_shared_memory>>>
-        (gpu_out_chA, gpu_out_chB, gpu_variance_list, blocks, (T)N);
+        (gpu_chA, gpu_chB, gpu_sq, gpu_variance_list, blocks, (T)N);
 
     cudaMemcpy(mean_list, gpu_mean_list, G1::no_outputs * sizeof(T), cudaMemcpyDeviceToHost);
     cudaMemcpy(variance_list, gpu_variance_list, G1::no_outputs * sizeof(T), cudaMemcpyDeviceToHost);
