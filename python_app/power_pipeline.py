@@ -178,20 +178,7 @@ class PowerPipeline:
                 if run_number != plotted_run:
                     plotted_run = run_number
                     data = np.transpose(np.loadtxt(filename))
-                    for ch in ["CHA", "CHB", "CHASQ", "CHBSQ", "SQ"]:
-                        self.plot_dict[ch]["plot"].set_ydata(
-                            data[self.plot_dict[ch]["idx"]]
-                        )
-                        self.ax[self.plot_dict[ch]["ax"]].relim()
-                        self.ax[self.plot_dict[ch]["ax"]].autoscale_view()
-
-                    self.fig.suptitle(f"Run {plotted_run}/{NO_RUNS}")
-                    if self.ipython:
-                        self.fig.canvas.draw()
-                    else:
-                        plt.pause(0.1)
-                        plt.draw()  # non-blocking drawing
-
+                    self.update_plot(data, plotted_run, NO_RUNS)
                     progress_bar.update()
 
             if not cpp_thread.is_alive():
@@ -200,9 +187,30 @@ class PowerPipeline:
                 library_manager.try_to_read_log_file()
                 break
 
+        self.update_plot(np.transpose(np.loadtxt(plot_trigger.filename)), NO_RUNS, NO_RUNS)
         result_file = f"{self.STORE_FOLDER}/{run_name}.csv"
         shutil.copyfile(filename, result_file)
         self.log(f"Measurements done -> data dumped to {result_file}")
+
+    def update_plot(self, data: np.array, run: int, NO_RUNS):
+        """
+        Using the supplied plotting handles and parameters, update the plot
+        """
+
+        for ch in ["CHA", "CHB", "CHASQ", "CHBSQ", "SQ"]:
+            self.plot_dict[ch]["plot"].set_ydata(
+                data[self.plot_dict[ch]["idx"]]
+            )
+            self.ax[self.plot_dict[ch]["ax"]].relim()
+            self.ax[self.plot_dict[ch]["ax"]].autoscale_view()
+
+        self.fig.suptitle(f"Run {run}/{NO_RUNS}")
+        if self.ipython:
+            self.fig.canvas.draw()
+        else:
+            plt.pause(0.1)
+            plt.draw()  # non-blocking drawing
+
 
     @classmethod
     def prepare_plot_trigger(cls):
