@@ -120,7 +120,7 @@ class PowerKernelGPUBaseFixture : public PowerKernelFixture {
 public:
     short *chA_data_locked;
     short *chB_data_locked;
-    short ***gpu_in; long ***gpu_out; long ***cpu_inout;
+    short ***gpu_in; long ***gpu_out; long ***cpu_out;
 
     // Deriving classes will define number of streams used
     int no_streams;
@@ -139,7 +139,7 @@ public:
 
         // Allocate memory
         POWER::GPU::allocate_memory(&chA_data_locked, &chB_data_locked,
-                                    &gpu_in, &gpu_out, &cpu_inout, no_streams);
+                                    &gpu_in, &gpu_out, &cpu_out, no_streams);
         // Copy over test input data to the locked memory
         for (int i(0); i < SP_POINTS; i++) {
             chA_data_locked[i] = chA_data[i];
@@ -150,7 +150,7 @@ public:
     void tearDown() override {
         PowerKernelFixture::tearDown();
         POWER::GPU::free_memory(chA_data_locked, chB_data_locked,
-                                gpu_in, gpu_out, cpu_inout, no_streams);
+                                gpu_in, gpu_out, cpu_out, no_streams);
     };
 };
 
@@ -193,13 +193,13 @@ public:
 //     POWER::GPU::power_kernel(
 //         chA_data_locked, chB_data_locked,
 //         data_out,
-//         gpu_in, gpu_out, cpu_inout, no_streams);
+//         gpu_in, gpu_out, cpu_out, no_streams);
 // }
 // BENCHMARK_F(POWER, GPU_2ST, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
 //     POWER::GPU::power_kernel(
 //         chA_data_locked, chB_data_locked,
 //         data_out,
-//         gpu_in, gpu_out, cpu_inout, no_streams);
+//         gpu_in, gpu_out, cpu_out, no_streams);
 //     dump_arrays_to_file(data_out, 5, SP_POINTS,
 //                         "./dump/bench-example.txt",
 //                         "#CHA\tCHB\tCHASQ\tCHBSQ\tSQ",
@@ -210,13 +210,13 @@ public:
 //     POWER::GPU::power_kernel(
 //         chA_data_locked, chB_data_locked,
 //         data_out,
-//         gpu_in, gpu_out, cpu_inout, no_streams);
+//         gpu_in, gpu_out, cpu_out, no_streams);
 // }
 // BENCHMARK_F(POWER, GPU_16ST, PowerKernelGPU16StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
 //     POWER::GPU::power_kernel(
 //         chA_data_locked, chB_data_locked,
 //         data_out,
-//         gpu_in, gpu_out, cpu_inout, no_streams);
+//         gpu_in, gpu_out, cpu_out, no_streams);
 // }
 // BENCHMARK_F(POWER, FILE_WRITTING, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
 //     dump_arrays_to_file(data_out, 5, SP_POINTS,
@@ -226,7 +226,7 @@ public:
 // BENCHMARK_F(POWER, PROCESSING, PowerKernelGPU2StreamFixture, SAMPLES, ITERATIONS_PER_SAMPLE) {
 //     process_digitiser_data(chA_data_locked, chB_data_locked,
 //                            data_out,
-//                            gpu_in, gpu_out, cpu_inout, no_streams,
+//                            gpu_in, gpu_out, cpu_out, no_streams,
 //                            1, "./dump/bench_processing-example");
 // }
 
@@ -376,17 +376,14 @@ public:
 class G1_GPU : public celero::TestFixture {
 public:
     cufftHandle *plans_forward; cufftHandle *plans_backward;
-    short **gpu_raw_data; cufftReal **gpu_inout;
-    float **gpu_pp_aux; cufftComplex **gpu_fftw_aux; float *gpu_mean, *gpu_variance;
-    float **cpu_inout;
-
+    G1::GPU::g1_memory memory;
     short* chA_data = new short[G1_DIGITISER_POINTS]();
     short* chB_data = new short[G1_DIGITISER_POINTS]();
 
     void setUp(__attribute__ ((unused)) const celero::TestFixture::ExperimentValue& x) override {
 
         G1::GPU::g1_prepare_fftw_plan(plans_forward, plans_backward);
-        G1::GPU::allocate_memory(gpu_raw_data, gpu_inout, cpu_inout, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance);
+        memory = G1::GPU::allocate_memory();
 
         std::srand(std::time(0));
         for (int i(0); i < G1_DIGITISER_POINTS; i++) {
@@ -399,7 +396,7 @@ public:
     };
 
     void tearDown() override {
-        G1::GPU::free_memory(gpu_raw_data, gpu_inout, cpu_inout, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance);
+        G1::GPU::free_memory(memory);
     };
 };
 
@@ -467,14 +464,13 @@ BENCHMARK_F(G1, CPU_PREPROCESSOR, G1Kernel_CPU_DIRECT, 0, 0)
 BENCHMARK_F(G1, GPU_FFTW, G1_GPU, 0, 0)
 {
     G1::GPU::g1_kernel(chA_data, chB_data,
-                       gpu_inout, cpu_inout,
-                       gpu_raw_data, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance,
+                       memory,
                        plans_forward, plans_backward);
 }
 BENCHMARK_F(G1, GPU_PREPROCESSOR, G1_GPU, 0, 0)
 {
     G1::GPU::preprocessor(
         G1_DIGITISER_POINTS, chA_data, chB_data,
-        gpu_raw_data, reinterpret_cast<float**>(gpu_inout),
-        gpu_pp_aux, gpu_mean, gpu_variance);
+        memory.gpu_raw_data, reinterpret_cast<float**>(memory.gpu_inout),
+        memory.gpu_pp_aux, memory.gpu_mean, memory.gpu_variance);
 }

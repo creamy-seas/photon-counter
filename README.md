@@ -26,9 +26,12 @@ Overview {#mainpage}
 |                           | 🏆 Compile + Run + Load latest log file and plot | 🏆 2 threads (read, process) dumping to rotating logs |
 |                           |                                                  |                                                       |
 | **G1 Kernel**             |                                                  | `g1_kernel.hpp`                                       |
-|                           |                                                  | 🏆 `g1_prepare_fftw_plan` to optimise FFTW transform  |
 |                           |                                                  | 🏆 Kernel to process single record of data            |
-|                           |                                                  | *TODO GPU implementation*                             |
+|                           | `g1_pipeline.py`                                   | `g1_pipeline.hpp`                                     |
+|                           |                                                  | 🏆 2 threads (read, process) dumping to rotating logs |
+| **G2 Kernel**             |                                                  | `g2_kernel.hpp`                                       |
+|                           |                                                  | TODO                                                  |
+
 
 # Colours #
 

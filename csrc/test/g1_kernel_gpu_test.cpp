@@ -46,34 +46,27 @@ public:
         // Create plans
         cufftHandle *plans_forward(0); cufftHandle *plans_backward(0);
         G1::GPU::g1_prepare_fftw_plan(plans_forward, plans_backward);
-
-        // Allocation of memory
-        short **gpu_raw_data; cufftReal **gpu_inout;
-        float **gpu_pp_aux; cufftComplex **gpu_fftw_aux; float *gpu_mean, *gpu_variance;
-        float **cpu_inout;
-        G1::GPU::allocate_memory(gpu_raw_data, gpu_inout, cpu_inout, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance);
+        G1::GPU::g1_memory memory = G1::GPU::allocate_memory();
 
         G1::GPU::g1_kernel(chA_data, chB_data,
-                           gpu_inout, cpu_inout,
-                           gpu_raw_data, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance,
+                           memory,
                            plans_forward, plans_backward);
 
         for (int tau(0); tau < tau_points; tau++) {
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("CHA Error on tau=" + std::to_string(tau),
                                                  chA_g1[tau],
-                                                 cpu_inout[CHAG1][tau],
+                                                 memory.cpu_out[CHAG1][tau],
                                                  0.05);
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("CHB Error on tau=" + std::to_string(tau),
                                                  chB_g1[tau],
-                                                 cpu_inout[CHBG1][tau],
+                                                 memory.cpu_out[CHBG1][tau],
                                                  0.05);
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("SQ Error on tau=" + std::to_string(tau),
                                                  sq_g1[tau],
-                                                 cpu_inout[SQG1][tau],
+                                                 memory.cpu_out[SQG1][tau],
                                                  0.05);
         }
-
-        G1::GPU::free_memory(gpu_raw_data, gpu_inout, cpu_inout, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance);
+        G1::GPU::free_memory(memory);
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION( G1KernelGpuTest );

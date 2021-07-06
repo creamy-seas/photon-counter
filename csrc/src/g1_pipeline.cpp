@@ -1,78 +1,111 @@
+#include <thread> // for std::thread
+#include "ADQAPI.h" // For MultiRecordSetup and MultiRecordClose
+#include <string>
+
 #include "logging.hpp"
 #include "sp_digitiser.hpp"
 #include "g1_kernel.hpp"
+#include "g1_pipeline.hpp"
+#include "utils.hpp"
 
-// int run_power_measurements(void* adq_cu_ptr,
-//                            short* chA_background, short* chB_background,
-//                            unsigned long no_runs, char* base_filename){
-//     const int no_threads = 3;
+/**
+ * \copy POWER::GPU::power_kernel
+ *
+ * Evaluates the following from chA_data and chB_data data
+ * - \f[ \left\langle{chA_data}\right\rangle \f]
+ * - \f[ \left\langle{chB_data}\right\rangle \f]
+ * - \f[ \left\langle{chA_data^2}\right\rangle \f]
+ * - \f[ \left\langle{chB_data^2}\right\rangle \f]
+ * - \f[ \left\langle{chA_data^2 + chB_data^2}\right\rangle \f]
+ *
+ * Data is dumped to a file using log rotation format.
+ *
+ * @param chA_data, chB_data data from the digitiser. Must be of length `SP_POINTS * R_POINTS`.
+ * @param cumulative cumulative array which will be incremented with the power kernel outputs
+ * @param run cumulative data is normalised by the number runs completed. This also specifies the unique log rotate command
+ * @param base_filename Used to ctonar data is dumped so that Python can plot it.
+ */
+void process_digitiser_data(
+    short *chA_data, short *chB_data, float **cumulative,
+    G1::GPU::g1_memory memory,
+    cufftHandle *plans_forward, cufftHandle *plans_backward,
+    unsigned long run, std::string base_filename){
 
-//     PYTHON_START;
+    G1::GPU::g1_kernel(
+        chA_data, chB_data,
+        memory,
+        plans_forward, plans_backward);
 
-//     G1::check_g1_kernel_parameters(false);
+    dump_arrays_to_file(
+        memory.cpu_out, cumulative,
+        G1::no_outputs,
+        100,
+        base_filename + std::to_string(run % LOG_ROTATE) + ".csv",
+        "# Run " + std::to_string(run) +  "\n# CHAG1\tCHBG1\tSQG1",
+        (double)run
+        );
+};
 
-//     // 1. Allocation of memory
-//     // There will be 3 copies of chA_data and chB_data.
-//     // One thread can be reading into one pair (chA, chB),
-//     // One thread will be preprocessing one pair (chA, chB)
-//     // Other thread will be evaluating the correlatio (chA, chB)
-//     short** chA_data = new short*[no_threads]();
-//     short** chB_data = new short*[no_threads]();
-//     double*** data_out = new long**[POWER::no_outputs];
-//     for (int i(0); i < POWER::no_outputs; i++)
-//         data_out[i] = new long[SP_POINTS]();
+int run_g1_measurements(void* adq_cu_ptr,
+                        unsigned long no_runs, char* base_filename){
+    const int no_threads = 2;
 
-//     // 2. Prepare for multirecord mode
-//     ADQ214_MultiRecordSetup(adq_cu_ptr, 1, R_POINTS, SP_POINTS);
+    PYTHON_START;
 
-//     // 3. Copy background data onto GPU
-//     POWER::GPU::copy_background_arrays_to_gpu(chA_background, chB_background);
+    G1::check_g1_kernel_parameters(false);
 
-//     // 4. Launch 2 parrallel threads, alternating between fetching from digitiser and processing on GPU.
-//     std::thread thread_list[NO_THREADS];
-//     int dth(0), pth(1); // flip-floppers between 0 and 1. DigitizerTHread and ProcessingTHread
+    cufftHandle *plans_forward(0); cufftHandle *plans_backward(0);
+    G1::GPU::g1_prepare_fftw_plan(plans_forward, plans_backward);
 
-//     // Initial read into digitiser
-//     fetch_digitiser_data(adq_cu_ptr, chA_data[dth], chB_data[dth], SP_POINTS, R_POINTS);
-//     for (unsigned long r(1); r < no_runs; r++) {
-//         // XOR to switch 0 <-> 1
-//         dth ^= 1; pth ^= 1;
+    // Allocation of memory
+    G1::GPU::g1_memory memory = G1::GPU::allocate_memory();
 
-//         thread_list[0] = std::thread(fetch_digitiser_data,
-//                                      adq_cu_ptr,
-//                                      chA_data[dth], chB_data[dth],
-//                                      SP_POINTS, R_POINTS);
+    // There will be 2 copies of chA_data and chB_data.
+    // One thread can be reading into one pair (chA, chB),
+    // Other thread will be evaluating the correlatio (chA, chB)
+    short** chA_data = new short*[no_threads]();
+    short** chB_data = new short*[no_threads]();
+    float** cumulative = new float*[G1::no_outputs];
+    for (int i(0); i < G1::no_outputs; i++)
+        cumulative[i] = new float[SP_POINTS]();
 
-//         thread_list[1] = std::thread(process_digitiser_data,
-//                                      chA_data[pth], chB_data[pth],
-//                                      data_out,
-//                                      gpu_in, gpu_out, cpu_out,
-//                                      NO_GPU_STREAMS,
-//                                      r, base_filename);
-//         thread_list[0].join();
-//         thread_list[1].join();
-//     }
-//     dth ^= 1; pth ^= 1;
-//     // Final processing of digitiser data
-//     process_digitiser_data(
-//         chA_data[pth], chB_data[pth],
-//         data_out,
-//         gpu_in, gpu_out, cpu_out,
-//         NO_GPU_STREAMS,
-//         no_runs, base_filename);
+    // 2. Prepare for multirecord mode
+    ADQ214_MultiRecordSetup(adq_cu_ptr, 1, R_POINTS, SP_POINTS);
 
-//     // Deallocation of memory
-//     POWER::GPU::free_memory(chA_data[0], chB_data[0], gpu_in, gpu_out, cpu_out, NO_GPU_STREAMS);
-//     POWER::GPU::free_memory(chA_data[1], chB_data[1], 0, 0, 0, NO_GPU_STREAMS);
-//     delete[] chA_data;
-//     delete[] chB_data;
-//     for (int i(0); i < POWER::no_outputs; i++)
-//         delete[] data_out[i];
-//     delete[] data_out;
+    // 4. Launch 2 parrallel threads, alternating between fetching from digitiser and processing on GPU.
+    std::thread thread_list[no_threads];
+    int dth(0), pth(1); // flip-floppers between 0 and 1. DigitizerTHread and ProcessingTHread
 
-//     // Resetting device
-//     ADQ214_MultiRecordClose(adq_cu_ptr, 1);
+    // Initial read into digitiser
+    fetch_digitiser_data(adq_cu_ptr, chA_data[dth], chB_data[dth], SP_POINTS, R_POINTS);
+    for (unsigned long r(1); r < no_runs; r++) {
+        // XOR to switch 0 <-> 1
+        dth ^= 1; pth ^= 1;
 
-//     PYTHON_END;
-//     return 0;
-// }
+        thread_list[0] = std::thread(fetch_digitiser_data,
+                                     adq_cu_ptr,
+                                     chA_data[dth], chB_data[dth],
+                                     SP_POINTS, R_POINTS);
+
+        thread_list[1] = std::thread(process_digitiser_data,
+                                     chA_data[pth], chB_data[pth], cumulative,
+                                     memory,
+                                     plans_forward, plans_backward,
+                                     r, base_filename);
+        thread_list[0].join();
+        thread_list[1].join();
+    }
+    dth ^= 1; pth ^= 1;
+    // Final processing of digitiser data
+    process_digitiser_data(chA_data[pth], chB_data[pth], cumulative,
+                           memory,
+                           plans_forward, plans_backward,
+                           no_runs, base_filename);
+
+    // Reset
+    G1::GPU::free_memory(memory);
+    ADQ214_MultiRecordClose(adq_cu_ptr, 1);
+
+    PYTHON_END;
+    return 0;
+}

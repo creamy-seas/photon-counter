@@ -49,34 +49,33 @@ static __global__ void fftw_square(cufftComplex *fourier_transform,
 
 void G1::GPU::g1_kernel(
     short *chA_data, short *chB_data,
-    cufftReal **gpu_inout, float **cpu_inout,
-    short **gpu_raw_data, float **gpu_pp_aux, cufftComplex **gpu_fftw_aux, float *gpu_mean, float *gpu_variance,
+    G1::GPU::g1_memory memory,
     cufftHandle *plans_forward, cufftHandle *plans_backward){
 
     // Normalise input arrays
     G1::GPU::preprocessor(
         G1_DIGITISER_POINTS, chA_data, chB_data,
-        gpu_raw_data, reinterpret_cast<float**>(gpu_inout),
-        gpu_pp_aux, gpu_mean, gpu_variance);
+        memory.gpu_raw_data, reinterpret_cast<float**>(memory.gpu_inout),
+        memory.gpu_pp_aux, memory.gpu_mean, memory.gpu_variance);
 
     for (int i(0); i < G1::no_outputs; i++) {
         CUDA_CHECK(
             cufftExecR2C(
                 plans_forward[i],
-                gpu_inout[i], gpu_fftw_aux[i]),
+                memory.gpu_inout[i], memory.gpu_fftw_aux[i]),
             "G1 Kernel: Failed forward transform.");
         fftw_square<<<(unsigned long long)G1_DIGITISER_POINTS / 1024 + 1,1024>>>(
-            gpu_fftw_aux[i],
-            gpu_variance,
+            memory.gpu_fftw_aux[i],
+            memory.gpu_variance,
             i
             );
         CUDA_CHECK(
             cufftExecC2R(
-                plans_backward[i], gpu_fftw_aux[i], gpu_inout[i]),
+                plans_backward[i], memory.gpu_fftw_aux[i], memory.gpu_inout[i]),
             "G1 Kernel: Failed backward transform."
             );
         CUDA_CHECK(
-            cudaMemcpy(cpu_inout[i], gpu_inout[i],
+            cudaMemcpy(memory.cpu_out[i], memory.gpu_inout[i],
                        sizeof(cufftReal) * G1_DIGITISER_POINTS,
                        cudaMemcpyDeviceToHost),
             "G1 Kernel: Failed to copy data to CPU.");

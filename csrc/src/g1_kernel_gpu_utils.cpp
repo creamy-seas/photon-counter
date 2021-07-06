@@ -44,60 +44,61 @@ unsigned long G1::GPU::get_number_of_blocks(int N) {
     return (unsigned long)(N + G1::GPU::pp_threads - 1) / G1::GPU::pp_threads;
 }
 
-void G1::GPU::allocate_memory(
-    short **&gpu_raw_data, cufftReal **&gpu_inout, float **&cpu_inout,
-    float **&gpu_pp_aux, cufftComplex **&gpu_fftw_aux, float *&gpu_mean, float *&gpu_variance,
-    int N) {
+G1::GPU::g1_memory G1::GPU::allocate_memory(int N) {
+    G1::GPU::g1_memory allocated_memory;
+
     int success = 0;
     unsigned long blocks = G1::GPU::get_number_of_blocks(N);
 
-    gpu_raw_data = new short*[2];
-    success += cudaMalloc(reinterpret_cast<void**>(&gpu_raw_data[CHAG1]), G1_DIGITISER_POINTS * sizeof(short));
-    success += cudaMalloc(reinterpret_cast<void**>(&gpu_raw_data[CHBG1]), G1_DIGITISER_POINTS * sizeof(short));
+    allocated_memory.gpu_raw_data = new short*[2];
+    success += cudaMalloc(reinterpret_cast<void**>(&allocated_memory.gpu_raw_data[CHAG1]), G1_DIGITISER_POINTS * sizeof(short));
+    success += cudaMalloc(reinterpret_cast<void**>(&allocated_memory.gpu_raw_data[CHBG1]), G1_DIGITISER_POINTS * sizeof(short));
 
-    gpu_pp_aux = new float*[G1::no_outputs];
-    gpu_inout = new cufftReal*[G1::no_outputs];
-    gpu_fftw_aux = new cufftComplex*[G1::no_outputs];
+    allocated_memory.gpu_pp_aux = new float*[G1::no_outputs];
+    allocated_memory.gpu_inout = new cufftReal*[G1::no_outputs];
+    allocated_memory.gpu_fftw_aux = new cufftComplex*[G1::no_outputs];
     for (int i(0); i < G1::no_outputs; i++) {
-        success += cudaMalloc(reinterpret_cast<void**>(&gpu_pp_aux[i]), blocks * sizeof(float));
-        success += cudaMalloc(reinterpret_cast<void**>(&gpu_inout[i]), G1_DIGITISER_POINTS * sizeof(cufftReal));
-        success += cudaMalloc(reinterpret_cast<void**>(&gpu_fftw_aux[i]), (int(G1_DIGITISER_POINTS / 2) + 1) * sizeof(cufftComplex));
+        success += cudaMalloc(reinterpret_cast<void**>(&allocated_memory.gpu_pp_aux[i]), blocks * sizeof(float));
+        success += cudaMalloc(reinterpret_cast<void**>(&allocated_memory.gpu_inout[i]), G1_DIGITISER_POINTS * sizeof(cufftReal));
+        success += cudaMalloc(reinterpret_cast<void**>(&allocated_memory.gpu_fftw_aux[i]), (int(G1_DIGITISER_POINTS / 2) + 1) * sizeof(cufftComplex));
     }
-    success += cudaMalloc(reinterpret_cast<void**>(&gpu_mean), G1::no_outputs * sizeof(float));
-    success += cudaMalloc(reinterpret_cast<void**>(&gpu_variance), G1::no_outputs * sizeof(float));
+
+    success += cudaMalloc(reinterpret_cast<void**>(&allocated_memory.gpu_mean), G1::no_outputs * sizeof(float));
+    success += cudaMalloc(reinterpret_cast<void**>(&allocated_memory.gpu_variance), G1::no_outputs * sizeof(float));
     if (success != 0) FAIL("G1 Kernel: Failed to allocate memory on GPU.");
 
-    cpu_inout = new float*[G1::no_outputs];
+    allocated_memory.cpu_out = new float*[G1::no_outputs];
     for (int i(0); i < G1::no_outputs; i++)
-        success += cudaHostAlloc(reinterpret_cast<void**>(&cpu_inout[i]), G1_DIGITISER_POINTS * sizeof(float), cudaHostAllocDefault);
+        success += cudaHostAlloc(reinterpret_cast<void**>(&allocated_memory.cpu_out[i]), G1_DIGITISER_POINTS * sizeof(float), cudaHostAllocDefault);
+
     if (success != 0) FAIL("G1 Kernel: Failed to allocate locked memory on CPU.");
+    return allocated_memory;
 }
 
-void G1::GPU::free_memory(
-    short **gpu_raw_data, cufftReal **gpu_inout, float **cpu_inout,
-    float **gpu_pp_aux, cufftComplex **gpu_fftw_aux, float *gpu_mean, float *gpu_variance) {
+void G1::GPU::free_memory(G1::GPU::g1_memory memory_to_free) {
     OKBLUE("G1 Kernel: Deallocating memory on GPU and CPU.");
     int success = 0;
 
-    cudaFree(gpu_raw_data[CHAG1]); cudaFree(gpu_raw_data[CHBG1]);
-    delete[] gpu_raw_data;
+    cudaFree(memory_to_free.gpu_raw_data[CHAG1]);
+    cudaFree(memory_to_free.gpu_raw_data[CHBG1]);
+    delete[] memory_to_free.gpu_raw_data;
 
     for (int i(0); i < G1::no_outputs; i++) {
-        success += cudaFree(gpu_pp_aux[i]);
-        success += cudaFree(gpu_inout[i]);
-        success += cudaFree(gpu_fftw_aux[i]);
+        success += cudaFree(memory_to_free.gpu_pp_aux[i]);
+        success += cudaFree(memory_to_free.gpu_inout[i]);
+        success += cudaFree(memory_to_free.gpu_fftw_aux[i]);
     }
-    cudaFree(gpu_mean);
-    cudaFree(gpu_variance);
-    delete[] gpu_pp_aux;
-    delete[] gpu_inout;
-    delete[] gpu_fftw_aux;
+    cudaFree(memory_to_free.gpu_mean);
+    cudaFree(memory_to_free.gpu_variance);
+    delete[] memory_to_free.gpu_pp_aux;
+    delete[] memory_to_free.gpu_inout;
+    delete[] memory_to_free.gpu_fftw_aux;
     if (success != 0) FAIL("Power Kernel: Failed to free memory on GPU.");
 
     for (int i(0); i < G1::no_outputs; i++) {
-        success += cudaFreeHost(cpu_inout[i]);
+        success += cudaFreeHost(memory_to_free.cpu_out[i]);
     }
-    delete[] cpu_inout;
+    delete[] memory_to_free.cpu_out;
     if (success != 0) FAIL("Power Kernel: Failed to free memory on CPU.");
 }
 

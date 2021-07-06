@@ -80,6 +80,35 @@ void dump_arrays_to_file(
 }
 
 /**
+ * @copydoc dump_arrays_to_file
+ * @param array_to_accumulate This array is appended to during dumping
+ */
+template <typename T1, typename T2>
+void dump_arrays_to_file(
+    T1** array_to_dump,
+    T1** array_to_accumulate,
+    int number_of_series,
+    int entries_per_series,
+    std::string file_name,
+    std::string headline_comment,
+    T2 normalisation
+    ) {
+
+    std::fstream fout;
+    fout.open(file_name, std::ios_base::out);
+
+    fout << headline_comment;
+    for (int i(0); i < entries_per_series; i++) {
+        fout << std::endl;
+        for (int j(0); j < number_of_series; j++) {
+            array_to_accumulate[j][i] += array_to_dump[j][i];
+            fout << (double)array_to_accumulate[j][i] / normalisation << '\t';
+        }
+    }
+    fout.close();
+}
+
+/**
  * a1 b1 c1 ... -> x-dim
  * a2 b2 c2
  * ...

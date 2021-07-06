@@ -52,8 +52,9 @@ void runTest();
 namespace G1 {
     const int no_outputs = 3; ///< Kernels returns CHAG1 and CHBG1 and SQG1
 
-    // TODO: GPU not implemented, as CPU performance is good enough
     /**
+     * @brief Even faster evaluation using Wiener-Khinchin Theorem on GPU.
+     *
      * **Recomendations for FFTW**
      * - Use single precision transforms.
      * - Restrict the size along all dimensions to be representable as 2a×3b×5c×7d.
@@ -62,42 +63,35 @@ namespace G1 {
      * Use out-of-place mode (copy data to new arrays)
      */
     namespace GPU {
+
         /**
-         * Memory allocation is required for streamed copying and processing of data on GPU:
-         * - `chA` and `chB` data is read into pinned CPU memory, so
-         * - Streams are used to process these chunks in parallel.
-         * - Memory is allocated for for each stream separately to avoid race conditions.
-         * - Memory on the CPU needs to be pinned so that it is never paged and always accessible to streams.
-         * - Memory on the GPU will be allocated and it's address (`short*`) stored in an array.
+         * @brief Collection of memory and cpu allocation for G1 evaluation on the GPU.
          *
-         * Pass in the ADDRESSES of the pointers that will store the location of these arrays on the GPU e.g.
-         *
-         *     short ***gpu_in; short **gpu_out; long ***cpu_out; short *chA_data, short *chB_data;
-         *     allocate_memory(&chA_data, &chB_data, &gpu_in, &gpu_out, &cpu_out, 2);
-         *
-         * @param chA_data, chB_data arrays to be populated by the digitiser. Pinned
-         * @param gpu_raw_data arrays on GPU to copy over the raw chA and chB data
-         * @param gpu_inout array `[CHAG1, CHBG1, SQG1]`, where each index holds the address of the arrays on the GPU for reading data to/from GPU.
-         * @param gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance arrays arrays `[CHAG1, CHBG1, SQG1]` on the GPU for intermediate execution
-         * @param cpu_out array `[CHAG1, CHBG1, SQG1]`, where each element accesses it's own array of pinned memory on CPU
-         * SEE https://docs.nvidia.com/cuda/cufft/index.html#multi-dimensional for dimensions to allocate
+         * Memory allocation is required for streamed copying and processing of data on GPU.
+         * @field gpu_inout array
+         * @field cpu_out
          */
-        void allocate_memory(
-            short **&gpu_raw_data,
-            cufftReal **&gpu_inout,
-            float **&cpu_inout,
-            float **&gpu_pp_aux, cufftComplex **&gpu_fftw_aux, float *&gpu_mean, float *&gpu_variance,
-            int N=G1_DIGITISER_POINTS
-            );
-        void free_memory(
-            short **gpu_raw_data, cufftReal **gpu_inout, float **cpu_inout,
-            float **gpu_pp_aux, cufftComplex **gpu_fftw_aux, float *gpu_mean, float *gpu_variance
-            );
+        struct g1_memory {
+            short **gpu_raw_data; ///< `[CHA, CHB]` arrays on GPU to copy over the raw chA and chB data into
+            cufftReal **gpu_inout; ///< `[CHAG1, CHBG1, SQG1]` arrays where each index holds the address of the arrays on the GPU for reading data to/from GPU.
+            float **gpu_pp_aux; ///< Used for intermediate execution
+            cufftComplex **gpu_fftw_aux; ///< Used for intermediate execution
+            float *gpu_mean; ///< Used for intermediate execution
+            float *gpu_variance; ///< Used for intermediate execution
+            /*@{*/
+            /**
+             * @name Allocation of memory on the CPU
+             */
+            float **cpu_out;
+            /*@}*/
+        };
+        g1_memory allocate_memory(int N=G1_DIGITISER_POINTS);
+        void free_memory(g1_memory memory_to_free);
 
         const int pp_threads = 1024; ///< Threads used in preprocessing. Kernel ignores `threads > N`.
-        const int pp_shared_memory = (pp_threads + WARP_SIZE) / WARP_SIZE;
+        const int pp_shared_memory = (pp_threads + WARP_SIZE) / WARP_SIZE; ///< Memory allocated for each warp for efficient reduction.
         /**
-         * Evaluates the number of blockas the preprocessor must be run with, in ordero to process entires of length `N`.
+         * Evaluates the number of blockas the preprocessor must be run with, in order to process entires of length `N`.
          */
         unsigned long get_number_of_blocks(int N);
 
@@ -113,7 +107,7 @@ namespace G1 {
          * @param chA, chB raw data from digitiser
          * @param gpu_raw_data memory allocated on GPU for copying of input data.
          * @param gpu_normalised memory on GPU that keeps hold of the preprocessed data. Will be used in the g1_kernel.
-         * @param gpu_pp_auxm, gpu_mean, gpu_variance, auxillary memory allocated on GPU for processing.
+         * @param gpu_pp_aux, gpu_mean, gpu_variance, auxillary arrays allocated on GPU for processing.
          * @param mean_list, variance_list, normalised_data arrays on CPU where mean and variance and normalisation are copied
          * @tparam T `float` or `double`
          */
@@ -124,17 +118,9 @@ namespace G1 {
             T **gpu_pp_aux, T *gpu_mean, T *gpu_variance,
             T *mean_list, T *variance_list, T **normalised_data);
         /**
-         * For evaluating correlation the data needs to undergo a normalisation by the average value.
-         * This preprocessor:
-         * - Applies normalisation
-         * - Evaluates mean
-         * - Evaluates variance
          * **Data is not copied back CPU - reuse the GPU arrays in the main straight away, without copying to and fro**
          *
-         * Access the `normalised_data` using indicies CHAG1, CHBG1, SQG1.
-         * @param N size of the inputs
-         * @param chA, chB raw data from digitiser
-         * @tparam T `float` or `double`
+         * @copydoc preprocessor
          */
         template <typename T>
         void preprocessor(int N,
@@ -156,17 +142,19 @@ namespace G1 {
         /**
          * Evaluation is performed using the the Wiener–Khinchin theorem on the GPU. First data is normalsied and preprocessed. Then the g1 kernel is run
          *
-         * @param gpu_inout, cpu_inout array for transferring data to and from GPU.
-         * @param gpu_raw_data, gpu_pp_aux, gpu_fftw_aux, gpu_mean, gpu_variance auxillary arrays from processing on GPU. Allocate then with allocate_memory and reuse them on every kernel invocation
+         * @param gpu_inout, cpu_out array for transferring data to and from GPU.
+         * @param memory generate with allocate_memory once and reuse them on every kernel invocation.
          * @param plans_forward, plans_backward plans for the transform, which should be prepared once with g1_prepare_fftw_plan and reused on every kernel invocation
          */
         void g1_kernel(
             short *chA_data, short *chB_data,
-            cufftReal **gpu_inout, float **cpu_inout,
-            short **gpu_raw_data, float **gpu_pp_aux, cufftComplex **gpu_fftw_aux, float *gpu_mean, float *gpu_variance,
+            g1_memory memory,
             cufftHandle *plans_forward, cufftHandle *plans_backward);
     }
 
+    /**
+     * @brief Yeah - CPU code not well maintained, since it was much worse in benchmarking.
+     */
     namespace CPU {
 
         /**
@@ -194,7 +182,7 @@ namespace G1 {
              * @param tau_points autocorrelation \f$g^{(1)}(\tau)\f$ is evaluated from \f$\tau=0\f$ to \$\tau=\$`tau_points`
              * @param normalise_with_less_bias to normalise each \f$g^{(1)}(\tau)\f$ by \f$N-\tau\f$ (since there are less points for evaluating larger lags) or to use the standard \f$N\f$ normalisation
              * @param no_threads to use for parallel evaluation.
-            */
+             */
             void g1_kernel(
                 short *chA_data,
                 short *chB_data,
